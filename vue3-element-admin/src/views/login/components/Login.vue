@@ -10,7 +10,7 @@
     >
       <!-- 用户名 -->
       <el-form-item prop="username">
-        <el-input v-model.trim="loginFormData.username" :placeholder="t('login.username')">
+        <el-input v-model.trim="loginFormData.UserName" :placeholder="t('login.username')">
           <template #prefix>
             <el-icon><User /></el-icon>
           </template>
@@ -21,7 +21,7 @@
       <el-tooltip :visible="isCapsLock" :content="t('login.capsLock')" placement="right">
         <el-form-item prop="password">
           <el-input
-            v-model.trim="loginFormData.password"
+            v-model.trim="loginFormData.Password"
             :placeholder="t('login.password')"
             type="password"
             show-password
@@ -36,7 +36,7 @@
       </el-tooltip>
 
       <!-- 验证码 -->
-      <el-form-item prop="captchaCode">
+      <!-- <el-form-item prop="captchaCode">
         <div flex>
           <el-input
             v-model.trim="loginFormData.captchaCode"
@@ -61,7 +61,7 @@
             />
           </div>
         </div>
-      </el-form-item>
+      </el-form-item> -->
 
       <div class="flex-x-between w-full">
         <el-checkbox v-model="loginFormData.rememberMe">{{ t("login.rememberMe") }}</el-checkbox>
@@ -113,7 +113,8 @@
 import type { FormInstance } from "element-plus";
 import { LocationQuery, RouteLocationRaw, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import AuthAPI, { type LoginFormData } from "@/api/auth.api";
+//import AuthAPI, { type LoginFormData } from "@/api/auth.api";
+import { type LoginFormData } from "@/api/auth.api";
 import router from "@/router";
 import { useUserStore } from "@/store";
 import CommonWrapper from "@/components/CommonWrapper/index.vue";
@@ -123,20 +124,20 @@ const { t } = useI18n();
 const userStore = useUserStore();
 const route = useRoute();
 
-onMounted(() => getCaptcha());
+//onMounted(() => getCaptcha());
 
 const loginFormRef = ref<FormInstance>();
 const loading = ref(false);
 // 是否大写锁定
 const isCapsLock = ref(false);
 // 验证码图片Base64字符串
-const captchaBase64 = ref();
+//const captchaBase64 = ref();
 // 记住我
 const rememberMe = Auth.getRememberMe();
 
 const loginFormData = ref<LoginFormData>({
-  username: "admin",
-  password: "123456",
+  UserName: "admin",
+  Password: "123",
   captchaKey: "",
   captchaCode: "",
   rememberMe,
@@ -144,21 +145,21 @@ const loginFormData = ref<LoginFormData>({
 
 const loginRules = computed(() => {
   return {
-    username: [
+    UserName: [
       {
         required: true,
         trigger: "blur",
         message: t("login.message.username.required"),
       },
     ],
-    password: [
+    Password: [
       {
         required: true,
         trigger: "blur",
         message: t("login.message.password.required"),
       },
       {
-        min: 6,
+        min: 3,
         message: t("login.message.password.min"),
         trigger: "blur",
       },
@@ -174,7 +175,7 @@ const loginRules = computed(() => {
 });
 
 // 获取验证码
-const codeLoading = ref(false);
+/* const codeLoading = ref(false);
 function getCaptcha() {
   codeLoading.value = true;
   AuthAPI.getCaptcha()
@@ -183,7 +184,7 @@ function getCaptcha() {
       captchaBase64.value = data.captchaBase64;
     })
     .finally(() => (codeLoading.value = false));
-}
+} */
 
 /**
  * 登录提交
@@ -215,7 +216,7 @@ async function handleLoginSubmit() {
     // - 未选中"记住我": token存储在sessionStorage中，浏览器关闭后失效
   } catch (error) {
     // 6. 统一错误处理
-    getCaptcha(); // 刷新验证码
+    //getCaptcha(); // 刷新验证码
     console.error("登录失败:", error);
   } finally {
     loading.value = false;

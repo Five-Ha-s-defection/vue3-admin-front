@@ -50,13 +50,14 @@ httpRequest.interceptors.response.use(
     const { code, data, msg } = response.data;
 
     // 请求成功
-    if (code === ResultEnum.SUCCESS) {
+    if (code == ResultEnum.SUCCESS) {
+      ElMessage.success(msg);
       return data;
+    } else {
+      // 业务错误
+      ElMessage.error(msg || "系统出错");
+      return Promise.reject(new Error(msg || "Business Error"));
     }
-
-    // 业务错误
-    ElMessage.error(msg || "系统出错");
-    return Promise.reject(new Error(msg || "Business Error"));
   },
   async (error) => {
     console.error("Response interceptor error:", error);
