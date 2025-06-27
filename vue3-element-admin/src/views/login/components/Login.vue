@@ -142,7 +142,7 @@ const loginFormData = ref<LoginFormData>({
   captchaCode: "",
   rememberMe,
 });
-// 表单验证规则
+
 const loginRules = computed(() => {
   return {
     UserName: [
