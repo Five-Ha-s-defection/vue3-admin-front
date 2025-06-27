@@ -48,10 +48,24 @@ httpRequest.interceptors.response.use(
     }
 
     const { code, data, msg } = response.data;
+    const url = response.config.url || "";
+    const method = response.config.method || "";
 
-    // 请求成功
-    if (code == ResultEnum.SUCCESS) {
+    // 只对非GET请求且不是登录、用户信息、菜单等接口弹窗
+    const shouldShowSuccess =
+      code == ResultEnum.SUCCESS &&
+      method !== "get" &&
+      !url.includes("/login-services/login") &&
+      !url.includes("/getInfo") &&
+      !url.includes("/menus") &&
+      !url.includes("/dict") &&
+      !url.includes("/captcha");
+
+    if (shouldShowSuccess) {
       ElMessage.success(msg);
+    }
+
+    if (code == ResultEnum.SUCCESS) {
       return data;
     } else {
       // 业务错误
