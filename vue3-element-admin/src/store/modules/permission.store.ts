@@ -14,6 +14,23 @@ export const usePermissionStore = defineStore("permission", () => {
   const sideMenuRoutes = ref<RouteRecordRaw[]>([]);
   // 路由是否加载完成
   const routesLoaded = ref(false);
+  /**
+   * 根据后端返回菜单（menus）生成动态路由
+   */
+  function generateRoutesFromMenus(menus: RouteVO[]) {
+    return new Promise<RouteRecordRaw[]>((resolve) => {
+      const dynamicRoutes = parseDynamicRoutes(menus);
+      //添加路由到路由器
+      dynamicRoutes.forEach((route) => {
+        router.addRoute(route);
+      });
+
+      routes.value = [...constantRoutes, ...dynamicRoutes]; // ✅ 正常访问
+      routesLoaded.value = true;
+
+      resolve(dynamicRoutes);
+    });
+  }
 
   /**
    * 获取后台动态路由数据，解析并注册到全局路由
@@ -48,7 +65,10 @@ export const usePermissionStore = defineStore("permission", () => {
    * @param parentPath 父菜单的路径，用于查找对应的菜单项
    */
   const updateSideMenu = (parentPath: string) => {
+    // 找到一级菜单
     const matchedItem = routes.value.find((item) => item.path === parentPath);
+
+    // 若有子菜单，则设置为侧边栏菜单
     if (matchedItem && matchedItem.children) {
       sideMenuRoutes.value = matchedItem.children;
     }
@@ -56,6 +76,7 @@ export const usePermissionStore = defineStore("permission", () => {
 
   /**
    * 重置路由
+   *  用于退出登录或权限更新时清空动态路由
    */
   const resetRouter = () => {
     // 创建常量路由名称集合，用于O(1)时间复杂度的查找
@@ -80,6 +101,7 @@ export const usePermissionStore = defineStore("permission", () => {
     routesLoaded,
     generateRoutes,
     updateSideMenu,
+    generateRoutesFromMenus,
     resetRouter,
   };
 });
@@ -94,20 +116,42 @@ const parseDynamicRoutes = (rawRoutes: RouteVO[]): RouteRecordRaw[] => {
   const parsedRoutes: RouteRecordRaw[] = [];
 
   rawRoutes.forEach((route) => {
+    // 创建一个新的路由对象（浅拷贝）
     const normalizedRoute = { ...route } as RouteRecordRaw;
 
-    // 处理组件路径
+    // 初始化 meta 信息对象（用于标题、图标等）
+    normalizedRoute.meta = normalizedRoute.meta || {};
+
+    const raw: any = route; // 强转，便于访问后端自定义字段
+
+    // 设置菜单标题（从 menuName 映射为 meta.title）
+    if (raw.menuName) {
+      normalizedRoute.meta.title = raw.menuName;
+    }
+
+    // 设置图标
+    if (raw.icon) {
+      normalizedRoute.meta.icon = raw.icon;
+    }
+
+    // 是否隐藏
+    if (raw.hidden !== undefined) {
+      normalizedRoute.meta.hidden = raw.hidden;
+    }
+
+    // 设置组件路径
     normalizedRoute.component =
       normalizedRoute.component?.toString() === "Layout"
-        ? Layout
+        ? Layout // 若是 Layout 字符串则替换为实际 Layout 组件
         : modules[`../../views/${normalizedRoute.component}.vue`] ||
-          modules["../../views/error-page/404.vue"];
+          modules["../../views/error-page/404.vue"]; // 找不到组件则兜底显示 404
 
     // 递归解析子路由
     if (normalizedRoute.children) {
       normalizedRoute.children = parseDynamicRoutes(route.children);
     }
 
+    // 添加到最终数组
     parsedRoutes.push(normalizedRoute);
   });
 
