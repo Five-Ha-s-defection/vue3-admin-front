@@ -24,10 +24,14 @@ export const useUserStore = defineStore("user", () => {
     return new Promise<void>((resolve, reject) => {
       AuthAPI.login(LoginFormData)
         .then((data) => {
-          const { accessToken, refreshToken } = data;
+          const token = data.token;
           // 保存记住我状态和token
           rememberMe.value = LoginFormData.rememberMe;
-          Auth.setTokens(accessToken, refreshToken, rememberMe.value);
+          Auth.setTokens(token, "", rememberMe.value);
+          //保存用户信息
+          if (data.user) {
+            userInfo.value = data.user;
+          }
           resolve();
         })
         .catch((error) => {
@@ -122,9 +126,9 @@ export const useUserStore = defineStore("user", () => {
     return new Promise<void>((resolve, reject) => {
       AuthAPI.refreshToken(refreshToken)
         .then((data) => {
-          const { accessToken, refreshToken: newRefreshToken } = data;
+          const { token, refreshToken: newRefreshToken } = data;
           // 更新令牌，保持当前记住我状态
-          Auth.setTokens(accessToken, newRefreshToken, Auth.getRememberMe());
+          Auth.setTokens(token, newRefreshToken, Auth.getRememberMe());
           resolve();
         })
         .catch((error) => {

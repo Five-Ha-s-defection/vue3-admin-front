@@ -219,3 +219,4 @@ const parseDynamicRoutes = (rawRoutes: RouteVO[]): RouteRecordRaw[] => {
 export function usePermissionStoreHook() {
   return usePermissionStore(store);
 }
+
