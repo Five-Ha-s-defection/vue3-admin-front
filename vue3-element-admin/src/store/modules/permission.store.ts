@@ -14,8 +14,6 @@ export const usePermissionStore = defineStore("permission", () => {
   const sideMenuRoutes = ref<RouteRecordRaw[]>([]);
   // 路由是否加载完成
   const routesLoaded = ref(false);
-<<<<<<< HEAD
-=======
   /**
    * 根据后端返回菜单（menus）生成动态路由
    */
@@ -36,7 +34,6 @@ export const usePermissionStore = defineStore("permission", () => {
       resolve(dynamicRoutes);
     });
   }
->>>>>>> 2983ef2 (提交正常使用的菜单)
 
   /**
    * 适配后端菜单数据格式为前端RouteVO格式
@@ -147,14 +144,6 @@ const parseDynamicRoutes = (rawRoutes: RouteVO[]): RouteRecordRaw[] => {
   rawRoutes.forEach((route) => {
     const normalizedRoute = { ...route } as RouteRecordRaw;
 
-<<<<<<< HEAD
-    // 处理组件路径
-    normalizedRoute.component =
-      normalizedRoute.component?.toString() === "Layout"
-        ? Layout
-        : modules[`../../views/${normalizedRoute.component}.vue`] ||
-          modules["../../views/error-page/404.vue"];
-=======
     // 初始化 meta 信息对象（用于标题、图标等）
     normalizedRoute.meta = normalizedRoute.meta || {};
 
@@ -209,7 +198,6 @@ const parseDynamicRoutes = (rawRoutes: RouteVO[]): RouteRecordRaw[] => {
 
       normalizedRoute.component = foundComponent;
     }
->>>>>>> 2983ef2 (提交正常使用的菜单)
 
     // 递归解析子路由
     if (normalizedRoute.children) {
