@@ -109,6 +109,7 @@
 import { ref, reactive, onMounted, onActivated } from "vue";
 import ReceivablesViewAPI, {ReceivablesPageQuery,ReceivableSearch,} from "@/api/Finance/receivables.api";
 import CustomerAPI, {CustomerPageQuery,CustomerData} from "@/api/CustomerProcess/customer.api";
+import CrmContractAPI from "@/api/crmcontract";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 
@@ -150,10 +151,7 @@ const addupdateForm = reactive({
   remark: "",
   customerName: "",
 });
-const contractList = [
-  { label: "合同A", value: "a" },
-  { label: "合同B", value: "b" },
-];
+
 const addRules = {
   customer: [{ required: true, message: "请选择客户", trigger: "blur" }],
   contract: [{ required: true, message: "请选择合同", trigger: "blur" }],
@@ -241,7 +239,6 @@ const selectedCustomer = ref<any>(null);
 function handleCustomerRadio(row: any) {
   selectedCustomer.value = row;
 }
-
 // 提交客户选择
 function handleCustomerSubmit() {
   if (!selectedCustomer.value) {
@@ -252,6 +249,19 @@ function handleCustomerSubmit() {
   addupdateForm.customerName = selectedCustomer.value.customerName;
   showCustomerDrawer.value = false;
 }
+
+// 获取合同列表数据
+const contractList = ref();
+const pageForm = reactive({
+  PageIndex: 1,
+  PageSize: 111,
+});
+//显示查询分页
+const GetcontractData = async () => {
+  const res = await CrmContractAPI.getInfo(pageForm);
+  contractList.value = res.data;
+  console.log(res);
+};
 
 function addExplain() {
   ElMessage.info("增加应收款明细功能待实现");
@@ -302,6 +312,7 @@ function handleDelete(id: string) {
 // 页面加载时获取数据
 onMounted(() => {
   GetReceivables();
+  GetcontractData();
 });
 
 // 路由激活时刷新（用于Add.vue返回后刷新列表）
