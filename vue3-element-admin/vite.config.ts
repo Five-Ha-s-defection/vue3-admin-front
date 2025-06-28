@@ -32,13 +32,14 @@ export default defineConfig(({ mode }: ConfigEnv) => {
     },
     css: {
       preprocessorOptions: {
-        // 定义全局 SCSS 变量
+        // 定义全局 SCSS 变量npm install @types/node --save-dev
         scss: {
           api: "modern-compiler",
           additionalData: `@use "@/styles/variables.scss" as *;`,
         },
       },
     },
+
     server: {
       host: "0.0.0.0",
       port: +env.VITE_APP_PORT,
