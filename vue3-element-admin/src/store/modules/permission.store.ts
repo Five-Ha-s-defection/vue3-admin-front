@@ -14,6 +14,7 @@ export const usePermissionStore = defineStore("permission", () => {
   const sideMenuRoutes = ref<RouteRecordRaw[]>([]);
   // 路由是否加载完成
   const routesLoaded = ref(false);
+
   /**
    * 根据后端返回菜单（menus）生成动态路由
    */
