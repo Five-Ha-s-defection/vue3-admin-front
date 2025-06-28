@@ -17,9 +17,12 @@ export const usePermissionStore = defineStore("permission", () => {
   /**
    * 根据后端返回菜单（menus）生成动态路由
    */
-  function generateRoutesFromMenus(menus: RouteVO[]) {
+  function generateRoutesFromMenus(menus: any[]) {
     return new Promise<RouteRecordRaw[]>((resolve) => {
-      const dynamicRoutes = parseDynamicRoutes(menus);
+      // 数据格式适配：将后端菜单数据转换为RouteVO格式
+      const adaptedMenus = adaptMenuData(menus);
+      const dynamicRoutes = parseDynamicRoutes(adaptedMenus);
+
       //添加路由到路由器
       dynamicRoutes.forEach((route) => {
         router.addRoute(route);
@@ -29,6 +32,34 @@ export const usePermissionStore = defineStore("permission", () => {
       routesLoaded.value = true;
 
       resolve(dynamicRoutes);
+    });
+  }
+
+  /**
+   * 适配后端菜单数据格式为前端RouteVO格式
+   * @param menus 后端返回的菜单数据
+   * @returns 适配后的RouteVO格式数据
+   */
+  function adaptMenuData(menus: any[]): RouteVO[] {
+    return menus.map((menu) => {
+      const adaptedMenu: RouteVO = {
+        children: menu.children ? adaptMenuData(menu.children) : [],
+        component: menu.component,
+        path: menu.path,
+        name: menu.path?.replace(/\//g, "_").substring(1) || menu.path,
+        meta: {
+          title: menu.menuName || menu.name,
+          icon: menu.icon,
+          hidden: menu.hidden || false,
+        },
+      };
+
+      // 如果有重定向路径
+      if (menu.redirect) {
+        adaptedMenu.redirect = menu.redirect;
+      }
+
+      return adaptedMenu;
     });
   }
 
@@ -140,11 +171,39 @@ const parseDynamicRoutes = (rawRoutes: RouteVO[]): RouteRecordRaw[] => {
     }
 
     // 设置组件路径
-    normalizedRoute.component =
-      normalizedRoute.component?.toString() === "Layout"
-        ? Layout // 若是 Layout 字符串则替换为实际 Layout 组件
-        : modules[`../../views/${normalizedRoute.component}.vue`] ||
-          modules["../../views/error-page/404.vue"]; // 找不到组件则兜底显示 404
+    if (normalizedRoute.component?.toString() === "Layout") {
+      normalizedRoute.component = Layout;
+    } else if (normalizedRoute.component) {
+      // 处理组件路径，移除开头的斜杠
+      let componentPath = normalizedRoute.component.toString();
+      if (componentPath.startsWith("/")) {
+        componentPath = componentPath.substring(1);
+      }
+
+      // 尝试多种可能的组件路径
+      const possiblePaths = [
+        `../../views/${componentPath}.vue`,
+        `../../views/${componentPath}/index.vue`,
+        `../../views/${componentPath.replace("/index", "")}.vue`,
+      ];
+
+      let foundComponent = null;
+      for (const path of possiblePaths) {
+        if (modules[path]) {
+          foundComponent = modules[path];
+          console.log(`✅ 找到组件: ${path}`);
+          break;
+        }
+      }
+
+      if (!foundComponent) {
+        console.warn(`⚠️ 未找到组件: ${componentPath}，尝试的路径:`, possiblePaths);
+        console.log("📁 可用的组件模块:", Object.keys(modules));
+        foundComponent = modules["../../views/error/404.vue"];
+      }
+
+      normalizedRoute.component = foundComponent;
+    }
 
     // 递归解析子路由
     if (normalizedRoute.children) {
