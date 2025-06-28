@@ -110,7 +110,9 @@ async function generateAndAddRoutes(permissionStore: any) {
 
     // 添加路由到路由器
     dynamicRoutes.forEach((route: RouteRecordRaw) => {
+      console.log("🛠️ 添加路由：", route.path, route);
       router.addRoute(route);
+      console.log("🛠️ 添加路由：", route.path, route);
     });
   } finally {
     isGeneratingRoutes = false;
