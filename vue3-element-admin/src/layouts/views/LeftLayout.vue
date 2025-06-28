@@ -6,8 +6,8 @@
         <!-- Logo -->
         <AppLogo v-if="isShowLogo" :collapse="!isSidebarOpen" />
         <!-- 主菜单内容 -->
-        <el-scrollbar>
-          <BasicMenu :data="routes" base-path="" />
+        <el-scrollbar v-loading="!routes || routes.length === 0">
+          <BasicMenu v-if="routes && routes.length > 0" :data="routes" base-path="" />
         </el-scrollbar>
       </div>
     </div>
