@@ -44,9 +44,9 @@
       <el-dialog v-model="showAddDialog" title="添加应收款" width="600px" @close="resetAddForm">
         <el-form ref="addFormRef" :model="addupdateForm" :rules="addRules" label-width="120px">
           <el-form-item label="所属客户" prop="customer">
-            <el-button type="primary" @click="selectCustomer">选择客户</el-button>
+            <el-button type="primary" @click="showCustomer()">选择客户</el-button>
             <span style="margin-left: 10px; color: #999">
-              {{ addupdateForm.customerId || "未选择客户" }}
+              {{ addupdateForm.customerName || "未选择客户" }}
             </span>
           </el-form-item>
           <el-form-item label="关联合同" prop="contract">
@@ -80,16 +80,35 @@
           <el-button type="primary" @click="handleAddSubmit">提交</el-button>
         </template>
       </el-dialog>
+
+      <!-- 客户选择抽屉 -->
+      <el-drawer v-model="showCustomerDrawer" title="客户列表" direction="rtl" size="80%" :with-header="true">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px">
+          <el-button type="primary" @click="handleCustomerSubmit">提交</el-button>
+          <el-button @click="showCustomerDrawer = false">取消</el-button>
+        </div>
+        <el-table :data="customerList" style="width: 100%" highlight-current-row>
+          <el-table-column type="selection" width="50" :selectable="() => true" :reserve-selection="false"
+            :show-overflow-tooltip="false" :fixed="true" :label="''">
+            <template #default="{ row }">
+              <el-radio :model-value="selectedCustomer && selectedCustomer.id" :label="row.id"
+                @change="() => handleCustomerRadio(row)" />
+            </template>
+          </el-table-column>
+          <el-table-column prop="id" label="客户编号" />
+          <el-table-column prop="customerName" label="客户名称" />
+          <el-table-column prop="customerPhone" label="联系电话" />
+          <el-table-column prop="creationTime" label="创建时间" />
+        </el-table>
+      </el-drawer>
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onActivated } from "vue";
-import ReceivablesViewAPI, {
-  ReceivablesPageQuery,
-  ReceivableSearch,
-} from "@/api/Finance/receivables.api";
+import ReceivablesViewAPI, {ReceivablesPageQuery,ReceivableSearch,} from "@/api/Finance/receivables.api";
+import CustomerAPI, {CustomerPageQuery,CustomerData} from "@/api/CustomerProcess/customer.api";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 
@@ -113,21 +132,23 @@ const searchForm = reactive({
 });
 
 // 添加弹窗相关
-const showAddDialog = ref(false);// 添加应收款弹窗
-const showAddCustomer = ref(false); // 添加客户弹窗
+const showAddDialog = ref(false); // 添加应收款弹窗
+const showCustomerDrawer = ref(false); // 客户选择抽屉
 
 const Addlist = () => {
   showAddDialog.value = true;
-}
+};
+
 const addFormRef = ref();
 const addupdateForm = reactive({
-  "customerId": "",
-  "contractId": "",
-  "userId": "",
-  "receivableCode": "",
-  "receivablePay": 0,
-  "receivableDate": "2025-06-28T02:53:26.870Z",
-  "remark": "",
+  customerId: "",
+  contractId: "",
+  userId: "",
+  receivableCode: "",
+  receivablePay: 0,
+  receivableDate: "2025-06-28T02:53:26.870Z",
+  remark: "",
+  customerName: "",
 });
 const contractList = [
   { label: "合同A", value: "a" },
@@ -190,12 +211,52 @@ const GetReceivables = () => {
     });
 };
 
-function selectCustomer() {
-  showAddCustomer.value = true; // 关闭添加弹窗
+
+// 客户列表数据（实际应从API获取，这里举例）
+const customerList = ref<CustomerData[]>([]);
+
+function showCustomer() {
+  showCustomerDrawer.value = true;
+  const params: CustomerPageQuery = {
+    PageIndex: 1,
+    PageSize: 111,
+  };
+
+  CustomerAPI.GetCustomerPage(params)
+    .then((res) => {
+
+      console.log("客户列表数据", res.data);
+      customerList.value = res.data;
+      pagination.totalCount = res.totalCount;
+      pagination.pageCount = res.pageCount;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
 }
+
+// 当前选中的客户
+const selectedCustomer = ref<any>(null);
+// 选择客户单选逻辑
+function handleCustomerRadio(row: any) {
+  selectedCustomer.value = row;
+}
+
+// 提交客户选择
+function handleCustomerSubmit() {
+  if (!selectedCustomer.value) {
+    ElMessage.warning("请选择客户");
+    return;
+  }
+  addupdateForm.customerId = selectedCustomer.value.id;
+  addupdateForm.customerName = selectedCustomer.value.customerName;
+  showCustomerDrawer.value = false;
+}
+
 function addExplain() {
   ElMessage.info("增加应收款明细功能待实现");
 }
+// 重置添加表单
 function resetAddForm() {
   addupdateForm.contractId = "";
   addupdateForm.customerId = "";
@@ -204,8 +265,9 @@ function resetAddForm() {
   addupdateForm.receivablePay = 0;
   addupdateForm.userId = "";
   addupdateForm.remark = "";
+  addupdateForm.customerName = "";
 }
-
+// 提交添加应收款
 function handleAddSubmit() {
   addFormRef.value.validate((valid: boolean) => {
     if (valid) {
