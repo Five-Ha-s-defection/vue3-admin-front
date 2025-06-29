@@ -66,30 +66,6 @@ export const constantRoutes: RouteRecordRaw[] = [
       },
     ],
   },
-
-  // 合同管理路由
-  {
-    path: "/crm",
-    component: Layout,
-    name: "CRM",
-    meta: {
-      title: "合同管理",
-      icon: "user-filled",
-      roles: ["admin", "editor"],
-    },
-    children: [
-      {
-        path: "contract",
-        component: () => import("@/views/CrmContract/ShowCrmContract.vue"),
-        name: "CrmContract",
-        meta: {
-          title: "合同列表",
-          icon: "document",
-          keepAlive: true,
-        },
-      },
-    ],
-  },
 ];
 
 /**
