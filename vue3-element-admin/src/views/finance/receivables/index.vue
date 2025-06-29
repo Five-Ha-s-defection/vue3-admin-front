@@ -43,29 +43,29 @@
       <!-- 添加应收款弹窗 -->
       <el-dialog v-model="showAddDialog" title="添加应收款" width="600px" @close="resetAddForm">
         <el-form ref="addFormRef" :model="addupdateForm" :rules="addRules" label-width="120px">
-          <el-form-item label="所属客户" prop="customer">
+          <el-form-item label="所属客户" prop="customerName">
             <el-button type="primary" @click="showCustomer()">选择客户</el-button>
             <span style="margin-left: 10px; color: #999">
               {{ addupdateForm.customerName || "未选择客户" }}
             </span>
           </el-form-item>
-          <el-form-item label="关联合同" prop="contract">
+          <el-form-item label="关联合同" prop="contractId">
             <el-select v-model="addupdateForm.contractId" placeholder="请选择合同" style="width: 100%">
-              <el-option v-for="item in contractList" :key="item.value" :label="item.label" :value="item.value" />
+              <el-option v-for="item in contractList" :label="item.customerName" :value="item.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="负责人" prop="owner">
+          <el-form-item label="负责人" prop="userId">
             <el-select v-model="addupdateForm.userId" placeholder="请输入负责人" style="width: 100%">
               <el-option v-for="item in contractList" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="应收款编号" prop="code">
+          <el-form-item label="应收款编号" prop="receivableCode">
             <el-input v-model="addupdateForm.receivableCode" prefix-icon="M-" />
           </el-form-item>
-          <el-form-item label="应收款金额" prop="amount">
+          <el-form-item label="应收款金额" prop="receivablePay">
             <el-input v-model="addupdateForm.receivablePay" placeholder="请输入应收款金额" />
           </el-form-item>
-          <el-form-item label="应收款时间" prop="date">
+          <el-form-item label="应收款时间" prop="receivableDate">
             <el-date-picker v-model="addupdateForm.receivableDate" type="date" placeholder="选择时间" style="width: 100%" />
           </el-form-item>
           <el-form-item>
@@ -259,8 +259,8 @@ const pageForm = reactive({
 //显示查询分页
 const GetcontractData = async () => {
   const res = await CrmContractAPI.getInfo(pageForm);
+  console.log("合同下拉",res.data);
   contractList.value = res.data;
-  console.log(res);
 };
 
 function addExplain() {
