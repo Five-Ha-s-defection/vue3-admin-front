@@ -2,12 +2,12 @@ import { store } from "@/store";
 
 import AuthAPI, { type LoginFormData } from "@/api/auth.api";
 import UserAPI, { type UserInfo } from "@/api/system/user.api";
+
 import { Auth } from "@/utils/auth";
 import { usePermissionStoreHook } from "@/store/modules/permission.store";
 import { useDictStoreHook } from "@/store/modules/dict.store";
 import { useTagsViewStore } from "@/store";
 import { cleanupWebSocket } from "@/plugins/websocket";
-import { ElMessage } from "element-plus";
 
 export const useUserStore = defineStore("user", () => {
   const userInfo = useStorage<UserInfo>("userInfo", {} as UserInfo);
@@ -24,37 +24,17 @@ export const useUserStore = defineStore("user", () => {
     return new Promise<void>((resolve, reject) => {
       AuthAPI.login(LoginFormData)
         .then((data) => {
-          if (!data.token) {
-            ElMessage.error("登录失败");
-            return reject(new Error("登录失败"));
-          }
-          const accessToken = data.token;
-          const refreshToken = data.refreshToken || "";
+          const token = data.token;
           // 保存记住我状态和token
           rememberMe.value = LoginFormData.rememberMe;
-          Auth.setTokens(accessToken, refreshToken, rememberMe.value);
-          // 登录成功后立即获取用户信息
-          //保存用户信息包含menus
-
-          // 登录成功手动弹窗
-          ElMessage.success("登录成功");
-          getUserInfo().then((user) => {
-            // 菜单
-            function normalizeMenuChildren(menus: any[]): any[] {
-              return menus.map((menu) => ({
-                ...menu,
-                children: menu.children ? normalizeMenuChildren(menu.children) : [],
-              }));
-            }
-            // 菜单数据
-            const menus = user.menus || [];
-            const normalizedMenus = normalizeMenuChildren(menus);
-            usePermissionStoreHook().generateRoutesFromMenus(normalizedMenus); // ✅ 动态注册菜单路由
-            resolve();
-          });
+          Auth.setTokens(token, "", rememberMe.value);
+          //保存用户信息
+          if (data.user) {
+            userInfo.value = data.user;
+          }
+          resolve();
         })
         .catch((error) => {
-          ElMessage.error(error.message || "登录失败");
           reject(error);
         });
     });
@@ -73,19 +53,12 @@ export const useUserStore = defineStore("user", () => {
             reject("Verification failed, please Login again.");
             return;
           }
-          //统一字段映射，确保nickname和avatar等存在
-          const transformdUser: UserInfo = {
-            username: data.username,
-            realName: data.realName || "",
-            avatar: data.avatar || "",
-            roles: data.roles || [],
-            permissions: data.permissions || [],
-            menus: data.menus || [], //加上这一句，把后端 menus 映射进来
-          };
-          userInfo.value = transformdUser;
-          resolve(transformdUser);
+          Object.assign(userInfo.value, { ...data });
+          resolve(data);
         })
-        .catch(reject);
+        .catch((error) => {
+          reject(error);
+        });
     });
   }
 

@@ -425,7 +425,7 @@ const currentDate = new Date();
 // 问候语：根据当前小时返回不同问候语
 const greetings = computed(() => {
   const hours = currentDate.getHours();
-  const nickname = userStore.userInfo.realName;
+  const nickname = userStore.userInfo.nickname;
   if (hours >= 6 && hours < 8) {
     return "晨起披衣出草堂，轩窗已自喜微凉🌅！";
   } else if (hours >= 8 && hours < 12) {
@@ -616,7 +616,7 @@ watch(
 
 // 组件挂载后加载访客统计数据和通知公告数据
 onMounted(() => {
-  //fetchVisitStatsData();
+  fetchVisitStatsData();
 });
 </script>
 

@@ -23,7 +23,6 @@ export function setupPermission() {
         next({ path: "/" });
         return;
       }
-
       // 处理已登录用户的路由访问
       await handleAuthenticatedUser(to, from, next);
     } else {
@@ -110,9 +109,7 @@ async function generateAndAddRoutes(permissionStore: any) {
 
     // 添加路由到路由器
     dynamicRoutes.forEach((route: RouteRecordRaw) => {
-      console.log("🛠️ 添加路由：", route.path, route);
       router.addRoute(route);
-      console.log("🛠️ 添加路由：", route.path, route);
     });
   } finally {
     isGeneratingRoutes = false;
@@ -159,11 +156,11 @@ async function resetUserStateAndRedirect(to: RouteLocationNormalized, next: Navi
  * 重定向到登录页
  */
 function redirectToLogin(to: RouteLocationNormalized, next: NavigationGuardNext) {
-  const params = new URLSearchParams(to.query as Record<string, string>);
-  const queryString = params.toString();
-  const redirect = queryString ? `${to.path}?${queryString}` : to.path;
-
-  next(`/login?redirect=${encodeURIComponent(redirect)}`);
+  if (to.path !== "/login") {
+    next(`/login?redirect=${encodeURIComponent(to.fullPath)}`);
+  } else {
+    next();
+  }
 }
 
 /** 判断是否有权限 */
