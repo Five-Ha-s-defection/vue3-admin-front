@@ -2,14 +2,18 @@
   <div class="logo">
     <transition enter-active-class="animate__animated animate__fadeInLeft">
       <router-link :key="+collapse" class="wh-full flex-center" to="/">
-        <img :src="logo" class="w20px h20px" style="width: 140px; height: 40px;"/>
+        <img :src="logo" class="w20px h20px" />
+        <span v-if="!collapse" class="title">
+          {{ defaultSettings.title }}
+        </span>
       </router-link>
     </transition>
   </div>
 </template>
 
 <script lang="ts" setup>
-const logo = "https://crm.feelec.com.cn/Public/img/feelCrm.png";
+import { defaultSettings } from "@/settings";
+import logo from "@/assets/logo.png";
 
 defineProps({
   collapse: {
