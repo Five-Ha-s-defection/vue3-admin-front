@@ -4,13 +4,24 @@ import { Auth } from "@/utils/auth";
 import router from "@/router";
 import { usePermissionStore, useUserStore } from "@/store";
 import { ROLE_ROOT } from "@/constants";
+import { usePermissionStoreHook } from "@/store";
 
 // 路由生成锁，防止重复生成
 let isGeneratingRoutes = false;
 
-export function setupPermission() {
+export async function setupPermission() {
   // 白名单路由
   const whiteList = ["/login"];
+  // 页面刷新时，初始化菜单和权限
+  const userInfoStr = localStorage.getItem("userInfo");
+  if (userInfoStr) {
+    const userInfo = JSON.parse(userInfoStr);
+    const userStore = useUserStore();
+    const permissionStore = usePermissionStoreHook();
+
+    userStore.setUserInfo(userInfo); // 恢复用户信息
+    await permissionStore.generateRoutesFromMenus(userInfo.menus); // 👈 恢复菜单路由
+  }
 
   router.beforeEach(async (to, from, next) => {
     NProgress.start();

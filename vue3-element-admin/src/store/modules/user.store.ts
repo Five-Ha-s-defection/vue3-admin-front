@@ -14,6 +14,10 @@ export const useUserStore = defineStore("user", () => {
   // 记住我状态
   const rememberMe = ref(Auth.getRememberMe());
 
+  function setUserInfo(info: UserInfo) {
+    userInfo.value = info;
+  }
+
   /**
    * 登录
    *
@@ -174,6 +178,7 @@ export const useUserStore = defineStore("user", () => {
     resetAllState,
     resetUserState,
     refreshToken,
+    setUserInfo,
   };
 });
 
