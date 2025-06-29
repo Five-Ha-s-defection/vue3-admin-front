@@ -142,7 +142,7 @@ const loginFormData = ref<LoginFormData>({
   captchaCode: "",
   rememberMe,
 });
-
+// 表单验证规则
 const loginRules = computed(() => {
   return {
     UserName: [
@@ -202,6 +202,7 @@ async function handleLoginSubmit() {
 
     // 3. 获取用户信息（包含用户角色，用于路由生成）
     await userStore.getUserInfo();
+
     // 4. 登录成功，让路由守卫处理跳转逻辑
     // 解析目标地址，但不直接跳转
     const redirect = resolveRedirectTarget(route.query);
@@ -221,6 +222,7 @@ async function handleLoginSubmit() {
     loading.value = false;
   }
 }
+
 
 /**
  * 解析重定向目标
