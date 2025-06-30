@@ -191,7 +191,7 @@ const parseDynamicRoutes = (rawRoutes: RouteVO[]): RouteRecordRaw[] => {
       let foundComponent = null;
       for (const path of possiblePaths) {
         if (modules[path]) {
-          foundComponent = modules[path];
+          foundComponent = modules[path]; //成功解析组件
           console.log(`✅ 找到组件: ${path}`);
           break;
         }

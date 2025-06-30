@@ -128,6 +128,8 @@ async function generateAndAddRoutes(permissionStore: any) {
       router.addRoute(route);
       console.log("🛠️ 添加路由：", route.path, route);
     });
+    // 这里一定要标记路由加载完成
+    permissionStore.routesLoaded = true;
   } finally {
     isGeneratingRoutes = false;
   }
