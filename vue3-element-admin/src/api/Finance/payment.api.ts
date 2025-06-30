@@ -3,16 +3,23 @@ import request from "@/utils/request";
 const PaymentViewAPI = {
   GetPaymentMeathod() {
     return request({
-      url: `/api/app/payment/meathod`,
+      url: `/api/app/payment/payment-method`,
       method: "get",
     });
   },
 
   GetPaymentPage(data: any) {
     return request<any, PaymentPageResult>({
-      url: `/api/app/receivables/page`,
+      url: `/api/app/payment/payment`,
       method: "get",
       params: data,
+    });
+  },
+  AddPayment(data: any) {
+    return request({
+      url: `/api/app/payment/payment`,
+      method: "post",
+      data,
     });
   },
 };
@@ -32,22 +39,22 @@ export interface PaymentPageResult {
   data: [];
 }
 
-export interface ReceivableSearch {
-  id:string;
-  creationTime:string;
+export interface  PaymentSearch {
+  id: string;
+  creationTime: string;
   creatorId: string;
-  lastModificationTime:string;
-  lastModifierId:string;
+  lastModificationTime: string;
+  lastModifierId: string;
   isDeleted: true;
   deleterId: string;
-  deletionTime:string;
-  customerId:string;
-  contractId:string;
+  deletionTime: string;
+  customerId: string;
+  contractId: string;
   receivableId: string;
-  userId:string;
+  userId: string;
   paymentCode: string;
   amount: 0;
-  paymentMethod:string;
+  paymentMethod: string;
   paymentDate: string;
   approverIds: string[];
   currentStep: 0;
@@ -56,4 +63,10 @@ export interface ReceivableSearch {
   paymentStatus: 0;
   remark: string;
   receivablePay: 0;
+  customerName: string;
+  contractName: string;
+  realName: string;
+  creatorRealName:string;
+  auditorNames:string;
+  paymentMethodName: string;
 }
