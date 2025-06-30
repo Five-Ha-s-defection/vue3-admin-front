@@ -142,7 +142,7 @@ const loginFormData = ref<LoginFormData>({
   captchaCode: "",
   rememberMe,
 });
-
+// 表单验证规则
 const loginRules = computed(() => {
   return {
     UserName: [
@@ -222,6 +222,7 @@ async function handleLoginSubmit() {
     loading.value = false;
   }
 }
+
 
 /**
  * 解析重定向目标

@@ -68,7 +68,7 @@ export interface LoginFormData {
 /** 登录响应 */
 export interface LoginResult {
   /** 访问令牌 */
-  accessToken: string;
+  token: string;
   /** 刷新令牌 */
   refreshToken: string;
   /** 令牌类型 */
