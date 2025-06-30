@@ -27,11 +27,11 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 const tableData = ref([]);
-const productPage=reactive({
-  PageIndex:1,
-  PageSize:10,
+const productPage = reactive({
+  PageIndex: 1,
+  PageSize: 10,
 })
-const productForm=reactive({
+const productForm = reactive({
   "categoryId": "",
   "parentId": "",
   "productImageUrl": "",
@@ -45,12 +45,14 @@ const productForm=reactive({
   "dealPrice": 0
 })
 
-const GetProductList=async ()=>{
-  const res:any=await ProductApi.getProductList(productForm);
-  tableData.value=res||[];
+const GetProductList = async () => {
+  const res: any = await ProductApi.getProductList(productForm);
+  tableData.value = res || [];
   console.log(res);
 }
-
+onMounted(() => {
+  GetProductList();
+})
 const handleEdit = (row: any) => {
   router.push({ path: '/cxs/product/edit', query: { id: row.id } });
 };

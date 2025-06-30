@@ -41,7 +41,8 @@ export default defineConfig(({ mode }: ConfigEnv) => {
     },
     server: {
       host: "0.0.0.0",
-      port: +env.VITE_APP_PORT,
+      port: env.VITE_APP_PORT,
+      //port: 3000,
       open: true,
       proxy: {
         // 代理 /dev-api 的请求
