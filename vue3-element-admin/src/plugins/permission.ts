@@ -4,13 +4,28 @@ import { Auth } from "@/utils/auth";
 import router from "@/router";
 import { usePermissionStore, useUserStore } from "@/store";
 import { ROLE_ROOT } from "@/constants";
+import { usePermissionStoreHook } from "@/store";
 
 // 路由生成锁，防止重复生成
 let isGeneratingRoutes = false;
 
-export function setupPermission() {
+export async function setupPermission() {
   // 白名单路由
   const whiteList = ["/login"];
+
+  // 页面刷新时，初始化菜单和权限
+  // 在开发环境中不自动恢复用户信息，强制重新登录
+  if (import.meta.env.PROD) {
+    const userInfoStr = localStorage.getItem("userInfo");
+    if (userInfoStr) {
+      const userInfo = JSON.parse(userInfoStr);
+      const userStore = useUserStore();
+      const permissionStore = usePermissionStoreHook();
+
+      userStore.setUserInfo(userInfo); // 恢复用户信息
+      await permissionStore.generateRoutesFromMenus(userInfo.menus); // 👈 恢复菜单路由
+    }
+  }
 
   router.beforeEach(async (to, from, next) => {
     NProgress.start();
@@ -112,6 +127,7 @@ async function generateAndAddRoutes(permissionStore: any) {
     dynamicRoutes.forEach((route: RouteRecordRaw) => {
       console.log("🛠️ 添加路由：", route.path, route);
       router.addRoute(route);
+      console.log("🛠️ 添加路由：", route.path, route);
     });
   } finally {
     isGeneratingRoutes = false;
@@ -161,19 +177,20 @@ function redirectToLogin(to: RouteLocationNormalized, next: NavigationGuardNext)
   const params = new URLSearchParams(to.query as Record<string, string>);
   const queryString = params.toString();
   const redirect = queryString ? `${to.path}?${queryString}` : to.path;
-  next(redirect);
+
+  next(`/login?redirect=${encodeURIComponent(redirect)}`);
 }
 
 /** 判断是否有权限 */
 export function hasAuth(value: string | string[], type: "button" | "role" = "button") {
-  const { roles, perms } = useUserStore().userInfo;
+  const { roles, permissions } = useUserStore().userInfo;
 
   // 超级管理员 拥有所有权限
   if (type === "button" && roles.includes(ROLE_ROOT)) {
     return true;
   }
 
-  const auths = type === "button" ? perms : roles;
+  const auths = type === "button" ? permissions : roles;
   return typeof value === "string"
     ? auths.includes(value)
     : value.some((perm) => auths.includes(perm));
