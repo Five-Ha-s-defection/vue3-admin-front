@@ -1,4 +1,3 @@
-@ -1,7 +1,211 @@
 <template>
   <div class="contract-query-ui">
     <!-- 查询板块 -->
@@ -7,7 +6,7 @@
         <span class="title">合同列表</span>
         <span class="total">
           | 总记录数：
-          <span class="count"></span>
+          <span class="count">{{ pageinfo.totalCount }}</span>
           条
         </span>
       </div>
@@ -74,7 +73,7 @@
     <el-card style="margin-top: 10px">
       <el-table :data="tableData" border style="width: 100%" size="small">
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="status" label="状态" width="80" align="center">
+        <el-table-column prop="paymentStatus" label="状态" width="80" align="center">
           <template #default="{ row }">
             <span
               :style="{
@@ -93,7 +92,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="amount" label="合同金额" align="center" />
+        <el-table-column prop="contractProceeds" label="合同金额" align="center" />
         <el-table-column prop="received" label="已收款" align="center" />
         <el-table-column prop="remaining" label="剩余应收" align="center">
           <template #default="{ row }">
@@ -104,32 +103,48 @@
         </el-table-column>
         <el-table-column prop="progress" label="收款进度" align="center" />
         <el-table-column prop="signDate" label="签订日期" align="center" />
-        <el-table-column prop="name" label="合同名称" align="center">
+        <el-table-column prop="contractName" label="合同名称" align="center">
           <template #default="{ row }">
             <el-link type="primary" :underline="false">{{ row.name }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="endDate" label="截止日期" align="center" />
+        <el-table-column prop="expirationDate" label="截止日期" align="center" />
         <el-table-column prop="dealer" label="经销商" align="center" />
-        <el-table-column prop="customer" label="所属客户" align="center">
+        <el-table-column prop="customerId" label="所属客户" align="center">
           <template #default="{ row }">
             <el-link type="primary" :underline="false">{{ row.customer }}</el-link>
           </template>
         </el-table-column>
+        <el-table-column prop="createTime" label="创建时间" align="center" />
+        <el-table-column prop="userId" label="负责人" align="center" />
+        <el-table-column prop="creatorId" label="创建人" align="center" />
       </el-table>
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted } from "vue";
+import { reactive, onMounted, ref } from "vue";
 import { Search, ArrowDown } from "@element-plus/icons-vue";
 import CrmContractAPI from "@/api/CrmContract/crmcontract";
 
-const pageForm = reactive({
-  PageIndex: 1,
-  PageSize: 10,
-});
+// 定义合同数据类型
+interface ContractItem {
+  id: string;
+  status: string;
+  amount: number;
+  received: number;
+  remaining: number;
+  progress: string;
+  signDate: string;
+  name: string;
+  endDate: string;
+  dealer: string;
+  customer: string;
+  createTime: string;
+  manager: string;
+  createUser: string;
+}
 
 const searchForm = reactive({
   SearchTimeType: 0, // 查询时间类型 0:创建时间 1:签订日期 2:生效日期 3:截至日期
@@ -148,13 +163,59 @@ const searchForm = reactive({
   PageSize: 10,
 });
 
-const tableData = ref([]);
+const tableData = ref<ContractItem[]>([]);
+const pageinfo = reactive({
+  pageCount: 0,
+  totalCount: 0,
+});
 
 //显示查询分页
 const getTableData = async () => {
-  const res: any = await CrmContractAPI.getInfo(searchForm);
-  tableData.value = res || [];
-  console.log(res);
+  /*  const res: any = await CrmContractAPI.getInfo(searchForm);
+  tableData.value = res.data;
+  pageinfo.pageCount = res.pageCount;
+  pageinfo.totalCount = res.totalCount;
+  console.log(tableData.value); */
+  try {
+    const res: any = await CrmContractAPI.getInfo(searchForm);
+    console.log("原始API返回数据:", res);
+
+    // 如果返回的是数组，进行数据转换
+    if (Array.isArray(res)) {
+      tableData.value = res.map((item) => ({
+        // 将API返回的数据映射到表格需要的字段
+        id: item.id || "",
+        status: item.status || "待审核",
+        amount: item.amount || item.contractAmount || 0,
+        received: item.received || item.receivedAmount || 0,
+        remaining:
+          (item.amount || item.contractAmount || 0) - (item.received || item.receivedAmount || 0),
+        progress: item.progress || "0%",
+        signDate: item.signDate || item.createTime,
+        name: item.contractName || item.name || "未命名合同",
+        endDate: item.expirationDate || item.endDate,
+        dealer: item.dealer || "",
+        customer: item.customerName || item.customer || "",
+        createTime: item.createTime || "",
+        manager: item.manager || "",
+        createUser: item.createUser || "",
+      }));
+      pageinfo.totalCount = res.length;
+    } else if (res && res.data) {
+      // 处理标准API返回格式
+      tableData.value = res.data || [];
+      pageinfo.pageCount = res.pageCount || 0;
+      pageinfo.totalCount = res.totalCount || 0;
+    } else {
+      tableData.value = [];
+      pageinfo.totalCount = 0;
+    }
+
+    console.log("处理后的表格数据:", tableData.value);
+  } catch (error) {
+    console.error("获取数据失败:", error);
+    tableData.value = [];
+  }
 };
 
 onMounted(() => {
