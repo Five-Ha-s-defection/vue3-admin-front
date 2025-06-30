@@ -3,9 +3,9 @@
     <el-card>
       <div style="margin-bottom: 16px">
         <el-button type="primary" @click="Addlist()">添加应收款</el-button>
-        <el-input v-model="searchForm.receivableCode" placeholder="应收款编号(不含符号)" style="width: 220px; margin-left: 16px"
+        <el-input v-model="searchForm.ReceivableCode" placeholder="应收款编号(不含符号)" style="width: 220px; margin-left: 16px"
           clearable />
-        <el-button type="primary" style="margin-left: 8px" @click="handleSearch">查询</el-button>
+        <el-button type="primary" style="margin-left: 8px" @click="search()">高级搜索</el-button>
         <el-button style="margin-left: 8px" @click="handleReset">重置</el-button>
       </div>
       <el-table v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据">
@@ -21,8 +21,8 @@
         <el-table-column prop="receivableDate" label="应收款时间" />
         <el-table-column prop="customerName" label="所属客户" />
         <el-table-column prop="contractName" label="关联合同" />
-        <el-table-column prop="userName" label="负责人" />
-        <el-table-column prop="creatorId" label="创建人" />
+        <el-table-column prop="realName" label="负责人" />
+        <el-table-column prop="creatorRealName" label="创建人" />
         <el-table-column label="操作" width="120">
           <template #default="scope">
             <el-button type="danger" size="small" @click="handleDelete(scope.row.id)">
@@ -35,7 +35,7 @@
       <!-- 分页区域 -->
       <div style="margin-top: 16px; display: flex; justify-content: center">
         <el-pagination v-model:current-page="pagination.PageIndex" v-model:page-size="pagination.PageSize"
-          :page-sizes="[10, 20, 50, 100]" :total="pagination.totalCount" :background="true"
+          :page-sizes="[5, 10, 15, 20]" :total="pagination.totalCount" :background="true"
           layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
           @current-change="handleCurrentChange" />
       </div>
@@ -43,29 +43,29 @@
       <!-- 添加应收款弹窗 -->
       <el-dialog v-model="showAddDialog" title="添加应收款" width="600px" @close="resetAddForm">
         <el-form ref="addFormRef" :model="addupdateForm" :rules="addRules" label-width="120px">
-          <el-form-item label="所属客户" prop="customer">
+          <el-form-item label="所属客户" prop="customerName">
             <el-button type="primary" @click="showCustomer()">选择客户</el-button>
             <span style="margin-left: 10px; color: #999">
               {{ addupdateForm.customerName || "未选择客户" }}
             </span>
           </el-form-item>
-          <el-form-item label="关联合同" prop="contract">
+          <el-form-item label="关联合同" prop="contractId">
             <el-select v-model="addupdateForm.contractId" placeholder="请选择合同" style="width: 100%">
-              <el-option v-for="item in contractList" :key="item.value" :label="item.label" :value="item.value" />
+              <el-option v-for="item in contractList" :label="item.contractName" :value="item.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="负责人" prop="owner">
+          <el-form-item label="负责人" prop="userId">
             <el-select v-model="addupdateForm.userId" placeholder="请输入负责人" style="width: 100%">
-              <el-option v-for="item in contractList" :key="item.value" :label="item.label" :value="item.value" />
+              <el-option v-for="item in userList" :label="item.realName" :value="item.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="应收款编号" prop="code">
+          <el-form-item label="应收款编号" prop="receivableCode">
             <el-input v-model="addupdateForm.receivableCode" prefix-icon="M-" />
           </el-form-item>
-          <el-form-item label="应收款金额" prop="amount">
+          <el-form-item label="应收款金额" prop="receivablePay">
             <el-input v-model="addupdateForm.receivablePay" placeholder="请输入应收款金额" />
           </el-form-item>
-          <el-form-item label="应收款时间" prop="date">
+          <el-form-item label="应收款时间" prop="receivableDate">
             <el-date-picker v-model="addupdateForm.receivableDate" type="date" placeholder="选择时间" style="width: 100%" />
           </el-form-item>
           <el-form-item>
@@ -101,14 +101,65 @@
           <el-table-column prop="creationTime" label="创建时间" />
         </el-table>
       </el-drawer>
+
+      <!-- 高级搜索弹窗 -->
+      <el-dialog v-model="showAdvancedSearch" title="高级搜索" width="800px" :close-on-click-modal="false" append-to-body>
+        <el-form :model="searchForm" label-width="100px" label-position="right">
+          <el-form-item label="开始时间">
+            <el-date-picker v-model="searchForm.StartTime" type="date" placeholder="选择开始时间" style="width: 100%" />
+          </el-form-item>
+          <el-form-item label="结束时间">
+            <el-date-picker v-model="searchForm.EndTime" type="date" placeholder="选择结束时间" style="width: 100%" />
+          </el-form-item>
+          <el-form-item label="应收款编号">
+            <el-input v-model="searchForm.ReceivableCode" placeholder="请输入应收款编号" />
+          </el-form-item>
+          <el-form-item label="负责人" prop="userId">
+            <el-select v-model="searchForm.UserId" placeholder="请输入负责人" style="width: 100%">
+              <el-option v-for="item in userList" :label="item.realName" :value="item.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="创建人">
+            <el-select v-model="searchForm.CreateId" placeholder="请选择创建人">
+              <el-option v-for="item in userList" :label="item.realName" :value="item.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="所属客户" prop="customerName">
+            <el-button type="primary" @click="showCustomer()">选择客户</el-button>
+            <span style="margin-left: 10px; color: #999">
+              {{ searchForm.CustomerId || "未选择客户" }}
+            </span>
+          </el-form-item>
+          <el-form-item label="关联合同" prop="contractId">
+            <el-select v-model="searchForm.ContractId" placeholder="请选择合同" style="width: 100%">
+              <el-option v-for="item in contractList" :label="item.contractName" :value="item.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="应收款金额">
+            <el-input v-model="searchForm.ReceivablePay" placeholder="请输入应收款金额" />
+          </el-form-item>
+          <el-form-item label="应收款时间">
+            <el-date-picker v-model="searchForm.ReceivableDate" type="date" placeholder="选择应收款时间" style="width: 100%" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="showAdvancedSearch = false">取消</el-button>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+        </template>
+      </el-dialog>
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onActivated } from "vue";
-import ReceivablesViewAPI, {ReceivablesPageQuery,ReceivableSearch,} from "@/api/Finance/receivables.api";
-import CustomerAPI, {CustomerPageQuery,CustomerData} from "@/api/CustomerProcess/customer.api";
+import ReceivablesViewAPI, {
+  ReceivablesPageQuery,
+  ReceivableSearch,
+} from "@/api/Finance/receivables.api";
+import CustomerAPI, { CustomerPageQuery, CustomerData } from "@/api/CustomerProcess/customer.api";
+import CrmContractAPI from "@/api/crmcontract";
+import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 
@@ -128,7 +179,15 @@ const pagination = reactive({
 
 // 搜索表单
 const searchForm = reactive({
-  receivableCode: "",
+  StartTime: "",
+  EndTime: "",
+  ReceivableCode: "",
+  UserId: "",
+  CreateId: "",
+  CustomerId: "",
+  ContractId: "",
+  ReceivablePay: "",
+  ReceivableDate: "",
 });
 
 // 添加弹窗相关
@@ -141,6 +200,8 @@ const Addlist = () => {
 
 const addFormRef = ref();
 const addupdateForm = reactive({
+  creationTime: "",
+  creatorId: "",
   customerId: "",
   contractId: "",
   userId: "",
@@ -149,11 +210,9 @@ const addupdateForm = reactive({
   receivableDate: "2025-06-28T02:53:26.870Z",
   remark: "",
   customerName: "",
+  creatorName: "",
 });
-const contractList = [
-  { label: "合同A", value: "a" },
-  { label: "合同B", value: "b" },
-];
+
 const addRules = {
   customer: [{ required: true, message: "请选择客户", trigger: "blur" }],
   contract: [{ required: true, message: "请选择合同", trigger: "blur" }],
@@ -175,16 +234,22 @@ function handleCurrentChange(val: number) {
   pagination.PageIndex = val;
   GetReceivables();
 }
+// 高级搜索抽屉
+const showAdvancedSearch = ref(false);
+const search = () => {
+  showAdvancedSearch.value = true;
+};
 
 // 搜索
 function handleSearch() {
+  // 这里将form的内容作为搜索条件，刷新页面或重新请求数据
+  showAdvancedSearch.value = false;
   pagination.PageIndex = 1; // 重置到第一页
   GetReceivables();
 }
-
 // 重置
 function handleReset() {
-  searchForm.receivableCode = "";
+  searchForm.ReceivableCode = "";
   pagination.PageIndex = 1;
   GetReceivables();
 }
@@ -195,7 +260,7 @@ const GetReceivables = () => {
   const params: ReceivablesPageQuery = {
     PageIndex: pagination.PageIndex,
     PageSize: pagination.PageSize,
-    receivableCode: searchForm.receivableCode || undefined,
+    receivableCode: searchForm.ReceivableCode || undefined,
   };
 
   ReceivablesViewAPI.GetReceivablesPage(params)
@@ -211,7 +276,6 @@ const GetReceivables = () => {
     });
 };
 
-
 // 客户列表数据（实际应从API获取，这里举例）
 const customerList = ref<CustomerData[]>([]);
 
@@ -224,7 +288,6 @@ function showCustomer() {
 
   CustomerAPI.GetCustomerPage(params)
     .then((res) => {
-
       console.log("客户列表数据", res.data);
       customerList.value = res.data;
       pagination.totalCount = res.totalCount;
@@ -241,7 +304,6 @@ const selectedCustomer = ref<any>(null);
 function handleCustomerRadio(row: any) {
   selectedCustomer.value = row;
 }
-
 // 提交客户选择
 function handleCustomerSubmit() {
   if (!selectedCustomer.value) {
@@ -252,6 +314,38 @@ function handleCustomerSubmit() {
   addupdateForm.customerName = selectedCustomer.value.customerName;
   showCustomerDrawer.value = false;
 }
+
+// 获取合同列表数据
+const contractList: any = ref([]);
+//显示查询分页
+const GetcontractData = async () => {
+  const pageForm = reactive({
+    PageIndex: 1,
+    PageSize: 111,
+  });
+  CrmContractAPI.getInfo(pageForm)
+    .then((res) => {
+      console.log("合同列表数据", res);
+      contractList.value = res;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+};
+
+// 获取负责人列表数据
+const userList: any = ref([]);
+//显示查询分页
+const UserData = async () => {
+  UserAPI.GetUserPage()
+    .then((res) => {
+      console.log("负责人用户列表数据", res);
+      userList.value = res;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+};
 
 function addExplain() {
   ElMessage.info("增加应收款明细功能待实现");
@@ -266,13 +360,20 @@ function resetAddForm() {
   addupdateForm.userId = "";
   addupdateForm.remark = "";
   addupdateForm.customerName = "";
+  addupdateForm.creatorName = "";
 }
 // 提交添加应收款
 function handleAddSubmit() {
   addFormRef.value.validate((valid: boolean) => {
     if (valid) {
       // 这里写实际的添加API调用
-      ElMessage.success("提交成功");
+      ReceivablesViewAPI.AddReceivable(addupdateForm).then((res) => {
+        if (res.data) {
+          ElMessage.success("添加成功");
+        } else {
+          ElMessage.error("添加失败");
+        }
+      });
       showAddDialog.value = false;
       resetAddForm();
       GetReceivables(); // 刷新列表
@@ -302,6 +403,8 @@ function handleDelete(id: string) {
 // 页面加载时获取数据
 onMounted(() => {
   GetReceivables();
+  GetcontractData();
+  UserData();
 });
 
 // 路由激活时刷新（用于Add.vue返回后刷新列表）
@@ -313,6 +416,10 @@ onActivated(() => {
     router.replace({ query: { ...route.query, refresh: undefined } });
   }
 });
+
+
+
+
 </script>
 
 <style scoped></style>
