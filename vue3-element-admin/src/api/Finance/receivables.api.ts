@@ -16,11 +16,19 @@ const ReceivablesViewAPI = {
       data,
     });
   },
-
+  //删除
   DeleteReceivable(id: string) {
     return request({
       url: `/api/app/receivables/${id}`,
       method: "delete",
+    });
+  },
+  //批量删除
+  BatchDeleteReceivables(data: string[]) {
+    return request({
+      url: `/api/app/receivables`,
+      method: "delete",
+      data,
     });
   },
 };
