@@ -97,7 +97,10 @@ export const usePermissionStore = defineStore("permission", () => {
    * @param parentPath 父菜单的路径，用于查找对应的菜单项
    */
   const updateSideMenu = (parentPath: string) => {
+    // 找到一级菜单
     const matchedItem = routes.value.find((item) => item.path === parentPath);
+
+    // 若有子菜单，则设置为侧边栏菜单
     if (matchedItem && matchedItem.children) {
       sideMenuRoutes.value = matchedItem.children;
     }
@@ -105,6 +108,7 @@ export const usePermissionStore = defineStore("permission", () => {
 
   /**
    * 重置路由
+   *  用于退出登录或权限更新时清空动态路由
    */
   const resetRouter = () => {
     // 创建常量路由名称集合，用于O(1)时间复杂度的查找
@@ -129,6 +133,7 @@ export const usePermissionStore = defineStore("permission", () => {
     routesLoaded,
     generateRoutes,
     updateSideMenu,
+    generateRoutesFromMenus,
     resetRouter,
   };
 });
@@ -143,6 +148,7 @@ const parseDynamicRoutes = (rawRoutes: RouteVO[]): RouteRecordRaw[] => {
   const parsedRoutes: RouteRecordRaw[] = [];
 
   rawRoutes.forEach((route) => {
+    // 创建一个新的路由对象（浅拷贝）
     const normalizedRoute = { ...route } as RouteRecordRaw;
 
     // 初始化 meta 信息对象（用于标题、图标等）
@@ -205,6 +211,7 @@ const parseDynamicRoutes = (rawRoutes: RouteVO[]): RouteRecordRaw[] => {
       normalizedRoute.children = parseDynamicRoutes(route.children);
     }
 
+    // 添加到最终数组
     parsedRoutes.push(normalizedRoute);
   });
 
@@ -220,4 +227,3 @@ const parseDynamicRoutes = (rawRoutes: RouteVO[]): RouteRecordRaw[] => {
 export function usePermissionStoreHook() {
   return usePermissionStore(store);
 }
-

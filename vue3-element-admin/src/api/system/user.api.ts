@@ -221,7 +221,7 @@ export interface UserInfo {
   username?: string;
 
   /** 昵称 */
-  nickname?: string;
+  realName?: string;
 
   /** 头像URL */
   avatar?: string;
@@ -230,7 +230,19 @@ export interface UserInfo {
   roles: string[];
 
   /** 权限 */
-  perms: string[];
+  permissions: string[];
+  /** 菜单 */
+  menus?: RouteVO[];
+}
+
+export interface RouteVO {
+  path: string;
+  name: string;
+  component: string;
+  icon?: string;
+  hidden?: boolean;
+  menuName?: string; // ⬅ 你的菜单标题字段
+  children?: RouteVO[];
 }
 
 /**
