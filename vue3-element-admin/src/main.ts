@@ -20,9 +20,6 @@ import "default-passive-events";
 async function bootstrap() {
   const app = createApp(App);
 
-  // 安装所有插件（pinia、i18n、element-plus 等）
-  app.use(setupPlugins);
-
   // 🚨【1】恢复用户信息 & 注册动态路由（必须在 app.use(router) 之前）
   const userInfoStr = localStorage.getItem("userInfo");
   if (userInfoStr) {
@@ -38,7 +35,8 @@ async function bootstrap() {
 
   // 🚨【2】动态路由准备好之后再 use router
   app.use(router);
-
+  // 安装所有插件（pinia、i18n、element-plus 等）
+  app.use(setupPlugins);
   // 🚨【3】挂载 Vue 应用
   app.mount("#app");
 }
