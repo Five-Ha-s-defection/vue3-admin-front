@@ -1,7 +1,7 @@
 @ -1,7 +1,211 @@
 <template>
-  <div></div>
   <div class="contract-query-ui">
+    <!-- 查询板块 -->
     <el-card>
       <div class="header">
         <span class="title">合同列表</span>
@@ -70,6 +70,7 @@
       </div>
     </el-card>
 
+    <!-- 表格板块 -->
     <el-card style="margin-top: 10px">
       <el-table :data="tableData" border style="width: 100%" size="small">
         <el-table-column type="selection" width="50" />
@@ -120,11 +121,10 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
 <script setup lang="ts">
 import { reactive, onMounted } from "vue";
 import { Search, ArrowDown } from "@element-plus/icons-vue";
-import CrmContractAPI from "@/api/crmcontract";
+import CrmContractAPI from "@/api/CrmContract/crmcontract";
 
 const pageForm = reactive({
   PageIndex: 1,
@@ -144,14 +144,16 @@ const searchForm = reactive({
   CommencementDate: "", // 生效日期
   ExpirationDate: "", // 截止日期
   Dealer: "", // 经销商
+  PageIndex: 1,
+  PageSize: 10,
 });
 
-const tableData = ref();
+const tableData = ref([]);
 
 //显示查询分页
 const getTableData = async () => {
-  const res = await CrmContractAPI.getInfo(pageForm);
-  tableData.value = res;
+  const res: any = await CrmContractAPI.getInfo(searchForm);
+  tableData.value = res || [];
   console.log(res);
 };
 
@@ -160,7 +162,6 @@ onMounted(() => {
 });
 </script>
 
-<style scoped></style>
 <style scoped>
 .contract-query-ui {
   background: rgb(245 248 253);
