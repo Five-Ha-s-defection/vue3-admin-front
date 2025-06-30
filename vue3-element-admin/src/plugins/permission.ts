@@ -15,16 +15,15 @@ export async function setupPermission() {
 
   // 页面刷新时，初始化菜单和权限
   // 在开发环境中不自动恢复用户信息，强制重新登录
-  if (import.meta.env.PROD) {
-    const userInfoStr = localStorage.getItem("userInfo");
-    if (userInfoStr) {
-      const userInfo = JSON.parse(userInfoStr);
-      const userStore = useUserStore();
-      const permissionStore = usePermissionStoreHook();
 
-      userStore.setUserInfo(userInfo); // 恢复用户信息
-      await permissionStore.generateRoutesFromMenus(userInfo.menus); // 👈 恢复菜单路由
-    }
+  const userInfoStr = localStorage.getItem("userInfo");
+  if (userInfoStr) {
+    const userInfo = JSON.parse(userInfoStr);
+    const userStore = useUserStore();
+    const permissionStore = usePermissionStoreHook();
+
+    userStore.setUserInfo(userInfo); // 恢复用户信息
+    await permissionStore.generateRoutesFromMenus(userInfo.menus); // 👈 恢复菜单路由
   }
 
   router.beforeEach(async (to, from, next) => {
