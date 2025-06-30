@@ -687,16 +687,35 @@ function handleExport() {
   location.href = "https://localhost:44341/api/app/receivables/export-receivables-async-excel";
 }
 
-function handleEditSubmit() {
-  editFormRef.value.validate((valid: boolean) => {
-    if (!valid) return;
-    ReceivablesViewAPI.UpdateReceivable(editForm).then((res: any) => {
-      ElMessage.success("修改成功");
-      showEditDrawer.value = false;
-      GetReceivables();
-    });
-  });
-}
+// const showDetailDrawer = ref(false);
+// const detailData = ref<any>(null);
+
+// 显示详情抽屉
+// function handleRowClick(row: any) {
+//   detailData.value = row;
+//   showDetailDrawer.value = true;
+// }
+
+// // 删除应收款
+// function handleDelete(row:any) {
+//   detailData.value = row;
+//   console.log("123",row);
+  
+//   ElMessageBox.confirm("确定要删除该应收款吗？", "提示", {
+//     type: "warning",
+//   }).then(() => {
+//     ReceivablesViewAPI.DeleteReceivable(row.id)
+//       .then(() => {
+//         ElMessage.success("删除成功");
+//         GetReceivables(); // 重新加载数据
+//       })
+//       .catch((error) => {
+//         console.error("删除失败:", error);
+//         ElMessage.error("删除失败");
+//       });
+//   });
+// }
+
 </script>
 
 <style scoped></style>

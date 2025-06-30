@@ -19,7 +19,7 @@ const ReceivablesViewAPI = {
   //删除
   DeleteReceivable(id: string) {
     return request({
-      url: `/api/app/receivables/${id}`,
+      url: `/api/app/receivables/${id}/get-id`,
       method: "delete",
     });
   },
@@ -35,7 +35,7 @@ const ReceivablesViewAPI = {
     return request({
       url: `/api/app/receivables/${id}`,
       method: "put",
-      params:data,
+      data,
     });
   },
 };

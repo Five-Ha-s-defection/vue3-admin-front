@@ -177,7 +177,7 @@
             </div>
             <div>
               <el-button type="primary" size="small" @click="handleEditDetail">修改</el-button>
-              <el-button type="danger" size="small" style="margin-left: 8px">删除</el-button>
+              <el-button type="danger" size="small" style="margin-left: 8px" @click="handleDelete(detailData)">删除</el-button>
             </div>
           </div>
 
@@ -536,23 +536,6 @@ function handleAddSubmit() {
   });
 }
 
-// 删除应收款
-// function handleDelete(id: string) {
-//   ElMessageBox.confirm("确定要删除该应收款吗？", "提示", {
-//     type: "warning",
-//   }).then(() => {
-//     ReceivablesViewAPI.DeleteReceivable(id)
-//       .then(() => {
-//         ElMessage.success("删除成功");
-//         GetReceivables(); // 重新加载数据
-//       })
-//       .catch((error) => {
-//         console.error("删除失败:", error);
-//         ElMessage.error("删除失败");
-//       });
-//   });
-// }
-
 // 页面加载时获取数据
 onMounted(() => {
   GetReceivables();
@@ -569,6 +552,9 @@ onActivated(() => {
     router.replace({ query: { ...route.query, refresh: undefined } });
   }
 });
+
+
+//批量删除
 
 const tableRef = ref();
 const selectedRows = ref([]); // 存储选中的行
@@ -603,12 +589,33 @@ function handleExport() {
   location.href = "https://localhost:44341/api/app/receivables/export-receivables-async-excel";
 }
 
+
+
 const showDetailDrawer = ref(false);
 const detailData = ref<any>(null);
+
 // 显示详情抽屉
 function handleRowClick(row: any) {
   detailData.value = row;
   showDetailDrawer.value = true;
+}
+
+// 删除应收款
+function handleDelete(row:any) {
+  detailData.value = row;
+  ElMessageBox.confirm("确定要删除该应收款吗？", "提示", {
+    type: "warning",
+  }).then(() => {
+    ReceivablesViewAPI.DeleteReceivable(row.id)
+      .then(() => {
+        ElMessage.success("删除成功");
+        GetReceivables(); // 重新加载数据
+      })
+      .catch((error) => {
+        console.error("删除失败:", error);
+        ElMessage.error("删除失败");
+      });
+  });
 }
 
 const showEditDrawer = ref(false);
@@ -624,7 +631,6 @@ const editForm = reactive({
   receivableDate: "2025-06-28T02:53:26.870Z",
   remark: "",
   customerName: "",
-  creatorName: "",
 });
 
 function handleEditDetail() {
@@ -644,6 +650,7 @@ function handleEditSubmit() {
         ElMessage.error("修改失败");
       }
       showEditDrawer.value = false;
+      showDetailDrawer.value = false;
       GetReceivables();
     });
   });
