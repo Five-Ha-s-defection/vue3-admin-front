@@ -9,7 +9,7 @@ const ReceivablesViewAPI = {
     });
   },
 
-  AddReceivable(data: ReceivableForm) {
+  AddReceivable(data:any) {
     return request({
       url: `/api/app/receivables`,
       method: "post",
