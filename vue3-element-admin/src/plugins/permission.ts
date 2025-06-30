@@ -126,8 +126,9 @@ async function generateAndAddRoutes(permissionStore: any) {
     dynamicRoutes.forEach((route: RouteRecordRaw) => {
       console.log("🛠️ 添加路由：", route.path, route);
       router.addRoute(route);
-      console.log("🛠️ 添加路由：", route.path, route);
+      console.log("✅ dynamically added:", route.path);
     });
+    console.log("✅ All dynamic routes added, now routesLoaded:", permissionStore.routesLoaded);
     // 这里一定要标记路由加载完成
     permissionStore.routesLoaded = true;
   } finally {
