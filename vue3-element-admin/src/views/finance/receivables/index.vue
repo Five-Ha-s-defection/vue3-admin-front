@@ -239,7 +239,7 @@ import ReceivablesViewAPI, {
   ReceivablesPageQuery,
   ReceivableSearch,
 } from "@/api/Finance/receivables.api";
-import CustomerAPI, { CustomerPageQuery, CustomerData } from "@/api/CustomerProcess/customer.api";
+import CustomerAPI, { CustomerPageQuery, CustomerData } from "@/api/CustomerProcess/Customer/customer.api";
 import CrmContractAPI from "@/api/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
