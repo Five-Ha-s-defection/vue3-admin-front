@@ -144,7 +144,7 @@
             </el-select>
           </el-form-item>
           <!-- 收款编号 -->
-          <el-form-item label="收款编号" prop="paymentCode" required>
+          <el-form-item label="收款编号" prop="paymentCode" >
             <el-input v-model="addForm.paymentCode" placeholder="自动生成或手动输入" />
           </el-form-item>
           <!-- 收款金额 -->
@@ -404,6 +404,7 @@ const GetPayment = () => {
 
   PaymentViewAPI.GetPaymentPage(params)
     .then((res) => {
+
       tableData.value = res.data;
       pagination.totalCount = res.totalCount;
       pagination.pageCount = res.pageCount;
@@ -466,14 +467,11 @@ const addForm = reactive({
   paymentDate: "",
   approverIds: [],
   remark: "",
-  // 下面字段如有需要可补充
   currentStep: 0,
   approveComments: [],
   approveTimes: [],
   paymentStatus: 0,
-
   customerName: "",
-  creatorName: "",
 });
 
 const addRules = {
@@ -481,7 +479,6 @@ const addRules = {
   contractId: [{ required: true, message: "请选择合同", trigger: "change" }],
   receivableId: [{ required: false }],
   userId: [{ required: true, message: "请选择负责人", trigger: "change" }],
-  paymentCode: [{ required: true, message: "请输入收款编号", trigger: "blur" }],
   amount: [{ required: true, message: "请输入收款金额", trigger: "blur" }],
   paymentMethod: [{ required: true, message: "请选择收款方式", trigger: "change" }],
   paymentDate: [{ required: true, message: "请选择收款时间", trigger: "change" }],
@@ -516,8 +513,22 @@ function handleSearch() {
 // 重置
 function handleReset() {
   searchForm.ReceivableCode = "";
-  pagination.PageIndex = 1;
-  GetPayment();
+  searchForm.UserId= "";
+  searchForm.CreatorId= "";
+  searchForm.CustomerId= "";
+  searchForm.ContractId= "";
+  searchForm.PaymentCode= "";
+  searchForm.PaymentMethod= "";
+  searchForm.PaymentDate= "";
+  searchForm.PaymentStatus= "";
+  searchForm.ApproverIds= [];
+  searchForm.StartTime= "";
+  searchForm.EndTime= "";
+  searchForm.ReceivableCode= "";
+  searchForm.ReceivablePay= "";
+  searchForm.CreateId= "";
+  pagination.PageIndex = 0;
+  handleSearch();
 }
 
 // 监听时间范围变化，自动同步到 StartTime 和 EndTime，并自动查询
@@ -613,6 +624,7 @@ function resetAddForm() {
   addForm.approveComments = [];
   addForm.approveTimes = [];
   addForm.paymentStatus = 0;
+  
 }
 // 提交添加应收款
 function handleAddSubmit() {
