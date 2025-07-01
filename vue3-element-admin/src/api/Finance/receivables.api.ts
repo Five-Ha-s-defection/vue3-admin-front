@@ -9,7 +9,7 @@ const ReceivablesViewAPI = {
     });
   },
 
-  AddReceivable(data:any) {
+  AddReceivable(data: any) {
     return request({
       url: `/api/app/receivables`,
       method: "post",
@@ -19,7 +19,7 @@ const ReceivablesViewAPI = {
   //删除
   DeleteReceivable(id: string) {
     return request({
-      url: `/api/app/receivables/${id}`,
+      url: `/api/app/receivables/${id}/get-id`,
       method: "delete",
     });
   },
@@ -28,6 +28,13 @@ const ReceivablesViewAPI = {
     return request({
       url: `/api/app/receivables`,
       method: "delete",
+      data,
+    });
+  },
+  UpdateReceivable(id: string, data: any) {
+    return request({
+      url: `/api/app/receivables/${id}`,
+      method: "put",
       data,
     });
   },

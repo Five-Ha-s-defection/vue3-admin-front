@@ -42,6 +42,7 @@ export const usePermissionStore = defineStore("permission", () => {
    * @returns 适配后的RouteVO格式数据
    */
   function adaptMenuData(menus: any[]): RouteVO[] {
+    if (!Array.isArray(menus)) return [];
     return menus.map((menu) => {
       const adaptedMenu: RouteVO = {
         children: menu.children ? adaptMenuData(menu.children) : [],
@@ -191,7 +192,7 @@ const parseDynamicRoutes = (rawRoutes: RouteVO[]): RouteRecordRaw[] => {
       let foundComponent = null;
       for (const path of possiblePaths) {
         if (modules[path]) {
-          foundComponent = modules[path];
+          foundComponent = modules[path]; //成功解析组件
           console.log(`✅ 找到组件: ${path}`);
           break;
         }

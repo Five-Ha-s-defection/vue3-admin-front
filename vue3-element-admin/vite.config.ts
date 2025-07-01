@@ -25,6 +25,14 @@ export default defineConfig(({ mode }: ConfigEnv) => {
   const isProduction = mode === "production";
 
   return {
+    define: {
+      // 注入全局应用信息
+      __APP_INFO__: JSON.stringify(__APP_INFO__),
+
+      // 【新增】注入后端接口基础地址，方便前端请求使用
+      __API_BASE__: JSON.stringify(env.VITE_APP_API_URL),
+    },
+
     resolve: {
       alias: {
         "@": pathSrc,
@@ -231,9 +239,6 @@ export default defineConfig(({ mode }: ConfigEnv) => {
           },
         },
       },
-    },
-    define: {
-      __APP_INFO__: JSON.stringify(__APP_INFO__),
     },
   };
 });
