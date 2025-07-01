@@ -23,8 +23,8 @@
 </template>
 <script setup lang="ts">
 import ProductApi from "@/api/CxsApi/CxsProductApi";
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive, onMounted } from 'vue';
+import { Search, ArrowDown } from "@element-plus/icons-vue";
 const router = useRouter();
 const tableData = ref([]);
 const productPage = reactive({
