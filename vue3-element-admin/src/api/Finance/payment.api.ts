@@ -22,6 +22,19 @@ const PaymentViewAPI = {
       data,
     });
   },
+  UpdatePayment(id:string,data:any) {
+    return request({
+      url: `/api/app/payment/${id}/payment`,
+      method: "put",
+      data,
+    });
+  },
+  DeletePayment(id: string) {
+    return request({
+      url: `/api/app/payment/${id}`,
+      method: "delete",
+    });
+  },
 };
 export default PaymentViewAPI;
 

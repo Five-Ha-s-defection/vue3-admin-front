@@ -42,6 +42,7 @@ export const usePermissionStore = defineStore("permission", () => {
    * @returns 适配后的RouteVO格式数据
    */
   function adaptMenuData(menus: any[]): RouteVO[] {
+    if (!Array.isArray(menus)) return [];
     return menus.map((menu) => {
       const adaptedMenu: RouteVO = {
         children: menu.children ? adaptMenuData(menu.children) : [],
