@@ -23,11 +23,27 @@ const MenuAPI = {
    * @param queryParams 查询参数
    * @returns 菜单树形列表
    */
-  getList(queryParams: MenuQuery) {
-    return request<any, MenuVO[]>({
-      url: `${MENU_BASE_URL}`,
-      method: "get",
-      params: queryParams,
+  getMenuTree() {
+    return request.get(`${MENU_BASE_URL}/routes`);
+  },
+
+  /**
+   * 获取角色当前绑定的菜单ID数组
+   * @param roleId
+   */
+  getRoleMenuIds(roleId: string) {
+    return request.get(`/api/app/role-menu/menus-by-role-id/${roleId}`);
+  },
+
+  /**
+   * 保存角色的菜单分配
+   * @param roleId
+   * @param menuIds
+   */
+  setRoleMenus(roleId: string, menuIds: string[]) {
+    return request.post(`/api/app/role-menu/role-menus`, {
+      roleId,
+      menuIds,
     });
   },
 
