@@ -1,4 +1,4 @@
-import request from '@/utils/request';
+import request from "@/utils/request";
 
 const UserAPI = {
   GetUserPage() {
@@ -7,6 +7,6 @@ const UserAPI = {
       method: "get",
     });
   },
-}
+};
 
 export default UserAPI;
