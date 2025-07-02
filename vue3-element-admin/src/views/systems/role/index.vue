@@ -30,6 +30,9 @@
           <el-button size="small" type="primary" @click="() => openAssignMenu(row.id)">
             分配菜单
           </el-button>
+          <el-button type="primary" size="small" @click="openPermissionDrawer(row)">
+            分配权限
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -54,6 +57,25 @@
     </el-dialog>
     <!--角色菜单树-->
     <AssignMenu ref="assignMenuRef" :role-id="currentRoleId" :on-success="loadRoleList" />
+    <el-drawer v-model="drawerVisible" title="权限分配" size="500px" direction="rtl">
+      <p>
+        <strong>角色：</strong>
+        {{ currentRole?.roleName }}
+      </p>
+
+      <el-tree
+        ref="treeRef"
+        :data="permissionTree"
+        show-checkbox
+        node-key="id"
+        default-expand-all
+        :props="{ label: 'label', children: 'children' }"
+        :checked-keys="checkedKeys"
+        @check="onTreeCheck"
+      />
+
+      <el-button type="primary" class="mt-4" @click="saveRolePermissions">保存权限</el-button>
+    </el-drawer>
   </el-card>
 </template>
 
@@ -62,6 +84,9 @@ import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox, FormInstance } from "element-plus";
 import RoleAPI, { RoleInfo } from "@/api/system/role.api"; // 你的封装 API 路径
 import AssignMenu from "@/components/Menus/AssignMenu.vue";
+
+import { PermissionAPI } from "@/api/system/permission.api"; //// 引入封装好的 API 模块
+import { nextTick } from "vue"; // 引入 nextTick
 
 const assignMenuRef = ref<InstanceType<typeof AssignMenu>>();
 
@@ -80,6 +105,14 @@ const form = reactive<RoleInfo>({
   description: "",
   isStatic: false,
 });
+//#region 权限管理
+const drawerVisible = ref(false); // 控制抽屉显示
+const currentRole = ref<any>(null); // 当前正在分配权限的角色
+
+const permissionTree: any = ref<any[]>([]); // 权限树（带分组）
+const checkedKeys: any = ref<string[]>([]); // 已选中的权限 ID 列表
+const treeRef = ref();
+//#endregion
 
 // 表单校验规则
 const rules = {
@@ -141,6 +174,86 @@ const openAssignMenu = (roleId: string) => {
   console.log("currentRoleId", currentRoleId.value);
   assignMenuRef.value?.open(roleId); // ✅ open() 被调用前，roleId 已更新
 };
+
+/**
+ * 打开抽屉，初始化权限树和已经勾选的权限
+ */
+async function openPermissionDrawer(role: any) {
+  currentRole.value = role; // 保存当前角色数据
+  drawerVisible.value = true; // 显示抽屉
+
+  // 1. 获取所有权限数据
+  const allPermissions: any = await PermissionAPI.getAllPermissions();
+  permissionTree.value = buildPermissionTree(allPermissions);
+
+  // 2. 获取当前角色已有权限 ID
+  const selectedIds = await PermissionAPI.getPermissionIds(role.id);
+
+  // 3. nextTick 后设置已选中权限
+  nextTick(() => {
+    treeRef.value?.setCheckedKeys(selectedIds);
+    console.log("设置选中权限 ID：", checkedKeys.value);
+  });
+}
+/**
+ * el-tree 的勾选事件
+ * @param _ 当前节点（无用）
+ * @param treeData el-tree 的完整选中结构
+ */
+function onTreeCheck(_: any, treeData: any) {
+  checkedKeys.value = treeData.checked;
+}
+
+/**
+ * 点击保存权限按钮
+ */
+function saveRolePermissions() {
+  // 直接从 el-tree 拿真正勾选的权限 ID（排除 group_）
+  const allChecked = treeRef.value?.getCheckedKeys(true) || []; // true 表示包含半选中
+  // 过滤掉 group_ 前缀的 ID
+  const realIds = allChecked.filter((id: string) => !id.startsWith("group_"));
+  // 调用保存接口
+  PermissionAPI.savePermissions({
+    roleId: currentRole.value.id, // 当前角色 ID
+    permissionIds: realIds, // 勾选的权限 ID 列表
+  }).then(() => {
+    ElMessage.success("保存成功"); // 成功提示
+    drawerVisible.value = false; // 关闭抽屉
+  });
+}
+
+/**
+ * 将后端返回的权限列表转成 el-tree 支持的分组结构
+ * @param list 原始权限数组（每个 item 含有 groupName）
+ * @returns el-tree 支持的树结构 [{ id, label, children: [...] }]
+ */
+function buildPermissionTree(list: any[]): any[] {
+  const map: Record<string, any> = {}; // 用于按 groupName 分组缓存节点
+
+  list.forEach((item) => {
+    const group = item.groupName || "未分组"; // 获取分组名，默认为“未分组”
+
+    // 如果该分组节点还未创建，先初始化
+    if (!map[group]) {
+      map[group] = {
+        id: `group_${group}`, // 注意加前缀，防止和真实权限ID冲突
+        label: group, // 分组显示名
+        children: [], // 初始化子节点数组
+      };
+    }
+
+    // 向该分组中添加子权限节点
+    map[group].children.push({
+      id: item.id, // 真实权限 ID
+      label: item.permissionName, // 权限名称，用于显示
+      code: item.permissionCode, // 可选，用于 tooltip 或业务用途
+      tooltip: item.permissionCode, // 用于显示 tooltip
+    });
+  });
+
+  // 将 map 转换为数组并返回
+  return Object.values(map);
+}
 
 // 页面加载时获取数据
 onMounted(() => {
