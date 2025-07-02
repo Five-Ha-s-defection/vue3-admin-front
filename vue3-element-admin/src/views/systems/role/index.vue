@@ -6,33 +6,35 @@
     </div>
 
     <!-- 角色列表表格 -->
-    <el-table :data="roleList" border style="width: 100%">
-      <el-table-column prop="roleName" label="角色名称" />
-      <el-table-column prop="description" label="描述" />
-      <el-table-column prop="isStatic" label="系统角色">
+    <el-table :data="roleList" border style="width: 200%">
+      <el-table-column prop="roleName" label="角色名称" align="center" header-align="center" />
+      <el-table-column prop="description" label="描述" align="center" header-align="center" />
+      <el-table-column prop="isStatic" label="系统角色" align="center" header-align="center">
         <template #default="{ row }">
           <el-tag :type="row.isStatic ? 'danger' : 'success'">
             {{ row.isStatic ? "是" : "否" }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200">
-        <template #default="{ row }">
-          <el-button size="small" @click="openDialog(row)">编辑</el-button>
-          <el-button
-            size="small"
-            type="danger"
-            :disabled="row.isStatic"
-            @click="handleDelete(row.id)"
-          >
-            删除
-          </el-button>
-          <el-button size="small" type="primary" @click="() => openAssignMenu(row.id)">
-            分配菜单
-          </el-button>
-          <el-button type="primary" size="small" @click="openPermissionDrawer(row)">
-            分配权限
-          </el-button>
+      <el-table-column label="操作" min-width="100" align="center" header-align="center">
+        <template #default="scope">
+          <div class="action-buttons">
+            <el-button type="primary" size="small" @click="openDialog(scope.row)">编辑</el-button>
+            <el-button
+              type="danger"
+              size="small"
+              :disabled="scope.row.isStatic"
+              @click="handleDelete(scope.row.id)"
+            >
+              删除
+            </el-button>
+            <el-button type="info" size="small" @click="() => openAssignMenu(scope.row.id)">
+              分配菜单
+            </el-button>
+            <el-button type="warning" size="small" @click="openPermissionDrawer(scope.row)">
+              分配权限
+            </el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -57,6 +59,7 @@
     </el-dialog>
     <!--角色菜单树-->
     <AssignMenu ref="assignMenuRef" :role-id="currentRoleId" :on-success="loadRoleList" />
+    <!--权限分配抽屉-->
     <el-drawer v-model="drawerVisible" title="权限分配" size="500px" direction="rtl">
       <p>
         <strong>角色：</strong>
@@ -231,7 +234,7 @@ function buildPermissionTree(list: any[]): any[] {
   const map: Record<string, any> = {}; // 用于按 groupName 分组缓存节点
 
   list.forEach((item) => {
-    const group = item.groupName || "未分组"; // 获取分组名，默认为“未分组”
+    const group = item.groupName || "未分组"; // 获取分组名，默认为"未分组"
 
     // 如果该分组节点还未创建，先初始化
     if (!map[group]) {
@@ -264,5 +267,12 @@ onMounted(() => {
 <style scoped>
 .mb-4 {
   margin-bottom: 16px;
+}
+.el-button-group .el-button {
+  margin-right: 8px;
+  border-radius: 6px;
+}
+.el-button-group .el-button:last-child {
+  margin-right: 0;
 }
 </style>
