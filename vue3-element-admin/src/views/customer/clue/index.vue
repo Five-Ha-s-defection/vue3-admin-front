@@ -18,7 +18,7 @@
         <el-col :span="24">
           <div class="clue-status-flex">
             <span class="clue-label">线索状态</span>
-            <el-checkbox-group v-model="queryParams.Status">
+            <el-checkbox-group v-model="queryParams.Status" @change="handleQuery">
               <el-checkbox v-for="item in statusOptions" :key="item.value" :label="item.value">{{ item.label
                 }}</el-checkbox>
             </el-checkbox-group>
@@ -29,9 +29,17 @@
       <el-row class="clue-row" align="middle">
         <el-col :span="24">
           <span class="clue-label">选择时间</span>
-          <el-date-picker v-model="dateRange" type="daterange" start-placeholder="开始时间" end-placeholder="结束时间"
-            value-format="YYYY-MM-DD" style="width: 220px" />
-          <el-radio-group v-model="queryParams.TimeType" class="ml16">
+          <el-date-picker
+            v-model="dateRange"
+            type="datetimerange"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            :shortcuts="dateShortcuts"
+            style="width: 380px"
+            @change="handleQuery"
+          />
+          <el-radio-group v-model="queryParams.TimeType" class="ml16" @change="handleQuery">
             <el-radio :label="2">创建时间</el-radio>
             <el-radio :label="1">下次联系</el-radio>
             <el-radio :label="0">最后跟进</el-radio>
@@ -154,7 +162,7 @@
           </template>
         </el-table-column>
         <el-table-column label="负责人" prop="userName" min-width="100" />
-        <el-table-column label="创建人" prop="creatorName" min-width="100" />
+        <el-table-column label="创建人" prop="createName" min-width="100" />
         <!-- <el-table-column label="录入方式"  min-width="100" /> -->
         <el-table-column label="操作" width="120" align="center">
           <template #default="{ row }">
@@ -356,6 +364,7 @@ import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose } from '@element-plus/icons-vue';
 import { ShowClueList } from '@/api/CustomerProcess/Clue/clue.api';
 import moment from 'moment';
+import dayjs from 'dayjs';
 
 const scopeOptions = [
   { label: '我负责的', value: 0 },
@@ -413,6 +422,57 @@ const statusOptions = [
 ];
 
 const dateRange = ref<string[]>([]);
+const dateShortcuts = [
+  {
+    text: '昨天',
+    value: () => [
+      dayjs().subtract(1, 'day').startOf('day').format('YYYY-MM-DD 00:00:00'),
+      dayjs().subtract(1, 'day').endOf('day').format('YYYY-MM-DD 23:59:59')
+    ],
+    onClick: () => setTimeout(() => handleQuery(), 0)
+  },
+  {
+    text: '今天',
+    value: () => [
+      dayjs().startOf('day').format('YYYY-MM-DD 00:00:00'),
+      dayjs().endOf('day').format('YYYY-MM-DD 23:59:59')
+    ],
+    onClick: () => setTimeout(() => handleQuery(), 0)
+  },
+  {
+    text: '最近三天',
+    value: () => [
+      dayjs().subtract(2, 'day').startOf('day').format('YYYY-MM-DD 00:00:00'),
+      dayjs().endOf('day').format('YYYY-MM-DD 23:59:59')
+    ],
+    onClick: () => setTimeout(() => handleQuery(), 0)
+  },
+  {
+    text: '最近一周',
+    value: () => [
+      dayjs().subtract(6, 'day').startOf('day').format('YYYY-MM-DD 00:00:00'),
+      dayjs().endOf('day').format('YYYY-MM-DD 23:59:59')
+    ],
+    onClick: () => setTimeout(() => handleQuery(), 0)
+  },
+  {
+    text: '最近一个月',
+    value: () => [
+      dayjs().subtract(1, 'month').add(1, 'day').startOf('day').format('YYYY-MM-DD 00:00:00'),
+      dayjs().endOf('day').format('YYYY-MM-DD 23:59:59')
+    ],
+    onClick: () => setTimeout(() => handleQuery(), 0)
+  },
+  {
+    text: '最近三个月',
+    value: () => [
+      dayjs().subtract(3, 'month').add(1, 'day').startOf('day').format('YYYY-MM-DD 00:00:00'),
+      dayjs().endOf('day').format('YYYY-MM-DD 23:59:59')
+    ],
+    onClick: () => setTimeout(() => handleQuery(), 0)
+  }
+];
+
 watch(dateRange, (val) => {
   queryParams.StartTime = val?.[0] || '';
   queryParams.EndTime = val?.[1] || '';
