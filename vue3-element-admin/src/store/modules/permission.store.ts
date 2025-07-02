@@ -20,6 +20,15 @@ export const usePermissionStore = defineStore("permission", () => {
    */
   function generateRoutesFromMenus(menus: any[]) {
     return new Promise<RouteRecordRaw[]>((resolve) => {
+      /*       // 添加空值检查
+      if (!menus || !Array.isArray(menus)) {
+        console.warn("传入的菜单数据为空或格式不正确", menus);
+        routes.value = [...constantRoutes];
+        routesLoaded.value = true;
+        resolve([]);
+        return;
+      } */
+
       // 数据格式适配：将后端菜单数据转换为RouteVO格式
       const adaptedMenus = adaptMenuData(menus);
       const dynamicRoutes = parseDynamicRoutes(adaptedMenus);
