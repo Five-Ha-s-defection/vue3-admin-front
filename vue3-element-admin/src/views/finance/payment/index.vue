@@ -9,12 +9,27 @@
             </el-button>
           </el-col>
           <el-col :span="20" style="text-align: right">
-            <el-date-picker v-model="dateRange" type="daterange" range-separator="-" start-placeholder="开始时间"
-              end-placeholder="结束时间" value-format="YYYY-MM-DD" style="width: 260px; margin-right: 12px"
-              @change="handleDateRangeChange" />
-            <el-input v-model="searchForm.PaymentCode" placeholder="收款编号(不含符号)" style="width: 220px; margin-left: 16px"
-              clearable />
-            <el-button type="primary" style="margin-left: 8px; margin-right: 10px" @click="search()">
+            <el-date-picker
+              v-model="dateRange"
+              type="daterange"
+              range-separator="-"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              value-format="YYYY-MM-DD"
+              style="width: 260px; margin-right: 12px"
+              @change="handleDateRangeChange"
+            />
+            <el-input
+              v-model="searchForm.PaymentCode"
+              placeholder="收款编号(不含符号)"
+              style="width: 220px; margin-left: 16px"
+              clearable
+            />
+            <el-button
+              type="primary"
+              style="margin-left: 8px; margin-right: 10px"
+              @click="search()"
+            >
               高级搜索
             </el-button>
             <el-dropdown>
@@ -35,8 +50,16 @@
           </el-col>
         </el-row>
       </div>
-      <el-table ref="tableRef" v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据"
-        @selection-change="handleSelectionChange" @row-click="handleRowClick">
+      <el-table
+        ref="tableRef"
+        v-loading="loading"
+        :data="tableData"
+        border
+        style="width: 100%"
+        empty-text="暂无数据"
+        @selection-change="handleSelectionChange"
+        @row-click="handleRowClick"
+      >
         <el-table-column type="selection" width="50" />
         <el-table-column prop="paymentCode" label="收款编号" />
         <el-table-column label="状态">
@@ -63,10 +86,16 @@
 
       <!-- 分页区域 -->
       <div style="margin-top: 16px; display: flex; justify-content: center">
-        <el-pagination v-model:current-page="pagination.PageIndex" v-model:page-size="pagination.PageSize"
-          :page-sizes="[5, 10, 15, 20]" :total="pagination.totalCount" :background="true"
-          layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
-          @current-change="handleCurrentChange" />
+        <el-pagination
+          v-model:current-page="pagination.PageIndex"
+          v-model:page-size="pagination.PageSize"
+          :page-sizes="[5, 10, 15, 20]"
+          :total="pagination.totalCount"
+          :background="true"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
       </div>
 
       <!-- 添加应收款弹窗 -->
@@ -81,19 +110,38 @@
           <!-- 关联合同 -->
           <el-form-item label="关联合同" prop="contractId">
             <el-select v-model="addForm.contractId" placeholder="请选择合同" style="width: 100%">
-              <el-option v-for="item in contractList" :key="item.id" :label="item.contractName" :value="item.id" />
+              <el-option
+                v-for="item in contractList"
+                :key="item.id"
+                :label="item.contractName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <!-- 关联应收款 -->
           <el-form-item label="关联应收款" prop="receivableId">
-            <el-select v-model="addForm.receivableId" placeholder="请选择应收款" style="width: 100%">
-              <el-option v-for="item in receivableList" :key="item.id" :label="item.receivablePay" :value="item.id" />
+            <el-select
+              v-model="addForm.receivableId"
+              placeholder="请选择应收款"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="item in receivableList"
+                :key="item.id"
+                :label="item.receivablePay"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <!-- 负责人 -->
           <el-form-item label="负责人" prop="userId">
             <el-select v-model="addForm.userId" placeholder="请选择负责人" style="width: 100%">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <!-- 收款编号 -->
@@ -106,19 +154,42 @@
           </el-form-item>
           <!-- 收款方式 -->
           <el-form-item label="收款方式" prop="paymentMethod" required>
-            <el-select v-model="addForm.paymentMethod" placeholder="请选择收款方式" style="width: 100%">
-              <el-option v-for="item in paymentMethodList" :label="item.paymentMethodName" :value="item.id" />
+            <el-select
+              v-model="addForm.paymentMethod"
+              placeholder="请选择收款方式"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="item in paymentMethodList"
+                :label="item.paymentMethodName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <!-- 收款时间 -->
           <el-form-item label="收款时间" prop="paymentDate" required>
-            <el-date-picker v-model="addForm.paymentDate" type="datetime" placeholder="选择时间" style="width: 100%"
-              value-format="YYYY-MM-DDTHH:mm:ss" />
+            <el-date-picker
+              v-model="addForm.paymentDate"
+              type="datetime"
+              placeholder="选择时间"
+              style="width: 100%"
+              value-format="YYYY-MM-DDTHH:mm:ss"
+            />
           </el-form-item>
           <!-- 审核人 -->
           <el-form-item label="审核人" prop="approverIds" required>
-            <el-select v-model="addForm.approverIds" multiple placeholder="请选择审核人" style="width: 100%">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+            <el-select
+              v-model="addForm.approverIds"
+              multiple
+              placeholder="请选择审核人"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <!-- 备注 -->
@@ -133,17 +204,33 @@
       </el-dialog>
 
       <!-- 客户选择抽屉 -->
-      <el-drawer v-model="showCustomerDrawer" title="客户列表" direction="rtl" size="80%" :with-header="true">
+      <el-drawer
+        v-model="showCustomerDrawer"
+        title="客户列表"
+        direction="rtl"
+        size="80%"
+        :with-header="true"
+      >
         <div style="display: flex; justify-content: flex-end; margin-bottom: 10px">
           <el-button type="primary" @click="handleCustomerSubmit">提交</el-button>
           <el-button @click="showCustomerDrawer = false">取消</el-button>
         </div>
         <el-table :data="customerList" style="width: 100%" highlight-current-row>
-          <el-table-column type="selection" width="50" :selectable="() => true" :reserve-selection="false"
-            :show-overflow-tooltip="false" :fixed="true" :label="''">
+          <el-table-column
+            type="selection"
+            width="50"
+            :selectable="() => true"
+            :reserve-selection="false"
+            :show-overflow-tooltip="false"
+            :fixed="true"
+            :label="''"
+          >
             <template #default="{ row }">
-              <el-radio :model-value="selectedCustomer && selectedCustomer.id" :label="row.id"
-                @change="() => handleCustomerRadio(row)" />
+              <el-radio
+                :model-value="selectedCustomer && selectedCustomer.id"
+                :label="row.id"
+                @change="() => handleCustomerRadio(row)"
+              />
             </template>
           </el-table-column>
           <el-table-column prop="id" label="客户编号" />
@@ -154,16 +241,32 @@
       </el-drawer>
 
       <!-- 高级搜索弹窗 -->
-      <el-dialog v-model="showAdvancedSearch" title="高级搜索" width="800px" :close-on-click-modal="false" append-to-body>
+      <el-dialog
+        v-model="showAdvancedSearch"
+        title="高级搜索"
+        width="800px"
+        :close-on-click-modal="false"
+        append-to-body
+      >
         <el-form :model="searchForm" label-width="100px" label-position="right">
           <el-form-item label="负责人">
             <el-select v-model="searchForm.UserId" placeholder="请选择">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="创建人">
             <el-select v-model="searchForm.CreatorId" placeholder="请选择创建人">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="所属客户" prop="customerName">
@@ -174,7 +277,12 @@
           </el-form-item>
           <el-form-item label="关联合同">
             <el-select v-model="searchForm.ContractId" placeholder="选择关联合同">
-              <el-option v-for="item in contractList" :key="item.id" :label="item.contractName" :value="item.id" />
+              <el-option
+                v-for="item in contractList"
+                :key="item.id"
+                :label="item.contractName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="收款编号">
@@ -182,12 +290,21 @@
           </el-form-item>
           <el-form-item label="收款方式">
             <el-select v-model="searchForm.PaymentMethod" placeholder="请选择收款方式">
-              <el-option v-for="item in paymentMethodList" :key="item.value" :label="item.paymentMethodName"
-                :value="item.id" />
+              <el-option
+                v-for="item in paymentMethodList"
+                :key="item.value"
+                :label="item.paymentMethodName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="收款时间">
-            <el-date-picker v-model="searchForm.PaymentDate" type="date" placeholder="选择时间" style="width: 100%" />
+            <el-date-picker
+              v-model="searchForm.PaymentDate"
+              type="date"
+              placeholder="选择时间"
+              style="width: 100%"
+            />
           </el-form-item>
           <el-form-item label="收款状态">
             <el-select v-model="searchForm.PaymentStatus" placeholder="选择收款状态">
@@ -197,7 +314,12 @@
           </el-form-item>
           <el-form-item label="收款审核人">
             <el-select v-model="searchForm.ApproverIds" multiple placeholder="选择收款审核人">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
             <el-tooltip content="可多选" placement="top">
               <el-icon style="margin-left: 8px">
@@ -213,7 +335,13 @@
       </el-dialog>
     </el-card>
 
-    <el-drawer v-model="showDetailDrawer" title="收款详情" size="60%" direction="rtl" :with-header="false">
+    <el-drawer
+      v-model="showDetailDrawer"
+      title="收款详情"
+      size="60%"
+      direction="rtl"
+      :with-header="false"
+    >
       <div style="padding: 24px 32px 0 32px">
         <!-- 顶部编号和按钮 -->
         <div style="display: flex; align-items: center; justify-content: space-between">
@@ -225,7 +353,12 @@
           </div>
           <div>
             <el-button type="primary" size="small" @click="handleEditDetail">修改</el-button>
-            <el-button type="danger" size="small" style="margin-left: 8px" @click="handleDelete(detailData)">
+            <el-button
+              type="danger"
+              size="small"
+              style="margin-left: 8px"
+              @click="handleDelete(detailData)"
+            >
               删除
             </el-button>
           </div>
@@ -234,7 +367,14 @@
         <!-- 基本信息分区 -->
         <div style="margin-top: 24px">
           <div
-            style="font-weight: bold;font-size: 15px;border-left: 3px solid #faad14;padding-left: 8px;margin-bottom: 18px;">
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
             基本信息
           </div>
           <el-row :gutter="32">
@@ -302,19 +442,31 @@
         <!-- 审核信息 -->
         <div>
           <div
-            style="font-weight: bold;font-size: 15px;border-left: 3px solid #faad14;padding-left: 8px;margin-bottom: 18px;">
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
             审核信息
           </div>
         </div>
-        <el-divider content-position="left">
-
-        </el-divider>
+        <el-divider content-position="left"></el-divider>
         <div style="color: #aaa; text-align: center; margin: 16px 0">暂无数据</div>
 
         <!-- 发票信息 -->
         <div>
           <div
-            style="font-weight: bold;font-size: 15px;border-left: 3px solid #faad14;padding-left: 8px;margin-bottom: 18px;">
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
             发票信息
           </div>
         </div>
@@ -332,16 +484,24 @@
         <!-- 操作日志 -->
         <div>
           <div
-            style="font-weight: bold;font-size: 15px;border-left: 3px solid #faad14;padding-left: 8px;margin-bottom: 18px;">
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
             操作日志
           </div>
         </div>
-        <el-divider content-position="left">
-
-        </el-divider>
+        <el-divider content-position="left"></el-divider>
         <div v-if="detailData.approveComments && detailData.approveComments.length">
-          <div v-for="(item, idx) in detailData.approveComments" :key="idx"
-            style="margin-bottom: 8px; display: flex; align-items: center">
+          <div
+            v-for="(item, idx) in detailData.approveComments"
+            :key="idx"
+            style="margin-bottom: 8px; display: flex; align-items: center"
+          >
             <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
             <span style="color: #1890ff">{{ detailData.creatorRealName }}</span>
             <span style="margin-left: 8px; color: #999">{{ detailData.approveTimes[idx] }}</span>
@@ -353,24 +513,55 @@
     </el-drawer>
 
     <!-- 修改收款抽屉 -->
-    <el-drawer v-model="showEditDrawer" title="修改收款" size="600px" direction="rtl" :with-header="true">
+    <el-drawer
+      v-model="showEditDrawer"
+      title="修改收款"
+      size="600px"
+      direction="rtl"
+      :with-header="true"
+    >
       <el-form ref="editFormRef" :model="editForm" :rules="addRules" label-width="120px">
         <el-form-item label="所属客户" prop="customerName">
           <el-input v-model="editForm.customerName" disabled />
         </el-form-item>
         <el-form-item label="关联合同" prop="contractId">
-          <el-select v-model="editForm.contractId" placeholder="请选择合同" style="width: 100%" disabled>
-            <el-option v-for="item in contractList" :key="item.id" :label="item.contractName" :value="item.id" />
+          <el-select
+            v-model="editForm.contractId"
+            placeholder="请选择合同"
+            style="width: 100%"
+            disabled
+          >
+            <el-option
+              v-for="item in contractList"
+              :key="item.id"
+              :label="item.contractName"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="关联应收款" prop="receivableId">
-          <el-select v-model="editForm.receivableId" placeholder="请选择应收款" style="width: 100%" disabled>
-            <el-option v-for="item in receivableList" :key="item.id" :label="item.receivablePay" :value="item.id" />
+          <el-select
+            v-model="editForm.receivableId"
+            placeholder="请选择应收款"
+            style="width: 100%"
+            disabled
+          >
+            <el-option
+              v-for="item in receivableList"
+              :key="item.id"
+              :label="item.receivablePay"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="负责人" prop="userId">
           <el-select v-model="editForm.userId" placeholder="请选择负责人" style="width: 100%">
-            <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+            <el-option
+              v-for="item in userList"
+              :key="item.id"
+              :label="item.realName"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="收款编号" prop="paymentCode">
@@ -380,17 +571,40 @@
           <el-input v-model="editForm.amount" type="number" />
         </el-form-item>
         <el-form-item label="收款方式" prop="paymentMethod">
-          <el-select v-model="editForm.paymentMethod" placeholder="请选择收款方式" style="width: 100%">
-            <el-option v-for="item in paymentMethodList" :label="item.paymentMethodName" :value="item.id" />
+          <el-select
+            v-model="editForm.paymentMethod"
+            placeholder="请选择收款方式"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in paymentMethodList"
+              :label="item.paymentMethodName"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="收款时间" prop="paymentDate">
-          <el-date-picker v-model="editForm.paymentDate" type="datetime" placeholder="选择时间" style="width: 100%"
-            value-format="YYYY-MM-DDTHH:mm:ss" />
+          <el-date-picker
+            v-model="editForm.paymentDate"
+            type="datetime"
+            placeholder="选择时间"
+            style="width: 100%"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+          />
         </el-form-item>
         <el-form-item label="审核人" prop="approverIds">
-          <el-select v-model="editForm.approverIds" multiple placeholder="请选择审核人" style="width: 100%">
-            <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+          <el-select
+            v-model="editForm.approverIds"
+            multiple
+            placeholder="请选择审核人"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in userList"
+              :key="item.id"
+              :label="item.realName"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
@@ -811,7 +1025,7 @@ function handleEditDetail() {
 function handleEditSubmit() {
   editFormRef.value.validate((valid: boolean) => {
     if (!valid) return;
-    PaymentViewAPI.UpdatePayment(detailData.value.id, editForm,).then((res) => {
+    PaymentViewAPI.UpdatePayment(detailData.value.id, editForm).then((res) => {
       if (res) {
         ElMessage.success("修改成功");
         showEditDrawer.value = false;
