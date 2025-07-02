@@ -28,6 +28,23 @@ const UserAPI = {
   deleteUser: (id: string) => {
     return request.delete(`${base}/${id}/user-info`);
   },
+
+  /**
+   * 获取用户已有角色（通过用户 ID）
+   */
+  getUserRoles: (userId: string) => {
+    return request.get(`/api/app/user-role-services/create-user-role/${userId}`);
+  },
+
+  /**
+   * 设置用户角色（分配角色）
+   */
+  setUserRoles: (userId: string, roleIds: string[]) => {
+    return request.post(`/api/app/user-role-services/user-role`, {
+      userId,
+      roleIds,
+    });
+  },
 };
 
 export default UserAPI;
