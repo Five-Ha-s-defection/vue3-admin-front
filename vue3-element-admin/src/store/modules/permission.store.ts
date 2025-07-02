@@ -20,6 +20,15 @@ export const usePermissionStore = defineStore("permission", () => {
    */
   function generateRoutesFromMenus(menus: any[]) {
     return new Promise<RouteRecordRaw[]>((resolve) => {
+      /*       // 添加空值检查
+      if (!menus || !Array.isArray(menus)) {
+        console.warn("传入的菜单数据为空或格式不正确", menus);
+        routes.value = [...constantRoutes];
+        routesLoaded.value = true;
+        resolve([]);
+        return;
+      } */
+
       // 数据格式适配：将后端菜单数据转换为RouteVO格式
       const adaptedMenus = adaptMenuData(menus);
       const dynamicRoutes = parseDynamicRoutes(adaptedMenus);
@@ -42,6 +51,7 @@ export const usePermissionStore = defineStore("permission", () => {
    * @returns 适配后的RouteVO格式数据
    */
   function adaptMenuData(menus: any[]): RouteVO[] {
+    if (!Array.isArray(menus)) return [];
     return menus.map((menu) => {
       const adaptedMenu: RouteVO = {
         children: menu.children ? adaptMenuData(menu.children) : [],
@@ -191,7 +201,7 @@ const parseDynamicRoutes = (rawRoutes: RouteVO[]): RouteRecordRaw[] => {
       let foundComponent = null;
       for (const path of possiblePaths) {
         if (modules[path]) {
-          foundComponent = modules[path];
+          foundComponent = modules[path]; //成功解析组件
           console.log(`✅ 找到组件: ${path}`);
           break;
         }
