@@ -54,9 +54,9 @@
               <span class="el-dropdown-link">···</span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item @click="handleEdit(scope.row)">修改</el-dropdown-item>
+                  <el-dropdown-item @click="handleEdit()">修改</el-dropdown-item>
                   <el-dropdown-item @click="handleDelete(scope.row.id)">删除</el-dropdown-item>
-                  <el-dropdown-item @click="handleUpDown(scope.row)">
+                  <el-dropdown-item @click="handleUpDown()">
                     {{ scope.row.productStatus === false ? '上架' : '下架' }}
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -151,8 +151,8 @@ function handleDelete(menuId: string) {
 // 事件处理函数（可复用原有逻辑）
 function handleTreeClick() { /* ... */ }
 function handleAdd() { /* ... */ }
-function handleEdit(row) { /* ... */ }
-function handleUpDown(row) { /* ... */ }
+function handleEdit() { /* ... */ }
+function handleUpDown() { /* ... */ }
 function handleSearch() { /* ... */ }
 function handleExport() { /* ... */ }
 function handlePageChange() { /* 查询数据 */ }
