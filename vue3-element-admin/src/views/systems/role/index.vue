@@ -64,6 +64,7 @@
       </p>
 
       <el-tree
+        ref="treeRef"
         :data="permissionTree"
         show-checkbox
         node-key="id"
@@ -85,6 +86,7 @@ import RoleAPI, { RoleInfo } from "@/api/system/role.api"; // 你的封装 API �
 import AssignMenu from "@/components/Menus/AssignMenu.vue";
 
 import { PermissionAPI } from "@/api/system/permission.api"; //// 引入封装好的 API 模块
+import { nextTick } from "vue"; // 引入 nextTick
 
 const assignMenuRef = ref<InstanceType<typeof AssignMenu>>();
 
@@ -109,7 +111,7 @@ const currentRole = ref<any>(null); // 当前正在分配权限的角色
 
 const permissionTree: any = ref<any[]>([]); // 权限树（带分组）
 const checkedKeys: any = ref<string[]>([]); // 已选中的权限 ID 列表
-
+const treeRef = ref();
 //#endregion
 
 // 表单校验规则
@@ -176,17 +178,21 @@ const openAssignMenu = (roleId: string) => {
 /**
  * 打开抽屉，初始化权限树和已经勾选的权限
  */
-function openPermissionDrawer(role: any) {
+async function openPermissionDrawer(role: any) {
   currentRole.value = role; // 保存当前角色数据
   drawerVisible.value = true; // 显示抽屉
 
-  //获取所有权限(分组)用于构建el-tree 树形结构
-  PermissionAPI.getAllPermissions().then((res) => {
-    permissionTree.value = buildPermissionTree(res);
-  });
-  // 获取该角色已拥有的权限id
-  PermissionAPI.getPermissionIds(role.id).then((res) => {
-    checkedKeys.value = res; //默认选中的权限id
+  // 1. 获取所有权限数据
+  const allPermissions: any = await PermissionAPI.getAllPermissions();
+  permissionTree.value = buildPermissionTree(allPermissions);
+
+  // 2. 获取当前角色已有权限 ID
+  const selectedIds = await PermissionAPI.getPermissionIds(role.id);
+
+  // 3. nextTick 后设置已选中权限
+  nextTick(() => {
+    treeRef.value?.setCheckedKeys(selectedIds);
+    console.log("设置选中权限 ID：", checkedKeys.value);
   });
 }
 /**
@@ -202,10 +208,10 @@ function onTreeCheck(_: any, treeData: any) {
  * 点击保存权限按钮
  */
 function saveRolePermissions() {
-  // el-tree 的 checkedKeys 中可能包含 group 节点（如 "group_客户管理"）
-  // 我们只需要真正的权限 ID，过滤掉这些虚拟分组节点
-  const realIds = checkedKeys.value.filter((id: any) => !String(id).startsWith("group_"));
-
+  // 直接从 el-tree 拿真正勾选的权限 ID（排除 group_）
+  const allChecked = treeRef.value?.getCheckedKeys(true) || []; // true 表示包含半选中
+  // 过滤掉 group_ 前缀的 ID
+  const realIds = allChecked.filter((id: string) => !id.startsWith("group_"));
   // 调用保存接口
   PermissionAPI.savePermissions({
     roleId: currentRole.value.id, // 当前角色 ID
@@ -241,6 +247,7 @@ function buildPermissionTree(list: any[]): any[] {
       id: item.id, // 真实权限 ID
       label: item.permissionName, // 权限名称，用于显示
       code: item.permissionCode, // 可选，用于 tooltip 或业务用途
+      tooltip: item.permissionCode, // 用于显示 tooltip
     });
   });
 
