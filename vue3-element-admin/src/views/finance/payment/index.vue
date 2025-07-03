@@ -653,10 +653,10 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onActivated } from "vue";
-import ReceivablesViewAPI, { ReceivablesPageQuery } from "@/api/Finance/receivables.api";
-import PaymentViewAPI, { PaymentSearch,PaymentPageQuery } from "@/api/Finance/payment.api";
-import CustomerAPI, { CustomerPageQuery, CustomerData } from "@/api/CustomerProcess/customer.api";
-import CrmContractAPI from "@/api/crmcontract";
+import ReceivablesViewAPI from "@/api/Finance/receivables.api";
+import PaymentViewAPI, { PaymentSearch } from "@/api/Finance/payment.api";
+import CustomerAPI from "@/api/CustomerProcess/customer.api";
+import CrmContractAPI from "@/api/CrmContract/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
@@ -720,7 +720,7 @@ const searchForm = reactive({
 // 获取收款数据
 const GetPayment = () => {
   loading.value = true;
-  const params: PaymentPageQuery = {
+  const params = {
     PageIndex: pagination.PageIndex,
     PageSize: pagination.PageSize,
     UserId: searchForm.UserId,
@@ -749,7 +749,7 @@ const receivableList: any = ref([]); // 用于存储应收款列表数据
 // 获取应收款数据
 const GetReceivables = () => {
   loading.value = true;
-  const params: ReceivablesPageQuery = {
+  const params = {
     PageIndex: 1,
     PageSize: 111,
   };
@@ -856,11 +856,11 @@ function handleDateRangeChange(val: any) {
 }
 
 // 客户列表数据（实际应从API获取，这里举例）
-const customerList = ref<CustomerData[]>([]);
+const customerList = ref([]);
 
 function showCustomer() {
   showCustomerDrawer.value = true;
-  const params: CustomerPageQuery = {
+  const params = {
     PageIndex: 1,
     PageSize: 111,
   };

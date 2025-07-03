@@ -407,8 +407,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onActivated } from "vue";
-import CustomerAPI, { CustomerPageQuery, CustomerData } from "@/api/CustomerProcess/customer.api";
-import CrmContractAPI from "@/api/crmcontract";
+import CustomerAPI, { CustomerData } from "@/api/CustomerProcess/customer.api";
+import CrmContractAPI from "@/api/CrmContract/crmcontract";
 import PaymentViewAPI from "@/api/Finance/payment.api";
 import UserAPI from "@/api/User/user.api";
 import InvoiceViewAPI, { InvoicePageQuery } from "@/api/Finance/invoice.api";
@@ -586,7 +586,7 @@ const customerList = ref<CustomerData[]>([]);
 
 function showCustomer() {
   showCustomerDrawer.value = true;
-  const params: CustomerPageQuery = {
+  const params = {
     PageIndex: 1,
     PageSize: 111,
   };
