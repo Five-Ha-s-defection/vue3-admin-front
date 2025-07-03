@@ -1,8 +1,11 @@
 <template>
   <el-card>
     <!-- 顶部操作按钮 -->
-    <div class="mb-4 flex justify-end">
-      <el-button type="primary" @click="openDialog()">新增角色</el-button>
+    <div class="mb-4 top-action-bar flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <el-button type="primary" @click="openDialog()">新增角色</el-button>
+      </div>
+      <h2 class="font-bold text-lg mb-2 m-0">角色管理</h2>
     </div>
 
     <!-- 角色列表表格 -->
@@ -274,5 +277,45 @@ onMounted(() => {
 }
 .el-button-group .el-button:last-child {
   margin-right: 0;
+}
+.top-action-bar {
+  background: #f7f8fa;
+  border-radius: 8px;
+  padding: 16px 24px 12px 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.top-action-bar h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+}
+.top-action-bar .el-button {
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.08);
+  transition: box-shadow 0.2s;
+}
+.top-action-bar .el-button:hover {
+  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.15);
+}
+@media (max-width: 600px) {
+  .top-action-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 10px;
+  }
+  .top-action-bar h2 {
+    align-self: flex-end;
+    margin-top: 8px;
+  }
+  .top-action-bar .el-button {
+    width: 100%;
+    margin-top: 8px;
+  }
 }
 </style>

@@ -1,23 +1,38 @@
 <template>
   <el-card>
     <!-- 操作区域 -->
-    <div class="mb-2 flex justify-end">
+    <div class="top-action-bar flex items-center">
       <el-button type="primary" @click="openAddDialog">新增用户</el-button>
     </div>
 
     <!-- 表格 -->
-    <el-table :data="userList" style="width: 100%" border>
+    <el-table :data="userList" style="width: 100%" border stripe highlight-current-row>
       <el-table-column prop="userName" align="center" header-align="center" label="用户名" />
       <el-table-column prop="realName" align="center" header-align="center" label="真实姓名" />
       <el-table-column prop="phoneInfo" align="center" header-align="center" label="手机号" />
       <el-table-column prop="email" align="center" header-align="center" label="邮箱" />
 
-      <el-table-column label="操作" fixed="right" width="250" align="center" header-align="center">
+      <el-table-column label="操作" fixed="right" width="300" align="center" header-align="center">
         <template #default="{ row }">
-          <el-button size="small" @click="openEditDialog(row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="deleteUser(row.id)">删除</el-button>
-          <!-- 分配角色按钮 -->
-          <el-button type="primary" size="small" @click="openRoleDialog(row)">分配角色</el-button>
+          <el-button
+            size="small"
+            type="primary"
+            style="margin-right: 8px; min-width: 60px"
+            @click="openEditDialog(row)"
+          >
+            编辑
+          </el-button>
+          <el-button
+            size="small"
+            type="danger"
+            style="margin-right: 8px; min-width: 60px"
+            @click="deleteUser(row.id)"
+          >
+            删除
+          </el-button>
+          <el-button size="small" type="info" style="min-width: 80px" @click="openRoleDialog(row)">
+            分配角色
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -341,5 +356,25 @@ onMounted(fetchUserList);
 .avatar-uploader ::v-deep(.el-upload) {
   border: none;
   background-color: transparent;
+}
+:deep(.el-table .el-table__cell) {
+  padding: 10px 0;
+  font-size: 15px;
+}
+:deep(.el-table th) {
+  font-weight: bold;
+  background: #fafbfc;
+}
+:deep(.el-button) {
+  border-radius: 6px;
+  font-weight: 500;
+}
+.top-action-bar {
+  background: #f7f8fa;
+  border-radius: 8px;
+  padding: 16px 0 8px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  max-width: 600px;
 }
 </style>
