@@ -2,35 +2,7 @@ import request from "@/utils/request";
 
 const CLUE_BASE_URL = "/api/app/clue";
 
-export const ShowClueList = (data: any) => {
-  return request({
-    url: `${CLUE_BASE_URL}/show-clue`,
-    method: "get",
-    params: data,
-  });
-};
-
-export const GetUser = () => {
-  return request({
-    url: `${CLUE_BASE_URL}/user-select-list`,
-    method: "get",
-  });
-};
-
-export const GetClueSource = () => {
-  return request({
-    url: `${CLUE_BASE_URL}/source-select-list`,
-    method: "get",
-  });
-};
-
-export const GetIndustry = () => {
-  return request({
-    url: `${CLUE_BASE_URL}/industry-select-list`,
-    method: "get",
-  });
-};
-
+// 添加线索
 export const AddClue= (data: any) => {
   return request({
     url: `${CLUE_BASE_URL}/clue`,
@@ -39,18 +11,61 @@ export const AddClue= (data: any) => {
   });
 }
 
+// 显示线索
+export const ShowClueList = (data: any) => {
+  return request({
+    url: `${CLUE_BASE_URL}/show-clue`,
+    method: "get",
+    params: data,
+  });
+};
 
-/** 分页查询参数 */
-export interface CluePageQuery {
-  PageIndex: number;
-  PageSize: number;
-  [key: string]: any; // 其他查询条件
-}
+// 获取线索详情
+export const GetClueDetail = (id: string) => {
+  return request({
+    url: `${CLUE_BASE_URL}/${id}/clue-by-id`,
+    method: "get",
+  });
+};
 
-/** 分页返回结构 */
-export interface CluePageResult {
-  totalCount: number;
-  pageCount: number;
-  data: [];
-}
+// 删除线索
+export const DeleteClue = (id: string) => {
+  return request({
+    url: `${CLUE_BASE_URL}/${id}/del-clue`,
+    method: "delete",
+  });
+};
+
+// 修改线索
+export const UpdateClue = (id: string, data: any) => {
+  return request({
+    url: `${CLUE_BASE_URL}/${id}/upd-clue`,
+    method: "put",
+    data,
+  });
+};
+
+//获取用户下拉框
+export const GetUser = () => {
+  return request({
+    url: `${CLUE_BASE_URL}/user-select-list`,
+    method: "get",
+  });
+};
+
+// 获取线索负责人下拉框
+export const GetClueSource = () => {
+  return request({
+    url: `${CLUE_BASE_URL}/source-select-list`,
+    method: "get",
+  });
+};
+
+// 获取行业下拉框
+export const GetIndustry = () => {
+  return request({
+    url: `${CLUE_BASE_URL}/industry-select-list`,
+    method: "get",
+  });
+};
 
