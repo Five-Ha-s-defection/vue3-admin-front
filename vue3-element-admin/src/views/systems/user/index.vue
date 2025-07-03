@@ -7,12 +7,12 @@
 
     <!-- 表格 -->
     <el-table :data="userList" style="width: 100%" border>
-      <el-table-column prop="userName" label="用户名" />
-      <el-table-column prop="realName" label="真实姓名" />
-      <el-table-column prop="phoneInfo" label="手机号" />
-      <el-table-column prop="email" label="邮箱" />
+      <el-table-column prop="userName" align="center" header-align="center" label="用户名" />
+      <el-table-column prop="realName" align="center" header-align="center" label="真实姓名" />
+      <el-table-column prop="phoneInfo" align="center" header-align="center" label="手机号" />
+      <el-table-column prop="email" align="center" header-align="center" label="邮箱" />
 
-      <el-table-column label="操作" fixed="right" width="150">
+      <el-table-column label="操作" fixed="right" width="250" align="center" header-align="center">
         <template #default="{ row }">
           <el-button size="small" @click="openEditDialog(row)">编辑</el-button>
           <el-button size="small" type="danger" @click="deleteUser(row.id)">删除</el-button>
@@ -194,6 +194,7 @@ const rules = {
 // 打开弹窗
 const openAddDialog = () => {
   showPassword.value = true; // 新增时需要填写密码
+  isEditMode.value = false;
   Object.assign(addForm, {
     id: "",
     userName: "",
@@ -235,11 +236,18 @@ const handleRemove = (file: any, fileList: any) => {
   addForm.avatar = "";
   avatarFileList.value = [];
 };
-
+/**
+ * 提交用户
+ */
 const submitUser = () => {
   addFormRef.value?.validate(async (valid) => {
     if (!valid) return;
     try {
+      const formData = { ...addForm }; // 拷贝表单
+      // 如果是编辑功能，并且没有修改密码，则删除password字段避免传入空字符串
+      if (isEditMode.value && !formData.password) {
+        delete formData.password;
+      }
       if (isEditMode.value) {
         await UserAPI.updateUser(addForm.id!, addForm);
         ElMessage.success("更新成功");
