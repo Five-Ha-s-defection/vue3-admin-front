@@ -4,6 +4,8 @@
     <div class="mb-4 flex justify-between items-center">
       <h2>权限管理</h2>
       <el-button type="primary" @click="openAddDialog">新增权限</el-button>
+      <el-button @click="expandPermissionAll">展开权限</el-button>
+      <el-button @click="collapsePermissionAll">收起权限</el-button>
     </div>
 
     <!-- 折叠面板分组展示权限 -->
@@ -20,7 +22,14 @@
           </el-tag>
         </template>
 
-        <el-table :data="group.permissions" row-key="id" border size="small" style="width: 100%">
+        <el-table
+          :ref="(el) => setPermissionTableRef(group.groupName, el)"
+          :data="group.permissions"
+          row-key="id"
+          border
+          size="small"
+          style="width: 100%"
+        >
           <el-table-column
             prop="permissionName"
             align="center"
@@ -83,6 +92,9 @@ import type { ElTable } from "element-plus";
 
 // 权限原始数据
 const permissions: any = ref<PermissionInfo[]>([]);
+// 所有分组的表格引用
+const permissionTableRefs = new Map<string, InstanceType<typeof ElTable>>();
+
 // 分组结构：每个分组包含 groupName 和 permissions[]
 const groupedPermissions = ref<{ groupName: string; permissions: PermissionInfo[] }[]>([]);
 
@@ -109,7 +121,44 @@ const rules: FormRules = {
   permissionCode: [{ required: true, message: "请输入权限编码", trigger: "blur" }],
   groupName: [{ required: true, message: "请输入分组名称", trigger: "blur" }],
 };
+// 设置每个表格的 ref
+const setPermissionTableRef = (groupName: string, el: Element | ComponentPublicInstance | null) => {
+  if (
+    el &&
+    typeof el === "object" &&
+    "$el" in el &&
+    typeof (el as any).toggleRowExpansion === "function"
+  ) {
+    permissionTableRefs.set(groupName, el as InstanceType<typeof ElTable>);
+  }
+};
+// 展开所有
+const expandPermissionAll = () => {
+  groupedPermissions.value.forEach((group) => {
+    const table = permissionTableRefs.get(group.groupName);
+    if (!table) {
+      console.warn("未找到表格 ref", group.groupName);
+      return;
+    }
 
+    group.permissions.forEach((item: any) => {
+      if (item.children && item.children.length > 0) {
+        console.log(`👉 尝试展开：${item.permissionName}`);
+        table.toggleRowExpansion(item, true);
+      } else {
+        console.warn(`⚠️ 无 children：${item.permissionName}`);
+      }
+    });
+  });
+};
+// 折叠所有
+const collapsePermissionAll = () => {
+  groupedPermissions.value.forEach((group) => {
+    group.permissions.forEach((item) => {
+      permissionTableRefs.get(group.groupName)?.toggleRowExpansion(item, false);
+    });
+  });
+};
 // 获取权限并按分组整理
 async function fetchPermissions() {
   // ✅ 1. 备份当前展开状态
