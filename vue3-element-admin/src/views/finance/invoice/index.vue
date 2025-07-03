@@ -12,7 +12,7 @@
             <el-date-picker v-model="dateRange" type="daterange" range-separator="-" start-placeholder="开始时间"
               end-placeholder="结束时间" value-format="YYYY-MM-DD" style="width: 260px; margin-right: 12px"
               @change="handleDateRangeChange" />
-            <el-input v-model="searchForm.ReceivableCode" placeholder="发票编号(不含符号)"
+            <el-input v-model="searchForm.InvoiceNumberCode" placeholder="发票编号(不含符号)"
               style="width: 220px; margin-left: 16px" clearable />
             <el-button type="primary" style="margin-left: 8px; margin-right: 10px" @click="search()">
               高级搜索
@@ -41,9 +41,9 @@
         <el-table-column prop="invoiceNumberCode" label="发票编号" />
         <el-table-column prop="invoiceStatus" label="状态">
           <template #default="scope">
-            <span v-if="scope.row.invoiceStatus === 0">未开票</span>
-            <span v-else-if="scope.row.invoiceStatus === 1">已开票</span>
-            <span v-else>--</span>
+            <span :style="{ color: scope.row.invoiceStatus === 0 ? '#faad14' : '#13c2c2' }">
+              {{ scope.row.invoiceStatus === 0 ? "未开票" : "已开票" }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column prop="amount" label="开票金额" />
@@ -54,16 +54,16 @@
         </el-table-column>
         <el-table-column prop="invoiceType" label="开票类型">
           <template #default="scope">
-            <span v-if="scope.row.invoiceType === 0">普通发票</span>
-            <span v-else-if="scope.row.invoiceType === 1">专用发票</span>
-            <span v-else>--</span>
+            <span v-if="scope.row.invoiceType === 0">增值税普通发票</span>
+            <span v-else-if="scope.row.invoiceType === 1">增值税专用发票</span>
+            <span v-else>收据</span>
           </template>
         </el-table-column>
         <el-table-column prop="customerName" label="所属客户" />
         <el-table-column prop="contractName" label="关联合同" />
-        <el-table-column prop="userName" label="负责人" />
-        <el-table-column prop="approverNames" label="审核人" />
-        <el-table-column prop="creatorName" label="创建人" />
+        <el-table-column prop="realName" label="负责人" />
+        <el-table-column prop="auditorNames" label="审核人" />
+        <el-table-column prop="creatorRealName" label="创建人" />
       </el-table>
 
       <!-- 分页区域 -->
@@ -101,7 +101,7 @@
                   <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="发票号码" prop="invoiceNumberCode" required>
+              <el-form-item label="发票号码" prop="invoiceNumberCode">
                 <el-input v-model="addForm.invoiceNumberCode" placeholder="请输入发票号码" />
               </el-form-item>
               <el-form-item label="开票金额" prop="amount" required>
@@ -116,8 +116,9 @@
               </el-form-item>
               <el-form-item label="开票类型" prop="invoiceType" required>
                 <el-select v-model="addForm.invoiceType" placeholder="请选择开票类型" style="width: 100%">
-                  <el-option label="普通发票" :value="0" />
-                  <el-option label="专用发票" :value="1" />
+                  <el-option label="增值税普通发票" :value="0" />
+                  <el-option label="增值税专用发票" :value="1" />
+                  <el-option label="收据" :value="3" />
                 </el-select>
               </el-form-item>
               <el-form-item label="审核人" prop="approverIds" required>
@@ -126,16 +127,14 @@
                 </el-select>
               </el-form-item>
               <el-form-item label="发票图片" prop="invoiceImg">
-                <el-upload class="avatar-uploader" action="#" :show-file-list="false" :on-success="handleUploadSuccess"
-                  :before-upload="beforeUpload" :http-request="dummyUpload">
-                  <img v-if="addForm.invoiceImg" :src="addForm.invoiceImg" style="width: 100px; height: 120px"
-                    class="avatar" />
-                  <div v-else class="upload-box">
-                    <el-icon>
-                      <Upload />
-                    </el-icon>
-                    <div>上传图片</div>
-                  </div>
+                <el-upload class="avatar-uploader" action="https://localhost:44341/api/app/common/upload-file"
+                  :show-file-list="false" :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
+                  <img v-if="addForm.invoiceImg" :src="addForm.invoiceImg" class="avatar"
+                    style="width: 35px; height: 45px" />
+                  <el-icon v-else class="avatar-uploader-icon">
+                    <Plus />
+                  </el-icon>
+                  <div>上传图片</div>
                 </el-upload>
               </el-form-item>
               <el-form-item label="备注" prop="remark">
@@ -147,7 +146,7 @@
               <div style="font-weight: bold; margin-bottom: 16px">发票信息</div>
               <el-form-item label="已有发票信息" prop="invoiceInformationId">
                 <el-select v-model="addForm.invoiceInformationId" placeholder="请选择发票信息" style="width: 100%">
-                  <el-option v-for="item in invoiceInfoList" :key="item.id" :label="item.bank" :value="item.id" />
+                  <el-option v-for="item in invoiceInfoList" :key="item.id" :label="item.title" :value="item.id" />
                 </el-select>
               </el-form-item>
               <el-form-item label="发票抬头" prop="title" required>
@@ -200,17 +199,16 @@
       <!-- 高级搜索弹窗 -->
       <el-dialog v-model="showAdvancedSearch" title="高级搜索" width="800px" :close-on-click-modal="false" append-to-body>
         <el-form :model="searchForm" label-width="100px" label-position="right">
-          <el-form-item label="应收款编号">
-            <el-input v-model="searchForm.ReceivableCode" placeholder="请输入应收款编号" />
-          </el-form-item>
-          <el-form-item label="负责人" prop="userId">
-            <el-select v-model="searchForm.UserId" placeholder="请输入负责人" style="width: 100%">
-              <el-option v-for="item in userList" :label="item.realName" :value="item.id" />
+          <!-- 负责人 -->
+          <el-form-item label="负责人">
+            <el-select v-model="searchForm.UserId" placeholder="请选择">
+              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
             </el-select>
           </el-form-item>
+          <!-- 创建人 -->
           <el-form-item label="创建人">
-            <el-select v-model="searchForm.CreateId" placeholder="请选择创建人">
-              <el-option v-for="item in userList" :label="item.realName" :value="item.id" />
+            <el-select v-model="searchForm.CreatorId" placeholder="请选择">
+              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
             </el-select>
           </el-form-item>
           <el-form-item label="所属客户" prop="customerName">
@@ -224,8 +222,35 @@
               <el-option v-for="item in contractList" :label="item.contractName" :value="item.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="应收款金额">
-            <el-input v-model="searchForm.ReceivablePay" placeholder="请输入应收款金额" />
+          <!-- 发票编号 -->
+          <el-form-item label="发票编号">
+            <el-input v-model="searchForm.InvoiceNumberCode" placeholder="不包含收款前缀" />
+          </el-form-item>
+          <!-- 开票类型 -->
+          <el-form-item label="开票类型">
+            <el-select v-model="searchForm.InvoiceType" placeholder="请选择开票类型">
+              <el-option label="增值税普通发票" :value="0" />
+              <el-option label="增值税专用发票" :value="1" />
+              <el-option label="收据" :value="3" />
+            </el-select>
+          </el-form-item>
+          <!-- 开票时间 -->
+          <el-form-item label="开票时间">
+            <el-date-picker v-model="searchForm.InvoiceDate" type="daterange" range-separator="-"
+              start-placeholder="开始时间" end-placeholder="结束时间" value-format="YYYY-MM-DD" style="width: 100%" />
+          </el-form-item>
+          <!-- 开票状态 -->
+          <el-form-item label="开票状态">
+            <el-select v-model="searchForm.InvoiceStatus" placeholder="请选择开票状态">
+              <el-option label="未开票" :value="0" />
+              <el-option label="已开票" :value="1" />
+            </el-select>
+          </el-form-item>
+          <!-- 收款审核人 -->
+          <el-form-item label="收款审核人">
+            <el-select v-model="searchForm.ApproverIds" multiple placeholder="选择收款审核人">
+              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+            </el-select>
           </el-form-item>
         </el-form>
         <template #footer>
@@ -235,7 +260,8 @@
       </el-dialog>
 
       <!-- 详情抽屉 -->
-      <el-drawer v-model="showDetailDrawer" title="应收款详情" size="60%" direction="rtl" :with-header="false">
+      <el-drawer v-model="showDetailDrawer" title="发票详情" size="60%" direction="rtl" :with-header="true">
+
         <div style="padding: 24px 32px 0 32px">
           <!-- 顶部编号和按钮 -->
           <div style="display: flex; align-items: center; justify-content: space-between">
@@ -243,7 +269,7 @@
               <el-icon style="color: #409eff; margin-right: 6px">
                 <Document />
               </el-icon>
-              {{ detailData?.receivableCode || "-" }}
+              {{ detailData?.paymentCode || "-" }}
             </div>
             <div>
               <el-button type="primary" size="small" @click="handleEditDetail">修改</el-button>
@@ -252,69 +278,99 @@
               </el-button>
             </div>
           </div>
+        </div>
+        <div style="padding: 24px 32px 0 32px; color: #fff; background: #181818; min-height: 100vh">
 
-          <!-- 基本信息分区 -->
-          <div style="margin-top: 24px">
-            <div style="
-                font-weight: bold;
-                font-size: 15px;
-                border-left: 3px solid #faad14;
-                padding-left: 8px;
-                margin-bottom: 18px;
-              ">
-              基本信息
-            </div>
-            <el-row :gutter="32">
-              <el-col :span="12">
-                <div class="info-row">
-                  <span class="info-label">应收款编号：</span>
-                  {{ detailData?.receivableCode }}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">所属客户：</span>
-                  <el-link type="primary" :underline="false">
-                    {{ detailData?.customerName }}
-                  </el-link>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">应收款：</span>
-                  {{ detailData?.receivablePay }}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">负责人：</span>
-                  {{ detailData?.realName }}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">创建人：</span>
-                  {{ detailData?.creatorRealName }}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">备注：</span>
-                  {{ detailData?.remark || "-" }}
-                </div>
-              </el-col>
-              <el-col :span="12">
-                <div class="info-row">
-                  <span class="info-label">关联合同：</span>
-                  <el-link type="primary" :underline="false">
-                    {{ detailData?.contractName }}
-                  </el-link>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">实际收款金额：</span>
-                  <span style="color: #f5222d">{{ detailData?.amount }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">收款时间：</span>
-                  {{ detailData?.receivableDate.substring(0, 19).replace("T", "") }}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">创建时间：</span>
-                  {{ detailData?.creationTime.substring(0, 19).replace("T", "") }}
-                </div>
-              </el-col>
-            </el-row>
-          </div>
+          <el-row :gutter="40">
+            <!-- 左侧 基础信息 -->
+            <el-col :span="12">
+              <div style="font-weight: bold; font-size: 20px; margin-bottom: 24px">基础信息</div>
+              <div class="info-row">
+                <span class="info-label">所属客户：</span>
+                {{ detailData?.customerName || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">关联合同：</span>
+                {{ detailData?.contractName || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">关联收款：</span>
+                {{ detailData?.amount || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">负责人：</span>
+                {{ detailData?.realName || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">发票号码：</span>
+                {{ detailData?.invoiceNumberCode || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">开票金额：</span>
+                {{ detailData?.amount || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">税额：</span>
+                {{ detailData?.taxAmount || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">开票日期：</span>
+                {{ detailData?.invoiceDate ? detailData.invoiceDate.substring(0, 10) : "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">开票类型：</span>
+                <span v-if="detailData?.invoiceType === 0">增值税普通发票</span>
+                <span v-else-if="detailData?.invoiceType === 1">增值税专用发票</span>
+                <span v-else-if="detailData?.invoiceType === 3">收据</span>
+                <span v-else>-</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">审核人：</span>
+                {{ detailData?.auditorNames || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">发票图片：</span>
+                <img v-if="detailData?.invoiceImg" :src="detailData.invoiceImg" style="width: 35px; height: 45px" />
+                <span v-else>-</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">备注：</span>
+                {{ detailData?.remark || "-" }}
+              </div>
+            </el-col>
+            <!-- 右侧 发票信息 -->
+            <el-col :span="12">
+              <div style="font-weight: bold; font-size: 20px; margin-bottom: 24px">发票信息</div>
+              <div class="info-row">
+                <span class="info-label">已有发票信息：</span>
+                {{ detailData?.inoviceTitle || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">发票抬头：</span>
+                {{ detailData?.title || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">纳税识别号：</span>
+                {{ detailData?.taxNumber || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">开户行：</span>
+                {{ detailData?.bank || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">开户账号：</span>
+                {{ detailData?.bankAccount || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">开户地址：</span>
+                {{ detailData?.billingAddress || "-" }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">电话：</span>
+                {{ detailData?.billingPhone || "-" }}
+              </div>
+            </el-col>
+          </el-row>
         </div>
       </el-drawer>
 
@@ -336,16 +392,6 @@
               <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="应收款编号" prop="reactivebleCode">
-            <el-input v-model="editForm.receivableCode" />
-          </el-form-item>
-          <el-form-item label="应收款金额" prop="receivablePay" required>
-            <el-input v-model="editForm.receivablePay" />
-          </el-form-item>
-          <el-form-item label="应收款时间" prop="receivableDate" required>
-            <el-date-picker v-model="editForm.receivableDate" type="datetime" value-format="YYYY-MM-DD HH:mm:ss"
-              style="width: 100%" />
-          </el-form-item>
           <el-form-item label="备注" prop="remark">
             <el-input v-model="editForm.remark" type="textarea" :rows="3" />
           </el-form-item>
@@ -361,16 +407,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onActivated } from "vue";
-import ReceivablesViewAPI, {
-  ReceivablesPageQuery,
-  ReceivableSearch,
-} from "@/api/Finance/receivables.api";
 import CustomerAPI, { CustomerPageQuery, CustomerData } from "@/api/CustomerProcess/customer.api";
 import CrmContractAPI from "@/api/crmcontract";
 import PaymentViewAPI from "@/api/Finance/payment.api";
 import UserAPI from "@/api/User/user.api";
 import InvoiceViewAPI, { InvoicePageQuery } from "@/api/Finance/invoice.api";
 import { ElMessage, ElMessageBox } from "element-plus";
+import type { UploadProps } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 
 const router = useRouter();
@@ -379,14 +422,14 @@ const route = useRoute();
 // 页面加载时获取数据
 onMounted(() => {
   GetPaymentData();
-  GetReceivables();
+  GetInvoice();
   GetcontractData();
   UserData();
   InvoiceData();
 });
 
 const loading = ref(false);
-const tableData = ref<ReceivableSearch[]>([]);
+const tableData: any = ref([]);
 
 // 分页配置
 const pagination = reactive({
@@ -403,34 +446,28 @@ const dateRange = ref([]);
 const searchForm = reactive({
   StartTime: "",
   EndTime: "",
-  ReceivableCode: "",
   UserId: "",
-  CreateId: "",
+  CreatorId: "",
   CustomerId: "",
   ContractId: "",
-  ReceivablePay: "",
+  InvoiceNumberCode: "",
+  InvoiceType: "",
+  InvoiceDate: [],
+  InvoiceStatus: "",
+  ApproverIds: [],
 });
 
-// 获取应收款数据
-const GetReceivables = () => {
+// 获取发票数据
+const GetInvoice = () => {
   loading.value = true;
-  const params: ReceivablesPageQuery = {
+  const params: InvoicePageQuery = {
     PageIndex: pagination.PageIndex,
     PageSize: pagination.PageSize,
-    //receivableCode: searchForm.receivableCode,
-    StartTime: searchForm.StartTime,
-    EndTime: searchForm.EndTime,
-    ReceivableCode: searchForm.ReceivableCode,
-    CustomerId: searchForm.CustomerId,
-    ContractId: searchForm.ContractId,
-    UserId: searchForm.UserId,
-    ReceivablePay: searchForm.ReceivablePay,
-    CreateId: searchForm.CreateId,
   };
 
-  ReceivablesViewAPI.GetReceivablesPage(params)
+  InvoiceViewAPI.GetInvoicePage(params)
     .then((res) => {
-      console.log("应收款数据", res);
+      console.log("发票数据", res);
 
       tableData.value = res.data;
       pagination.totalCount = res.totalCount;
@@ -442,7 +479,7 @@ const GetReceivables = () => {
 };
 
 // 添加弹窗相关
-const showAddDialog = ref(false); // 添加应收款弹窗
+const showAddDialog = ref(false); // 添加发票弹窗
 const showCustomerDrawer = ref(false); // 客户选择抽屉
 
 const Addlist = () => {
@@ -499,13 +536,13 @@ const addRules = {
 function handleSizeChange(val: number) {
   pagination.PageSize = val;
   pagination.PageIndex = 1; // 重置到第一页
-  GetReceivables();
+  GetInvoice();
 }
 
 // 当前页改变
 function handleCurrentChange(val: number) {
   pagination.PageIndex = val;
-  GetReceivables();
+  GetInvoice();
 }
 // 高级搜索抽屉
 const showAdvancedSearch = ref(false);
@@ -518,20 +555,30 @@ function handleSearch() {
   // 这里将form的内容作为搜索条件，刷新页面或重新请求数据
   showAdvancedSearch.value = false;
   pagination.PageIndex = 1; // 重置到第一页
-  GetReceivables();
+  GetInvoice();
 }
 // 重置
 function handleReset() {
-  searchForm.ReceivableCode = "";
+  searchForm.StartTime = "";
+  searchForm.EndTime = "";
+  searchForm.UserId = "";
+  searchForm.CreatorId = "";
+  searchForm.CustomerId = "";
+  searchForm.ContractId = "";
+  searchForm.InvoiceNumberCode = "";
+  searchForm.InvoiceType = "";
+  searchForm.InvoiceDate = [];
+  searchForm.InvoiceStatus = "";
+  searchForm.ApproverIds = [];
   pagination.PageIndex = 1;
-  GetReceivables();
+  GetInvoice();
 }
 
 // 监听时间范围变化，自动同步到 StartTime 和 EndTime，并自动查询
 function handleDateRangeChange(val: any) {
   searchForm.StartTime = val?.[0] || "";
   searchForm.EndTime = val?.[1] || "";
-  GetReceivables();
+  GetInvoice();
 }
 
 // 客户列表数据（实际应从API获取，这里举例）
@@ -624,7 +671,7 @@ const GetPaymentData = async () => {
 };
 
 // 发票信息列表数据下拉
-const invoiceInfoList :any = ref([]);
+const invoiceInfoList: any = ref([]);
 const InvoiceData = async () => {
   const params = reactive({
     PageIndex: 1,
@@ -641,7 +688,6 @@ const InvoiceData = async () => {
     });
 };
 
-
 // 重置添加表单
 function resetAddForm() {
   addForm.contractId = "";
@@ -651,13 +697,13 @@ function resetAddForm() {
   addForm.customerName = "";
   addForm.customerType = "unselected";
 }
-// 提交添加应收款
+// 提交添加发票
 function handleAddSubmit() {
   addFormRef.value.validate((valid: boolean) => {
     if (valid) {
       // 这里写实际的添加API调用
-      ReceivablesViewAPI.AddReceivable(addForm).then((res) => {
-        if (res.data) {
+      InvoiceViewAPI.AddInvoice(addForm).then((res) => {
+        if (res) {
           ElMessage.success("添加成功");
         } else {
           ElMessage.error("添加失败");
@@ -665,7 +711,7 @@ function handleAddSubmit() {
       });
       showAddDialog.value = false;
       resetAddForm();
-      GetReceivables(); // 刷新列表
+      GetInvoice(); // 刷新列表
     } else {
       ElMessage.error("请完善表单信息");
     }
@@ -676,7 +722,7 @@ function handleAddSubmit() {
 onActivated(() => {
   // 判断是否带有刷新标记
   if (route.query.refresh) {
-    GetReceivables();
+    GetInvoice();
     // 清除刷新标记，避免重复刷新
     router.replace({ query: { ...route.query, refresh: undefined } });
   }
@@ -702,11 +748,11 @@ function handleBatchDelete() {
   }).then(() => {
     // 这里假设你有批量删除API
     const ids: string[] = selectedRows.value.map((item: any) => item.id);
-    ReceivablesViewAPI.BatchDeleteReceivables(ids).then(() => {
+    InvoiceViewAPI.BatchDeleteInvoice(ids).then(() => {
       // 提示用户
       ElMessage.success("删除成功");
       // 刷新表格
-      GetReceivables();
+      GetInvoice();
       // 清空选中
       tableRef.value.clearSelection();
     });
@@ -732,10 +778,10 @@ function handleDelete(row: any) {
   ElMessageBox.confirm("确定要删除该应收款吗？", "提示", {
     type: "warning",
   }).then(() => {
-    ReceivablesViewAPI.DeleteReceivable(row.id)
+    InvoiceViewAPI.DeleteInvoice(row.id)
       .then(() => {
         ElMessage.success("删除成功");
-        GetReceivables(); // 重新加载数据
+        GetInvoice(); // 重新加载数据
       })
       .catch((error) => {
         console.error("删除失败:", error);
@@ -747,16 +793,41 @@ function handleDelete(row: any) {
 const showEditDrawer = ref(false);
 const editFormRef = ref();
 const editForm = reactive({
+  id: "",
+  userId: "",
   creationTime: "",
   creatorId: "",
+  lastModificationTime: "",
+  lastModifierId: "",
+  isDeleted: true,
+  deleterId: "",
+  deletionTime: "",
   customerId: "",
   contractId: "",
-  userId: "",
-  receivableCode: "",
-  receivablePay: 0,
-  receivableDate: "2025-06-28T02:53:26.870Z",
+  paymentId: "",
+  invoiceNumberCode: "",
+  amount: 0,
+  invoiceDate: "",
+  invoiceType: 0,
+  approverIds: [],
+  currentStep: 0,
+  approveComments: [],
+  approveTimes: [],
+  invoiceStatus: 0,
+  invoiceImg: "",
   remark: "",
+  invoiceInformationId: "",
+  title: "",
+  taxNumber: "",
+  bank: "",
+  billingAddress: "",
+  bankAccount: "",
+  billingPhone: "",
   customerName: "",
+  contractName: "",
+  realName: "",
+  creatorRealName: "",
+  auditorNames: "",
 });
 
 function handleEditDetail() {
@@ -769,7 +840,7 @@ function handleEditDetail() {
 function handleEditSubmit() {
   editFormRef.value.validate((valid: boolean) => {
     if (!valid) return;
-    ReceivablesViewAPI.UpdateReceivable(detailData.value.id, editForm).then((res) => {
+    InvoiceViewAPI.UpdateInvoice(detailData.value.id, editForm).then((res) => {
       if (res.data) {
         ElMessage.success("修改成功");
       } else {
@@ -777,37 +848,38 @@ function handleEditSubmit() {
       }
       showEditDrawer.value = false;
       showDetailDrawer.value = false;
-      GetReceivables();
+      GetInvoice();
     });
   });
 }
 
-// function handleUploadSuccess(res, file) {
-//   addForm.invoiceImg = file.url || "";
-// }
+const handleAvatarSuccess = (val: any) => {
+  addForm.invoiceImg = val;
+};
 
-// function beforeUpload(file) {
-//   return true;
-// }
-
-// function dummyUpload(param) {
-//   const reader = new FileReader();
-//   reader.onload = (e) => {
-//     addForm.invoiceImg = e.target.result;
-//   };
-//   reader.readAsDataURL(param.file);
-// }
+const beforeAvatarUpload: UploadProps["beforeUpload"] = (rawFile) => {
+  if (rawFile.type !== "image/jpeg") {
+    ElMessage.error("Avatar picture must be JPG format!");
+    return false;
+  } else if (rawFile.size / 1024 / 1024 > 2) {
+    ElMessage.error("Avatar picture size can not exceed 2MB!");
+    return false;
+  }
+  return true;
+};
 </script>
 
 <style scoped>
 .info-row {
-  margin-bottom: 10px;
-  font-size: 15px;
+  margin-bottom: 18px;
+  font-size: 18px;
+  color: #fff;
 }
 
 .info-label {
   color: #888;
-  min-width: 90px;
+  min-width: 120px;
   display: inline-block;
+  font-size: 18px;
 }
 </style>

@@ -22,6 +22,14 @@ export const InvoiceViewAPI = {
       data,
     });
   },
+    //批量删除
+  BatchDeleteInvoice(data: string[]) {
+    return request({
+      url: `/api/app/receivables`,
+      method: "delete",
+      data,
+    });
+  },
   
   DeleteInvoice(id: string) {
     return request({

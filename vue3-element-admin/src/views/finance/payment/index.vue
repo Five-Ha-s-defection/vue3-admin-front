@@ -1,54 +1,71 @@
 <template>
   <div>
     <el-card>
+      <!-- 顶部筛选区 -->
       <div style="margin-bottom: 16px">
-        <el-row>
-          <el-col :span="4">
-            <el-button type="primary" style="padding-right: 20px" @click="Addlist()">
-              添加收款
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="font-weight: bold; font-size: 16px">应收款列表</span>
+          <span style="margin-left: 16px; color: #888">总记录数：</span>
+          <span style="color: #409eff; margin-left: 2px">{{ pagination.totalCount }}</span>
+          <span style="color: #888; margin-left: 2px">条</span>
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="color: #888">查看范围</span>
+          <el-radio-group v-model="scopeType" size="small" style="margin-left: 12px">
+            <el-radio-button label="myDuty">我负责的</el-radio-button>
+            <el-radio-button label="myCreate">我创建的</el-radio-button>
+            <el-radio-button label="all">全部</el-radio-button>
+          </el-radio-group>
+          <!-- 
+          <span style="margin-left: 32px; color: #888">收款进度</span>
+          <el-radio-group v-model="progressType" size="small" style="margin-left: 12px">
+            <el-radio-button label="all">全部</el-radio-button>
+            <el-radio-button label="unfinished">未完成</el-radio-button>
+            <el-radio-button label="finished">收款完成</el-radio-button>
+          </el-radio-group> -->
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <el-button type="primary" style="margin-left: 10px; margin-right: 400px" @click="Addlist">
+            添加收款
+          </el-button>
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            range-separator="-"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            value-format="YYYY-MM-DD"
+            style="width: 30px; margin-right: 12px"
+            @change="handleDateRangeChange"
+          />
+          <el-input
+            v-model="searchForm.PaymentCode"
+            placeholder="应收款编号(不含符号)"
+            style="width: 200px; margin-left: 16px"
+            clearable
+          />
+          <el-button type="primary" style="margin-left: 8px; margin-right: 10px" @click="search()">
+            高级搜索
+          </el-button>
+          <el-dropdown>
+            <el-button>
+              操作
+              <el-icon>
+                <ArrowDown />
+              </el-icon>
             </el-button>
-          </el-col>
-          <el-col :span="20" style="text-align: right">
-            <el-date-picker
-              v-model="dateRange"
-              type="daterange"
-              range-separator="-"
-              start-placeholder="开始时间"
-              end-placeholder="结束时间"
-              value-format="YYYY-MM-DD"
-              style="width: 260px; margin-right: 12px"
-              @change="handleDateRangeChange"
-            />
-            <el-input
-              v-model="searchForm.PaymentCode"
-              placeholder="收款编号(不含符号)"
-              style="width: 220px; margin-left: 16px"
-              clearable
-            />
-            <el-button
-              type="primary"
-              style="margin-left: 8px; margin-right: 10px"
-              @click="search()"
-            >
-              高级搜索
-            </el-button>
-            <el-dropdown>
-              <el-button>
-                操作
-                <el-icon>
-                  <ArrowDown />
-                </el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="handleBatchDelete">删除</el-dropdown-item>
-                  <el-dropdown-item @click="handleExport">导出数据</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-            <el-button style="margin-left: 8px" @click="handleReset">重置</el-button>
-          </el-col>
-        </el-row>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="handleBatchDelete">删除</el-dropdown-item>
+                <el-dropdown-item @click="handleExport">导出数据</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <el-row>
+            <el-col :span="4"></el-col>
+            <el-col :span="20"></el-col>
+          </el-row>
+        </div>
       </div>
       <el-table
         ref="tableRef"
@@ -309,7 +326,9 @@
           <el-form-item label="收款状态">
             <el-select v-model="searchForm.PaymentStatus" placeholder="选择收款状态">
               <el-option label="待审核" :value="0" />
-              <el-option label="已审核" :value="1" />
+              <el-option label="审核中" :value="1" />
+              <el-option label="已审核" :value="2" />
+              <el-option label="审核失败" :value="3" />
             </el-select>
           </el-form-item>
           <el-form-item label="收款审核人">
@@ -470,15 +489,28 @@
             发票信息
           </div>
         </div>
-        <el-table :data="[]" style="width: 100%; margin-bottom: 16px">
-          <el-table-column prop="invoiceCode" label="发票编号" />
-          <el-table-column prop="status" label="状态" />
+        <el-table :data="invoiceList" style="width: 100%; margin-bottom: 16px">
+          <el-table-column prop="invoiceNumberCode" label="发票编号" />
+          <el-table-column prop="invoiceStatus" label="状态">
+            <template #default="scope">
+              <span v-if="scope.row.invoiceStatus === 0">未开票</span>
+              <span v-else-if="scope.row.invoiceStatus === 1">已开票</span>
+              <span v-else>--</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="amount" label="开票金额" />
-          <el-table-column prop="type" label="开票类型" />
-          <el-table-column prop="time" label="开票时间" />
-          <template #empty>
-            <div style="color: #aaa; text-align: center">没有数据</div>
-          </template>
+          <el-table-column prop="invoiceType" label="开票类型">
+            <template #default="scope">
+              <span v-if="scope.row.invoiceType === 0">普通发票</span>
+              <span v-else-if="scope.row.invoiceType === 1">专用发票</span>
+              <span v-else>--</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="invoiceDate" label="开票时间">
+            <template #default="scope">
+              {{ scope.row.invoiceDate ? scope.row.invoiceDate.substring(0, 10) : "" }}
+            </template>
+          </el-table-column>
         </el-table>
 
         <!-- 操作日志 -->
@@ -622,12 +654,15 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onActivated } from "vue";
 import ReceivablesViewAPI, { ReceivablesPageQuery } from "@/api/Finance/receivables.api";
-import PaymentViewAPI, { PaymentPageQuery, PaymentSearch } from "@/api/Finance/payment.api";
+import PaymentViewAPI, { PaymentSearch,PaymentPageQuery } from "@/api/Finance/payment.api";
 import CustomerAPI, { CustomerPageQuery, CustomerData } from "@/api/CustomerProcess/customer.api";
 import CrmContractAPI from "@/api/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
+import InvoiceViewAPI from "@/api/Finance/invoice.api";
+import { useUserStore } from "@/store";
+const store = useUserStore();
 
 const router = useRouter();
 const route = useRoute();
@@ -646,6 +681,26 @@ const pagination = reactive({
 // 时间范围中间变量
 const dateRange = ref([]);
 
+// 查看范围和收款进度筛选
+const scopeType = ref("all");
+const progressType = ref("all");
+const currentUserId = store.userInfo.id; // 获取当前登录人ID
+console.log("当前登录人ID", currentUserId);
+
+watch([scopeType, progressType], () => {
+  // 先清空筛选条件
+  searchForm.UserId = "";
+  searchForm.CreatorId = "";
+
+  if (scopeType.value === "myDuty") {
+    searchForm.UserId = currentUserId?.toString() || ""; // 负责人=当前用户
+  } else if (scopeType.value === "myCreate") {
+    searchForm.CreatorId = currentUserId?.toString() || ""; // 创建人=当前用户
+  }
+
+  GetReceivables();
+});
+
 // 搜索表单
 const searchForm = reactive({
   UserId: "",
@@ -659,9 +714,8 @@ const searchForm = reactive({
   ApproverIds: [],
   StartTime: "",
   EndTime: "",
-  ReceivableCode: "",
-  ReceivablePay: "",
-  CreateId: "",
+  scopeType: "all",
+  progressType: "all",
 });
 // 获取收款数据
 const GetPayment = () => {
@@ -678,11 +732,6 @@ const GetPayment = () => {
     PaymentDate: searchForm.PaymentDate,
     PaymentStatus: searchForm.PaymentStatus,
     ApproverIds: searchForm.ApproverIds,
-    StartTime: searchForm.StartTime,
-    EndTime: searchForm.EndTime,
-    ReceivableCode: searchForm.ReceivableCode,
-    ReceivablePay: searchForm.ReceivablePay,
-    CreateId: searchForm.CreateId,
   };
 
   PaymentViewAPI.GetPaymentPage(params)
@@ -780,18 +829,6 @@ function handleCurrentChange(val: number) {
 const showAdvancedSearch = ref(false);
 const search = () => {
   showAdvancedSearch.value = true;
-};
-
-// 搜索
-function handleSearch() {
-  // 这里将form的内容作为搜索条件，刷新页面或重新请求数据
-  showAdvancedSearch.value = false;
-  pagination.PageIndex = 1; // 重置到第一页
-  GetPayment();
-}
-// 重置
-function handleReset() {
-  searchForm.ReceivableCode = "";
   searchForm.UserId = "";
   searchForm.CreatorId = "";
   searchForm.CustomerId = "";
@@ -801,13 +838,14 @@ function handleReset() {
   searchForm.PaymentDate = "";
   searchForm.PaymentStatus = "";
   searchForm.ApproverIds = [];
-  searchForm.StartTime = "";
-  searchForm.EndTime = "";
-  searchForm.ReceivableCode = "";
-  searchForm.ReceivablePay = "";
-  searchForm.CreateId = "";
-  pagination.PageIndex = 0;
-  handleSearch();
+};
+
+// 搜索
+function handleSearch() {
+  // 这里将form的内容作为搜索条件，刷新页面或重新请求数据
+  showAdvancedSearch.value = false;
+  pagination.PageIndex = 1; // 重置到第一页
+  GetPayment();
 }
 
 // 监听时间范围变化，自动同步到 StartTime 和 EndTime，并自动查询
@@ -976,10 +1014,22 @@ function handleExport() {
 
 const showDetailDrawer = ref(false);
 const detailData = ref<any>({});
+const invoiceList = ref<any[]>([]);
 
 function handleRowClick(row: any) {
   detailData.value = row;
   showDetailDrawer.value = true;
+  fetchInvoiceList(row.id);
+}
+
+function fetchInvoiceList(paymentId: string) {
+  InvoiceViewAPI.GetInvoicePage({ paymentId, PageIndex: 1, PageSize: 100 })
+    .then((res) => {
+      invoiceList.value = res.data || [];
+    })
+    .catch(() => {
+      invoiceList.value = [];
+    });
 }
 
 // 删除应收款
