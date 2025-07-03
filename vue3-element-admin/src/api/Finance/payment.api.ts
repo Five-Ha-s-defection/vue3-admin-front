@@ -29,6 +29,14 @@ const PaymentViewAPI = {
       data,
     });
   },
+      //批量删除
+  BatchDeletePayment(data: string[]) {
+    return request({
+      url: `/api/app/receivables`,
+      method: "delete",
+      data,
+    });
+  },
   DeletePayment(id: string) {
     return request({
       url: `/api/app/payment/${id}`,
