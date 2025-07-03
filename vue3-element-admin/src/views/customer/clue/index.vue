@@ -29,16 +29,8 @@
       <el-row class="clue-row" align="middle">
         <el-col :span="24">
           <span class="clue-label">选择时间</span>
-          <el-date-picker
-            v-model="dateRange"
-            type="datetimerange"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            :shortcuts="dateShortcuts"
-            style="width: 380px"
-            @change="handleQuery"
-          />
+          <el-date-picker v-model="dateRange" type="datetimerange" start-placeholder="开始时间" end-placeholder="结束时间"
+            value-format="YYYY-MM-DD HH:mm:ss" :shortcuts="dateShortcuts" style="width: 380px" @change="handleQuery" />
           <el-radio-group v-model="queryParams.TimeType" class="ml16" @change="handleQuery">
             <el-radio :label="2">创建时间</el-radio>
             <el-radio :label="1">下次联系</el-radio>
@@ -75,6 +67,9 @@
               <DocumentAdd />
             </el-icon>
             添加线索
+          </el-button>
+          <el-button type="warning" @click="handleResetQuery()">
+            重置
           </el-button>
         </el-col>
         <el-col :span="12" class="clue-bottom-right">
@@ -196,14 +191,14 @@
           </div>
         </div>
       </template>
-      <el-form :model="advancedForm" label-width="100px" class="advanced-form">
+      <el-form :model="queryParams" label-width="100px" class="advanced-form">
         <el-row :gutter="0">
           <el-col :span="24" style="margin-bottom: 16px;">
             <div class="advanced-match-flex">
               <span class="advanced-match-label el-form-item__label">满足条件</span>
-              <el-radio-group v-model="advancedForm.matchType">
-                <el-radio :label="'all'">全部满足</el-radio>
-                <el-radio :label="'any'">部分满足</el-radio>
+              <el-radio-group v-model="queryParams.MatchMode">
+                <el-radio :label="0">全部满足</el-radio>
+                <el-radio :label="1">部分满足</el-radio>
               </el-radio-group>
               <el-tooltip content="部分满足是指只要满足部分条件就查询出来，全部满足则查询满足全部条件的" placement="right">
                 <el-icon class="advanced-match-info">
@@ -212,21 +207,11 @@
               </el-tooltip>
             </div>
           </el-col>
-          <el-col :span="24">
-            <el-form-item label="选择部门">
-              <div class="form-item-flex">
-                <el-select v-model="advancedForm.dept" placeholder="请选择" />
-                <el-tooltip content="输入/选择内容模糊查询" placement="right">
-                  <el-icon class="advanced-info">
-                    <InfoFilled />
-                  </el-icon>
-                </el-tooltip>
-              </div>
-            </el-form-item>
-          </el-col>
           <el-col :span="24"><el-form-item label="负责人">
               <div class="form-item-flex">
-                <el-select v-model="advancedForm.owner" placeholder="请选择" />
+                <el-select v-model="queryParams.UserIds" multiple placeholder="请选择">
+                  <el-option v-for="item in userList" :label="item.userName" :value="item.id" />
+                </el-select>
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -236,7 +221,9 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="创建人">
               <div class="form-item-flex">
-                <el-select v-model="advancedForm.creator" placeholder="请选择" />
+                <el-select v-model="queryParams.CreatedByIds" multiple placeholder="请选择">
+                  <el-option v-for="item in userList" :label="item.userName" :value="item.id" />
+                </el-select>
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -246,7 +233,7 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="线索编号">
               <div class="form-item-flex">
-                <el-input v-model="advancedForm.clueNo" placeholder="不包含线索编码" />
+                <el-input v-model="queryParams.ClueCode" placeholder="不包含线索编码" />
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -256,7 +243,7 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="姓名">
               <div class="form-item-flex">
-                <el-input v-model="advancedForm.name" />
+                <el-input v-model="queryParams.ClueName" />
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -266,7 +253,7 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="电话">
               <div class="form-item-flex">
-                <el-input v-model="advancedForm.phone" />
+                <el-input v-model="queryParams.CluePhone" />
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -276,10 +263,8 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="线索来源">
               <div class="form-item-flex">
-                <el-select v-model="advancedForm.clueSource" placeholder="请选择线索来源">
-                  <el-option label="客户推荐" value="客户推荐" />
-                  <el-option label="电话营销" value="电话营销" />
-                  <el-option label="网络营销" value="网络营销" />
+                <el-select v-model="queryParams.ClueSourceId"  placeholder="请选择">
+                  <el-option v-for="item in cluesourceList" :label="item.clueSourceName" :value="item.id" />
                 </el-select>
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
@@ -290,7 +275,7 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="邮箱">
               <div class="form-item-flex">
-                <el-input v-model="advancedForm.email" />
+                <el-input v-model="queryParams.ClueEmail" />
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -300,7 +285,7 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="微信号">
               <div class="form-item-flex">
-                <el-input v-model="advancedForm.wechat" />
+                <el-input v-model="queryParams.ClueWechat" />
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -310,7 +295,7 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="QQ">
               <div class="form-item-flex">
-                <el-input v-model="advancedForm.qq" />
+                <el-input v-model="queryParams.ClueQQ" />
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -320,7 +305,7 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="公司名称">
               <div class="form-item-flex">
-                <el-input v-model="advancedForm.company" />
+                <el-input v-model="queryParams.CompanyName" />
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -330,10 +315,8 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="行业">
               <div class="form-item-flex">
-                <el-select v-model="advancedForm.industry" placeholder="请选择行业">
-                  <el-option label="IT" value="IT" />
-                  <el-option label="制造业" value="制造业" />
-                  <el-option label="金融" value="金融" />
+                <el-select v-model="queryParams.IndustryId"  placeholder="请选择">
+                  <el-option v-for="item in industryList" :label="item.industryName" :value="item.id" />
                 </el-select>
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
@@ -344,7 +327,7 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="地址">
               <div class="form-item-flex">
-                <el-input v-model="advancedForm.address" />
+                <el-input v-model="queryParams.Address" />
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -362,9 +345,10 @@
 import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose } from '@element-plus/icons-vue';
-import { ShowClueList } from '@/api/CustomerProcess/Clue/clue.api';
+import { ShowClueList, GetUser,GetClueSource,GetIndustry} from '@/api/CustomerProcess/Clue/clue.api';
 import moment from 'moment';
 import dayjs from 'dayjs';
+
 
 const scopeOptions = [
   { label: '我负责的', value: 0 },
@@ -395,25 +379,23 @@ const queryParams = reactive({
   Keyword: '', // string
   PageIndex: 1, // int32
   PageSize: 10, // int32
+  UserIds: [],      // 负责人
+  CreatedByIds: [], // 创建人
+  ClueCode: '',     // 线索编号
+  ClueName: '',     // 姓名
+  CluePhone: '',    // 电话
+  ClueSourceId: 0, // 线索来源
+  ClueEmail: '',    // 邮箱
+  clueSource: '',   // 线索来源
+  ClueWechat: '',   // 微信号
+  ClueQQ: '',       // QQ
+  CompanyName: '',  // 公司名称
+  IndustryId: 0,   // 行业
+  Address: '',      // 地址
+  MatchMode: 0, // 0: 全部满足, 1: 部分满足
 });
 
 const advancedDialogVisible = ref(false);
-const advancedForm = reactive({
-  matchType: 'all',
-  dept: '',
-  owner: '',
-  creator: '',
-  clueNo: '',
-  name: '',
-  phone: '',
-  clueSource: '',
-  email: '',
-  wechat: '',
-  qq: '',
-  company: '',
-  industry: '',
-  address: '',
-});
 
 const statusOptions = [
   { label: '未跟进', value: 0 },
@@ -489,10 +471,46 @@ const getStatusText = (status: number | string) => {
   }
 };
 
+// 下拉框绑定用户列表
+const userList: any = ref([])
+const selectUser = async () => {
+  await GetUser()
+    .then(res => {
+      userList.value = res
+    })
+}
+
+//下拉框绑定线索来源列表
+const cluesourceList: any = ref([])
+const selectClueSource = async () => {
+  await GetClueSource()
+    .then(res => {
+      cluesourceList.value = res
+    })
+}
+
+//下拉框绑定行业列表
+const industryList: any = ref([])
+const selectIndustry = async () => {
+  await GetIndustry()
+    .then(res => {
+      industryList.value = res
+    })
+}
+
+//高级筛选
+const handleAdvancedSearch = () => {
+  // 这里可以将queryParams的内容合并到queryParams并请求
+  advancedDialogVisible.value = false;
+  fetchClueList();
+  ElMessage.success('高级搜索已应用');
+};
+
+//显示线索列表信息
 const fetchClueList = async () => {
   loading.value = true;
   try {
-    const params: any = {
+    const rawParams = {
       type: queryParams.type,
       CreatedBy: queryParams.CreatedBy,
       AssignedTo: queryParams.AssignedTo,
@@ -505,7 +523,28 @@ const fetchClueList = async () => {
       Keyword: queryParams.Keyword,
       PageIndex: queryParams.PageIndex,
       PageSize: queryParams.PageSize,
+      UserIds: queryParams.UserIds,
+      CreatedByIds: queryParams.CreatedByIds,
+      ClueCode: queryParams.ClueCode,
+      ClueName: queryParams.ClueName,
+      CluePhone: queryParams.CluePhone,
+      ClueSourceId: queryParams.ClueSourceId,
+      ClueEmail: queryParams.ClueEmail,
+      ClueWechat: queryParams.ClueWechat,
+      ClueQQ: queryParams.ClueQQ,
+      CompanyName: queryParams.CompanyName,
+      IndustryId: queryParams.IndustryId,
+      Address: queryParams.Address,
+      MatchMode: queryParams.MatchMode
     };
+    const params = filterParams(rawParams);
+
+    // MatchMode为数字
+    if (typeof params.MatchMode === 'string') {
+      params.MatchMode = params.MatchMode === 'all' ? 0 : 1;
+    }
+
+    console.log('最终请求参数:', params);
     const res = await ShowClueList(params);
     clueList.value = res.data
   } catch (e) {
@@ -515,16 +554,34 @@ const fetchClueList = async () => {
   }
 };
 
+//查询线索列表（顶部）
 const handleQuery = () => {
   queryParams.PageIndex = 1;
   fetchClueList();
 };
+
+// 重置查询条件
 const handleResetQuery = () => {
   queryParams.Status = [0, 1, 2];
   dateRange.value = [];
   queryParams.TimeType = 2;
   queryParams.OrderBy = 0;
   queryParams.Keyword = "";
+  queryParams.UserIds = [];
+  queryParams.CreatedByIds = [];
+  queryParams.ClueCode = '';
+  queryParams.ClueName = '';
+  queryParams.CluePhone = '';
+  queryParams.ClueSourceId = 0;
+  queryParams.ClueEmail = '';
+  queryParams.ClueWechat = '';
+  queryParams.ClueQQ = '';
+  queryParams.CompanyName = '';
+  queryParams.IndustryId = 0;
+  queryParams.Address = '';
+  queryParams.MatchMode = 0; // 重置为全部满足
+  queryParams.PageIndex = 1;
+  queryParams.PageSize = 10;
   handleQuery();
 };
 const handleSelectionChange = (val: any[]) => {
@@ -550,11 +607,7 @@ const handleFollow = (row: any) => {
 const handleDelete = (row: any) => {
   ElMessage.info('删除功能开发中...');
 };
-const handleAdvancedSearch = () => {
-  // 这里可以将advancedForm的内容合并到queryParams并请求
-  advancedDialogVisible.value = false;
-  ElMessage.success('高级搜索功能开发中...');
-};
+
 
 const handleOrderClick = (value: number) => {
   if (queryParams.OrderBy === value) {
@@ -566,8 +619,36 @@ const handleOrderClick = (value: number) => {
   fetchClueList();
 };
 
+function filterParams(params: any) {
+  const result: any = {};
+  Object.keys(params).forEach(key => {
+    const val = params[key];
+    // Guid类型不能传空字符串或0
+    if (
+      val === '' ||
+      val === undefined ||
+      val === null ||
+      (Array.isArray(val) && val.length === 0) ||
+      (typeof val === 'number' && val === 0 && (key === 'ClueSourceId' || key === 'IndustryId'))
+    ) {
+      // 跳过
+    } else {
+      // 处理响应式数组
+      if (Array.isArray(val)) {
+        result[key] = Array.from(val);
+      } else {
+        result[key] = val;
+      }
+    }
+  });
+  return result;
+}
+
 onMounted(() => {
   fetchClueList();
+  selectUser(); // 获取用户列表
+  selectClueSource(); // 获取线索来源列表
+  selectIndustry(); // 获取行业列表
 });
 </script>
 
