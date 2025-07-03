@@ -24,7 +24,7 @@
           clearable
           @keyup.enter="handleSearch"
         />
-        <el-button @click="handleSearch">搜索</el-button>
+        <el-button @click="GetProductList()">搜索</el-button>
         <el-button @click="handleExport">导入导出</el-button>
       </div>
 
