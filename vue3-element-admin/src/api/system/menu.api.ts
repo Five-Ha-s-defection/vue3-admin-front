@@ -73,17 +73,13 @@ const MenuAPI = {
   },
 
   /**
-   * 添加菜单
+   * 新增菜单
    *
    * @param data 菜单表单数据
-   * @returns 请求结果
+   * @returns 菜单ID
    */
-  create(data: MenuForm) {
-    return request({
-      url: `${MENU_BASE_URL}`,
-      method: "post",
-      data,
-    });
+  addMenu(data: MenuInfo) {
+    return request.post("/api/app/menu/menu", data);
   },
 
   /**
@@ -93,12 +89,8 @@ const MenuAPI = {
    * @param data 菜单表单数据
    * @returns 请求结果
    */
-  update(id: string, data: MenuForm) {
-    return request({
-      url: `${MENU_BASE_URL}/${id}`,
-      method: "put",
-      data,
-    });
+  updateMenu(id: string, data: MenuInfo) {
+    return request.put(`/api/app/menu/${id}/menu`, data);
   },
 
   /**
@@ -107,17 +99,26 @@ const MenuAPI = {
    * @param id 菜单ID
    * @returns 请求结果
    */
-  deleteById(id: string) {
-    return request({
-      url: `${MENU_BASE_URL}/${id}`,
-      method: "delete",
-    });
+  deleteMenu(id: string) {
+    return request.delete(`/api/app/menu/${id}/menu`);
   },
 };
 
 export default MenuAPI;
 
 import type { MenuTypeEnum } from "@/enums/system/menu.enum";
+// 菜单表单对象
+export interface MenuInfo {
+  id: string;
+  parentId: string | null;
+  menuName: string;
+  path: string;
+  component: string;
+  icon: string;
+  permissionCode: string;
+  hidden: boolean;
+  sort: number;
+}
 
 /** 菜单查询参数 */
 export interface MenuQuery {

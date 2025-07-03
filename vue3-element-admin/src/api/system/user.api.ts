@@ -215,7 +215,7 @@ export default UserAPI;
 /** 登录用户信息 */
 export interface UserInfo {
   /** 用户ID */
-  userId?: string;
+  id?: string;
 
   /** 用户名 */
   username?: string;
