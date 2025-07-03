@@ -841,7 +841,7 @@ function handleEditSubmit() {
   editFormRef.value.validate((valid: boolean) => {
     if (!valid) return;
     InvoiceViewAPI.UpdateInvoice(detailData.value.id, editForm).then((res) => {
-      if (res.data) {
+      if (res) {
         ElMessage.success("修改成功");
       } else {
         ElMessage.error("修改失败");
