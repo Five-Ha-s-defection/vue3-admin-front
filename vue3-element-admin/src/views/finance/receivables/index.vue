@@ -425,7 +425,7 @@ import ReceivablesViewAPI, {
   ReceivableSearch,
 } from "@/api/Finance/receivables.api";
 import CustomerAPI from "@/api/CustomerProcess/customer.api"; 
-import CrmContractAPI from "@/api/crmcontract";
+import CrmContractAPI from "@/api/CrmContract/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
