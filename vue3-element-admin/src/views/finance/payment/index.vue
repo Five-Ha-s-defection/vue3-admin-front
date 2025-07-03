@@ -1,42 +1,82 @@
 <template>
   <div>
     <el-card>
+      <!-- 顶部筛选区 -->
       <div style="margin-bottom: 16px">
-        <el-row>
-          <el-col :span="4">
-            <el-button type="primary" style="padding-right: 20px" @click="Addlist()">
-              添加收款
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="font-weight: bold; font-size: 16px">应收款列表</span>
+          <span style="margin-left: 16px; color: #888">总记录数：</span>
+          <span style="color: #409eff; margin-left: 2px">{{ pagination.totalCount }}</span>
+          <span style="color: #888; margin-left: 2px">条</span>
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="color: #888">查看范围</span>
+          <el-radio-group v-model="scopeType" size="small" style="margin-left: 12px">
+            <el-radio-button label="myDuty">我负责的</el-radio-button>
+            <el-radio-button label="myCreate">我创建的</el-radio-button>
+            <el-radio-button label="all">全部</el-radio-button>
+          </el-radio-group>
+          <!-- 
+          <span style="margin-left: 32px; color: #888">收款进度</span>
+          <el-radio-group v-model="progressType" size="small" style="margin-left: 12px">
+            <el-radio-button label="all">全部</el-radio-button>
+            <el-radio-button label="unfinished">未完成</el-radio-button>
+            <el-radio-button label="finished">收款完成</el-radio-button>
+          </el-radio-group> -->
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <el-button type="primary" style="margin-left: 10px; margin-right: 350px" @click="Addlist">
+            添加收款
+          </el-button>
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            range-separator="-"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            value-format="YYYY-MM-DD"
+            style="width: 50px; margin-right: 12px"
+            @change="handleDateRangeChange"
+          />
+          <el-input
+            v-model="searchForm.PaymentCode"
+            placeholder="应收款编号(不含符号)"
+            style="width: 200px; margin-left: 16px"
+            clearable
+          />
+          <el-button type="primary" style="margin-left: 8px; margin-right: 10px" @click="search()">
+            高级搜索
+          </el-button>
+          <el-dropdown>
+            <el-button>
+              操作
+              <el-icon>
+                <ArrowDown />
+              </el-icon>
             </el-button>
-          </el-col>
-          <el-col :span="20" style="text-align: right">
-            <el-date-picker v-model="dateRange" type="daterange" range-separator="-" start-placeholder="开始时间"
-              end-placeholder="结束时间" value-format="YYYY-MM-DD" style="width: 260px; margin-right: 12px"
-              @change="handleDateRangeChange" />
-            <el-input v-model="searchForm.PaymentCode" placeholder="收款编号(不含符号)" style="width: 220px; margin-left: 16px"
-              clearable />
-            <el-button type="primary" style="margin-left: 8px; margin-right: 10px" @click="search()">
-              高级搜索
-            </el-button>
-            <el-dropdown>
-              <el-button>
-                操作
-                <el-icon>
-                  <ArrowDown />
-                </el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="handleBatchDelete">删除</el-dropdown-item>
-                  <el-dropdown-item @click="handleExport">导出数据</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-            <el-button style="margin-left: 8px" @click="handleReset">重置</el-button>
-          </el-col>
-        </el-row>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="handleBatchDelete">删除</el-dropdown-item>
+                <el-dropdown-item @click="handleExport">导出数据</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <el-row>
+            <el-col :span="4"></el-col>
+            <el-col :span="20"></el-col>
+          </el-row>
+        </div>
       </div>
-      <el-table ref="tableRef" v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据"
-        @selection-change="handleSelectionChange" @row-click="handleRowClick">
+      <el-table
+        ref="tableRef"
+        v-loading="loading"
+        :data="tableData"
+        border
+        style="width: 100%"
+        empty-text="暂无数据"
+        @selection-change="handleSelectionChange"
+        @row-click="handleRowClick"
+      >
         <el-table-column type="selection" width="50" />
         <el-table-column prop="paymentCode" label="收款编号" />
         <el-table-column label="状态">
@@ -63,10 +103,16 @@
 
       <!-- 分页区域 -->
       <div style="margin-top: 16px; display: flex; justify-content: center">
-        <el-pagination v-model:current-page="pagination.PageIndex" v-model:page-size="pagination.PageSize"
-          :page-sizes="[5, 10, 15, 20]" :total="pagination.totalCount" :background="true"
-          layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
-          @current-change="handleCurrentChange" />
+        <el-pagination
+          v-model:current-page="pagination.PageIndex"
+          v-model:page-size="pagination.PageSize"
+          :page-sizes="[5, 10, 15, 20]"
+          :total="pagination.totalCount"
+          :background="true"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
       </div>
 
       <!-- 添加应收款弹窗 -->
@@ -81,19 +127,38 @@
           <!-- 关联合同 -->
           <el-form-item label="关联合同" prop="contractId">
             <el-select v-model="addForm.contractId" placeholder="请选择合同" style="width: 100%">
-              <el-option v-for="item in contractList" :key="item.id" :label="item.contractName" :value="item.id" />
+              <el-option
+                v-for="item in contractList"
+                :key="item.id"
+                :label="item.contractName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <!-- 关联应收款 -->
           <el-form-item label="关联应收款" prop="receivableId">
-            <el-select v-model="addForm.receivableId" placeholder="请选择应收款" style="width: 100%">
-              <el-option v-for="item in receivableList" :key="item.id" :label="item.receivablePay" :value="item.id" />
+            <el-select
+              v-model="addForm.receivableId"
+              placeholder="请选择应收款"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="item in receivableList"
+                :key="item.id"
+                :label="item.receivablePay"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <!-- 负责人 -->
           <el-form-item label="负责人" prop="userId">
             <el-select v-model="addForm.userId" placeholder="请选择负责人" style="width: 100%">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <!-- 收款编号 -->
@@ -106,19 +171,42 @@
           </el-form-item>
           <!-- 收款方式 -->
           <el-form-item label="收款方式" prop="paymentMethod" required>
-            <el-select v-model="addForm.paymentMethod" placeholder="请选择收款方式" style="width: 100%">
-              <el-option v-for="item in paymentMethodList" :label="item.paymentMethodName" :value="item.id" />
+            <el-select
+              v-model="addForm.paymentMethod"
+              placeholder="请选择收款方式"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="item in paymentMethodList"
+                :label="item.paymentMethodName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <!-- 收款时间 -->
           <el-form-item label="收款时间" prop="paymentDate" required>
-            <el-date-picker v-model="addForm.paymentDate" type="datetime" placeholder="选择时间" style="width: 100%"
-              value-format="YYYY-MM-DDTHH:mm:ss" />
+            <el-date-picker
+              v-model="addForm.paymentDate"
+              type="datetime"
+              placeholder="选择时间"
+              style="width: 100%"
+              value-format="YYYY-MM-DDTHH:mm:ss"
+            />
           </el-form-item>
           <!-- 审核人 -->
           <el-form-item label="审核人" prop="approverIds" required>
-            <el-select v-model="addForm.approverIds" multiple placeholder="请选择审核人" style="width: 100%">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+            <el-select
+              v-model="addForm.approverIds"
+              multiple
+              placeholder="请选择审核人"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <!-- 备注 -->
@@ -133,17 +221,33 @@
       </el-dialog>
 
       <!-- 客户选择抽屉 -->
-      <el-drawer v-model="showCustomerDrawer" title="客户列表" direction="rtl" size="80%" :with-header="true">
+      <el-drawer
+        v-model="showCustomerDrawer"
+        title="客户列表"
+        direction="rtl"
+        size="80%"
+        :with-header="true"
+      >
         <div style="display: flex; justify-content: flex-end; margin-bottom: 10px">
           <el-button type="primary" @click="handleCustomerSubmit">提交</el-button>
           <el-button @click="showCustomerDrawer = false">取消</el-button>
         </div>
         <el-table :data="customerList" style="width: 100%" highlight-current-row>
-          <el-table-column type="selection" width="50" :selectable="() => true" :reserve-selection="false"
-            :show-overflow-tooltip="false" :fixed="true" :label="''">
+          <el-table-column
+            type="selection"
+            width="50"
+            :selectable="() => true"
+            :reserve-selection="false"
+            :show-overflow-tooltip="false"
+            :fixed="true"
+            :label="''"
+          >
             <template #default="{ row }">
-              <el-radio :model-value="selectedCustomer && selectedCustomer.id" :label="row.id"
-                @change="() => handleCustomerRadio(row)" />
+              <el-radio
+                :model-value="selectedCustomer && selectedCustomer.id"
+                :label="row.id"
+                @change="() => handleCustomerRadio(row)"
+              />
             </template>
           </el-table-column>
           <el-table-column prop="id" label="客户编号" />
@@ -154,16 +258,32 @@
       </el-drawer>
 
       <!-- 高级搜索弹窗 -->
-      <el-dialog v-model="showAdvancedSearch" title="高级搜索" width="800px" :close-on-click-modal="false" append-to-body>
+      <el-dialog
+        v-model="showAdvancedSearch"
+        title="高级搜索"
+        width="800px"
+        :close-on-click-modal="false"
+        append-to-body
+      >
         <el-form :model="searchForm" label-width="100px" label-position="right">
           <el-form-item label="负责人">
             <el-select v-model="searchForm.UserId" placeholder="请选择">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="创建人">
             <el-select v-model="searchForm.CreatorId" placeholder="请选择创建人">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="所属客户" prop="customerName">
@@ -174,7 +294,12 @@
           </el-form-item>
           <el-form-item label="关联合同">
             <el-select v-model="searchForm.ContractId" placeholder="选择关联合同">
-              <el-option v-for="item in contractList" :key="item.id" :label="item.contractName" :value="item.id" />
+              <el-option
+                v-for="item in contractList"
+                :key="item.id"
+                :label="item.contractName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="收款编号">
@@ -182,22 +307,38 @@
           </el-form-item>
           <el-form-item label="收款方式">
             <el-select v-model="searchForm.PaymentMethod" placeholder="请选择收款方式">
-              <el-option v-for="item in paymentMethodList" :key="item.value" :label="item.paymentMethodName"
-                :value="item.id" />
+              <el-option
+                v-for="item in paymentMethodList"
+                :key="item.value"
+                :label="item.paymentMethodName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="收款时间">
-            <el-date-picker v-model="searchForm.PaymentDate" type="date" placeholder="选择时间" style="width: 100%" />
+            <el-date-picker
+              v-model="searchForm.PaymentDate"
+              type="date"
+              placeholder="选择时间"
+              style="width: 100%"
+            />
           </el-form-item>
           <el-form-item label="收款状态">
             <el-select v-model="searchForm.PaymentStatus" placeholder="选择收款状态">
               <el-option label="待审核" :value="0" />
-              <el-option label="已审核" :value="1" />
+              <el-option label="审核中" :value="1" />
+              <el-option label="已审核" :value="2" />
+              <el-option label="审核失败" :value="3" />
             </el-select>
           </el-form-item>
           <el-form-item label="收款审核人">
             <el-select v-model="searchForm.ApproverIds" multiple placeholder="选择收款审核人">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
             <el-tooltip content="可多选" placement="top">
               <el-icon style="margin-left: 8px">
@@ -213,7 +354,13 @@
       </el-dialog>
     </el-card>
 
-    <el-drawer v-model="showDetailDrawer" title="收款详情" size="60%" direction="rtl" :with-header="false">
+    <el-drawer
+      v-model="showDetailDrawer"
+      title="收款详情"
+      size="60%"
+      direction="rtl"
+      :with-header="false"
+    >
       <div style="padding: 24px 32px 0 32px">
         <!-- 顶部编号和按钮 -->
         <div style="display: flex; align-items: center; justify-content: space-between">
@@ -225,7 +372,12 @@
           </div>
           <div>
             <el-button type="primary" size="small" @click="handleEditDetail">修改</el-button>
-            <el-button type="danger" size="small" style="margin-left: 8px" @click="handleDelete(detailData)">
+            <el-button
+              type="danger"
+              size="small"
+              style="margin-left: 8px"
+              @click="handleDelete(detailData)"
+            >
               删除
             </el-button>
           </div>
@@ -234,7 +386,14 @@
         <!-- 基本信息分区 -->
         <div style="margin-top: 24px">
           <div
-            style="font-weight: bold;font-size: 15px;border-left: 3px solid #faad14;padding-left: 8px;margin-bottom: 18px;">
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
             基本信息
           </div>
           <el-row :gutter="32">
@@ -302,46 +461,79 @@
         <!-- 审核信息 -->
         <div>
           <div
-            style="font-weight: bold;font-size: 15px;border-left: 3px solid #faad14;padding-left: 8px;margin-bottom: 18px;">
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
             审核信息
           </div>
         </div>
-        <el-divider content-position="left">
-
-        </el-divider>
+        <el-divider content-position="left"></el-divider>
         <div style="color: #aaa; text-align: center; margin: 16px 0">暂无数据</div>
 
         <!-- 发票信息 -->
         <div>
           <div
-            style="font-weight: bold;font-size: 15px;border-left: 3px solid #faad14;padding-left: 8px;margin-bottom: 18px;">
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
             发票信息
           </div>
         </div>
-        <el-table :data="[]" style="width: 100%; margin-bottom: 16px">
-          <el-table-column prop="invoiceCode" label="发票编号" />
-          <el-table-column prop="status" label="状态" />
+        <el-table :data="invoiceList" style="width: 100%; margin-bottom: 16px">
+          <el-table-column prop="invoiceNumberCode" label="发票编号" />
+          <el-table-column prop="invoiceStatus" label="状态">
+            <template #default="scope">
+              <span v-if="scope.row.invoiceStatus === 0">未开票</span>
+              <span v-else-if="scope.row.invoiceStatus === 1">已开票</span>
+              <span v-else>--</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="amount" label="开票金额" />
-          <el-table-column prop="type" label="开票类型" />
-          <el-table-column prop="time" label="开票时间" />
-          <template #empty>
-            <div style="color: #aaa; text-align: center">没有数据</div>
-          </template>
+          <el-table-column prop="invoiceType" label="开票类型">
+            <template #default="scope">
+              <span v-if="scope.row.invoiceType === 0">普通发票</span>
+              <span v-else-if="scope.row.invoiceType === 1">专用发票</span>
+              <span v-else>--</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="invoiceDate" label="开票时间">
+            <template #default="scope">
+              {{ scope.row.invoiceDate ? scope.row.invoiceDate.substring(0, 10) : "" }}
+            </template>
+          </el-table-column>
         </el-table>
 
         <!-- 操作日志 -->
         <div>
           <div
-            style="font-weight: bold;font-size: 15px;border-left: 3px solid #faad14;padding-left: 8px;margin-bottom: 18px;">
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
             操作日志
           </div>
         </div>
-        <el-divider content-position="left">
-
-        </el-divider>
+        <el-divider content-position="left"></el-divider>
         <div v-if="detailData.approveComments && detailData.approveComments.length">
-          <div v-for="(item, idx) in detailData.approveComments" :key="idx"
-            style="margin-bottom: 8px; display: flex; align-items: center">
+          <div
+            v-for="(item, idx) in detailData.approveComments"
+            :key="idx"
+            style="margin-bottom: 8px; display: flex; align-items: center"
+          >
             <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
             <span style="color: #1890ff">{{ detailData.creatorRealName }}</span>
             <span style="margin-left: 8px; color: #999">{{ detailData.approveTimes[idx] }}</span>
@@ -353,24 +545,55 @@
     </el-drawer>
 
     <!-- 修改收款抽屉 -->
-    <el-drawer v-model="showEditDrawer" title="修改收款" size="600px" direction="rtl" :with-header="true">
+    <el-drawer
+      v-model="showEditDrawer"
+      title="修改收款"
+      size="600px"
+      direction="rtl"
+      :with-header="true"
+    >
       <el-form ref="editFormRef" :model="editForm" :rules="addRules" label-width="120px">
         <el-form-item label="所属客户" prop="customerName">
           <el-input v-model="editForm.customerName" disabled />
         </el-form-item>
         <el-form-item label="关联合同" prop="contractId">
-          <el-select v-model="editForm.contractId" placeholder="请选择合同" style="width: 100%" disabled>
-            <el-option v-for="item in contractList" :key="item.id" :label="item.contractName" :value="item.id" />
+          <el-select
+            v-model="editForm.contractId"
+            placeholder="请选择合同"
+            style="width: 100%"
+            disabled
+          >
+            <el-option
+              v-for="item in contractList"
+              :key="item.id"
+              :label="item.contractName"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="关联应收款" prop="receivableId">
-          <el-select v-model="editForm.receivableId" placeholder="请选择应收款" style="width: 100%" disabled>
-            <el-option v-for="item in receivableList" :key="item.id" :label="item.receivablePay" :value="item.id" />
+          <el-select
+            v-model="editForm.receivableId"
+            placeholder="请选择应收款"
+            style="width: 100%"
+            disabled
+          >
+            <el-option
+              v-for="item in receivableList"
+              :key="item.id"
+              :label="item.receivablePay"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="负责人" prop="userId">
           <el-select v-model="editForm.userId" placeholder="请选择负责人" style="width: 100%">
-            <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+            <el-option
+              v-for="item in userList"
+              :key="item.id"
+              :label="item.realName"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="收款编号" prop="paymentCode">
@@ -380,17 +603,40 @@
           <el-input v-model="editForm.amount" type="number" />
         </el-form-item>
         <el-form-item label="收款方式" prop="paymentMethod">
-          <el-select v-model="editForm.paymentMethod" placeholder="请选择收款方式" style="width: 100%">
-            <el-option v-for="item in paymentMethodList" :label="item.paymentMethodName" :value="item.id" />
+          <el-select
+            v-model="editForm.paymentMethod"
+            placeholder="请选择收款方式"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in paymentMethodList"
+              :label="item.paymentMethodName"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="收款时间" prop="paymentDate">
-          <el-date-picker v-model="editForm.paymentDate" type="datetime" placeholder="选择时间" style="width: 100%"
-            value-format="YYYY-MM-DDTHH:mm:ss" />
+          <el-date-picker
+            v-model="editForm.paymentDate"
+            type="datetime"
+            placeholder="选择时间"
+            style="width: 100%"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+          />
         </el-form-item>
         <el-form-item label="审核人" prop="approverIds">
-          <el-select v-model="editForm.approverIds" multiple placeholder="请选择审核人" style="width: 100%">
-            <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+          <el-select
+            v-model="editForm.approverIds"
+            multiple
+            placeholder="请选择审核人"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in userList"
+              :key="item.id"
+              :label="item.realName"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
@@ -407,13 +653,16 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onActivated } from "vue";
-import ReceivablesViewAPI, { ReceivablesPageQuery } from "@/api/Finance/receivables.api";
-import PaymentViewAPI, { PaymentPageQuery, PaymentSearch } from "@/api/Finance/payment.api";
-import CustomerAPI, { CustomerPageQuery, CustomerData } from "@/api/CustomerProcess/customer.api";
+import ReceivablesViewAPI from "@/api/Finance/receivables.api";
+import PaymentViewAPI, { PaymentSearch } from "@/api/Finance/payment.api";
+import CustomerAPI from "@/api/CustomerProcess/customer.api";
 import CrmContractAPI from "@/api/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
+import InvoiceViewAPI from "@/api/Finance/invoice.api";
+import { useUserStore } from "@/store";
+const store = useUserStore();
 
 const router = useRouter();
 const route = useRoute();
@@ -432,6 +681,26 @@ const pagination = reactive({
 // 时间范围中间变量
 const dateRange = ref([]);
 
+// 查看范围和收款进度筛选
+const scopeType = ref("all");
+const progressType = ref("all");
+const currentUserId = store.userInfo.id; // 获取当前登录人ID
+console.log("当前登录人ID", currentUserId);
+
+watch([scopeType, progressType], () => {
+  // 先清空筛选条件
+  searchForm.UserId = "";
+  searchForm.CreatorId = "";
+
+  if (scopeType.value === "myDuty") {
+    searchForm.UserId = currentUserId?.toString() || ""; // 负责人=当前用户
+  } else if (scopeType.value === "myCreate") {
+    searchForm.CreatorId = currentUserId?.toString() || ""; // 创建人=当前用户
+  }
+
+  GetReceivables();
+});
+
 // 搜索表单
 const searchForm = reactive({
   UserId: "",
@@ -445,16 +714,17 @@ const searchForm = reactive({
   ApproverIds: [],
   StartTime: "",
   EndTime: "",
-  ReceivableCode: "",
-  ReceivablePay: "",
-  CreateId: "",
+  scopeType: "all",
+  progressType: "all",
 });
 // 获取收款数据
 const GetPayment = () => {
   loading.value = true;
-  const params: PaymentPageQuery = {
+  const params = {
     PageIndex: pagination.PageIndex,
     PageSize: pagination.PageSize,
+    StartTime: searchForm.StartTime,
+    EndTime: searchForm.EndTime,
     UserId: searchForm.UserId,
     CreatorId: searchForm.CreatorId,
     PaymentCode: searchForm.PaymentCode,
@@ -464,11 +734,6 @@ const GetPayment = () => {
     PaymentDate: searchForm.PaymentDate,
     PaymentStatus: searchForm.PaymentStatus,
     ApproverIds: searchForm.ApproverIds,
-    StartTime: searchForm.StartTime,
-    EndTime: searchForm.EndTime,
-    ReceivableCode: searchForm.ReceivableCode,
-    ReceivablePay: searchForm.ReceivablePay,
-    CreateId: searchForm.CreateId,
   };
 
   PaymentViewAPI.GetPaymentPage(params)
@@ -486,7 +751,7 @@ const receivableList: any = ref([]); // 用于存储应收款列表数据
 // 获取应收款数据
 const GetReceivables = () => {
   loading.value = true;
-  const params: ReceivablesPageQuery = {
+  const params = {
     PageIndex: 1,
     PageSize: 111,
   };
@@ -566,6 +831,14 @@ function handleCurrentChange(val: number) {
 const showAdvancedSearch = ref(false);
 const search = () => {
   showAdvancedSearch.value = true;
+  searchForm.UserId = "";
+  searchForm.CreatorId = "";
+  searchForm.CustomerId = "";
+  searchForm.ContractId = "";
+  searchForm.PaymentMethod = "";
+  searchForm.PaymentDate = "";
+  searchForm.PaymentStatus = "";
+  searchForm.ApproverIds = [];
 };
 
 // 搜索
@@ -574,26 +847,6 @@ function handleSearch() {
   showAdvancedSearch.value = false;
   pagination.PageIndex = 1; // 重置到第一页
   GetPayment();
-}
-// 重置
-function handleReset() {
-  searchForm.ReceivableCode = "";
-  searchForm.UserId = "";
-  searchForm.CreatorId = "";
-  searchForm.CustomerId = "";
-  searchForm.ContractId = "";
-  searchForm.PaymentCode = "";
-  searchForm.PaymentMethod = "";
-  searchForm.PaymentDate = "";
-  searchForm.PaymentStatus = "";
-  searchForm.ApproverIds = [];
-  searchForm.StartTime = "";
-  searchForm.EndTime = "";
-  searchForm.ReceivableCode = "";
-  searchForm.ReceivablePay = "";
-  searchForm.CreateId = "";
-  pagination.PageIndex = 0;
-  handleSearch();
 }
 
 // 监听时间范围变化，自动同步到 StartTime 和 EndTime，并自动查询
@@ -604,11 +857,11 @@ function handleDateRangeChange(val: any) {
 }
 
 // 客户列表数据（实际应从API获取，这里举例）
-const customerList = ref<CustomerData[]>([]);
+const customerList: any = ref([]);
 
 function showCustomer() {
   showCustomerDrawer.value = true;
-  const params: CustomerPageQuery = {
+  const params = {
     PageIndex: 1,
     PageSize: 111,
   };
@@ -617,8 +870,6 @@ function showCustomer() {
     .then((res) => {
       console.log("客户列表数据", res.data);
       customerList.value = res.data;
-      pagination.totalCount = res.totalCount;
-      pagination.pageCount = res.pageCount;
     })
     .finally(() => {
       loading.value = false;
@@ -652,8 +903,8 @@ const GetcontractData = async () => {
   });
   CrmContractAPI.getInfo(pageForm)
     .then((res) => {
-      console.log("合同列表数据", res);
-      contractList.value = res;
+      console.log("合同列表数据", res.data);
+      contractList.value = res.data;
     })
     .finally(() => {
       loading.value = false;
@@ -762,10 +1013,22 @@ function handleExport() {
 
 const showDetailDrawer = ref(false);
 const detailData = ref<any>({});
+const invoiceList = ref<any[]>([]);
 
 function handleRowClick(row: any) {
   detailData.value = row;
   showDetailDrawer.value = true;
+  fetchInvoiceList(row.id);
+}
+
+function fetchInvoiceList(paymentId: string) {
+  InvoiceViewAPI.GetInvoicePage({ paymentId, PageIndex: 1, PageSize: 100 })
+    .then((res) => {
+      invoiceList.value = res.data || [];
+    })
+    .catch(() => {
+      invoiceList.value = [];
+    });
 }
 
 // 删除应收款
@@ -811,7 +1074,7 @@ function handleEditDetail() {
 function handleEditSubmit() {
   editFormRef.value.validate((valid: boolean) => {
     if (!valid) return;
-    PaymentViewAPI.UpdatePayment(detailData.value.id, editForm,).then((res) => {
+    PaymentViewAPI.UpdatePayment(detailData.value.id, editForm).then((res) => {
       if (res) {
         ElMessage.success("修改成功");
         showEditDrawer.value = false;

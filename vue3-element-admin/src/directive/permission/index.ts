@@ -17,7 +17,7 @@ export const hasPerm: Directive = {
       );
     }
 
-    const { roles, perms } = useUserStore().userInfo;
+    const { roles, permissions } = useUserStore().userInfo;
 
     // 超级管理员拥有所有权限，如果是"*:*:*"权限标识，则不需要进行权限校验
     if (roles.includes(ROLE_ROOT) || requiredPerms.includes("*:*:*")) {
@@ -26,8 +26,8 @@ export const hasPerm: Directive = {
 
     // 检查权限
     const hasAuth = Array.isArray(requiredPerms)
-      ? requiredPerms.some((perm) => perms.includes(perm))
-      : perms.includes(requiredPerms);
+      ? requiredPerms.some((perm) => permissions.includes(perm))
+      : permissions.includes(requiredPerms);
 
     // 如果没有权限，移除该元素
     if (!hasAuth && el.parentNode) {
