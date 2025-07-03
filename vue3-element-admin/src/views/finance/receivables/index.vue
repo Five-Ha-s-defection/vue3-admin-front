@@ -25,7 +25,7 @@
           </el-radio-group> -->
         </div>
         <div style="display: flex; align-items: center; margin-bottom: 8px">
-          <el-button type="primary" style="margin-left: 12px; margin-right: 350px" @click="Addlist">
+          <el-button type="primary" style="margin-left: 32px; margin-right: 400px" @click="Addlist">
             添加应收款
           </el-button>
           <el-date-picker
@@ -424,7 +424,7 @@ import ReceivablesViewAPI, {
   ReceivablesPageQuery,
   ReceivableSearch,
 } from "@/api/Finance/receivables.api";
-import CustomerAPI from "@/api/CustomerProcess/customer.api"; 
+import CustomerAPI, { CustomerPageQuery, CustomerData } from "@/api/CustomerProcess/customer.api";
 import CrmContractAPI from "@/api/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -590,11 +590,11 @@ function handleDateRangeChange(val: any) {
 }
 
 // 客户列表数据（实际应从API获取，这里举例）
-const customerList:any = ref([]);
+const customerList = ref<CustomerData[]>([]);
 
 function showCustomer() {
   showCustomerDrawer.value = true;
-  const params = {
+  const params: CustomerPageQuery = {
     PageIndex: 1,
     PageSize: 111,
   };
@@ -603,6 +603,8 @@ function showCustomer() {
     .then((res) => {
       console.log("客户列表数据", res.data);
       customerList.value = res.data;
+      pagination.totalCount = res.totalCount;
+      pagination.pageCount = res.pageCount;
     })
     .finally(() => {
       loading.value = false;
@@ -636,8 +638,8 @@ const GetcontractData = async () => {
   });
   CrmContractAPI.getInfo(pageForm)
     .then((res) => {
-      console.log("合同列表数据", res.data);
-      contractList.value = res.data;
+      console.log("合同列表数据", res);
+      contractList.value = res;
     })
     .finally(() => {
       loading.value = false;
