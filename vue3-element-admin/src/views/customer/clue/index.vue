@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-card class="search-card" shadow="never">
       <div class="clue-header">
-        <span>线索列表 | 总记录数：<b>{{ total }}</b> 条</span>
+        <span>线索列表 | 总记录数：<b>{{ queryParams.totalCount }}</b> 条</span>
       </div>
       <!-- 查看范围 -->
       <el-row class="clue-row" align="middle">
@@ -10,7 +10,9 @@
           <span class="clue-label">查看范围</span>
           <el-link v-for="item in scopeOptions" :key="item.value" :underline="false"
             :type="queryParams.type === item.value ? 'primary' : 'default'" class="clue-link"
-            @click="queryParams.type = item.value">{{ item.label }}</el-link>
+            @click="handleScopeChange(item.value)">
+            {{ item.label }}
+          </el-link>
         </el-col>
       </el-row>
       <!-- 线索状态 -->
@@ -99,6 +101,63 @@
         </el-col>
       </el-row>
     </el-card>
+    <!-- 添加线索弹出框 -->
+    <el-dialog v-model="addcluedialogVisible" title="添加线索" width="500">
+      <el-form ref="ruleFormRef" style="max-width: 600px" :model="ruleForm" :rules="rules" label-width="auto">
+        <el-form-item label="线索负责人">
+          <el-select v-model="ruleForm.userId" placeholder="请选择负责人">
+            <el-option v-for="item in userList" :label="item.userName" :value="item.id" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="姓名" prop="clueName">
+          <el-input v-model="ruleForm.clueName" />
+        </el-form-item>
+
+        <el-form-item label="电话" prop="cluePhone">
+          <el-input v-model="ruleForm.cluePhone" maxlength="11" show-word-limit/>
+        </el-form-item>
+
+        <el-form-item label="线索来源">
+          <el-select v-model="ruleForm.clueSourceId" placeholder="请选择线索来源">
+            <el-option v-for="item in cluesourceList" :label="item.clueSourceName" :value="item.id" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="邮箱">
+          <el-input v-model="ruleForm.clueEmail" />
+        </el-form-item>
+
+        <el-form-item label="微信号">
+          <el-input v-model="ruleForm.clueWechat" />
+        </el-form-item>
+
+        <el-form-item label="QQ">
+          <el-input v-model="ruleForm.clueQQ" />
+        </el-form-item>
+
+        <el-form-item label="公司名称">
+          <el-input v-model="ruleForm.companyName" />
+        </el-form-item>
+
+        <el-form-item label="行业">
+          <el-select v-model="ruleForm.industryId" placeholder="请选择行业">
+            <el-option v-for="item in industryList" :label="item.industryName" :value="item.id" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="地址">
+          <el-input v-model="ruleForm.address" />
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" @click="submitForm(ruleFormRef)">
+            提交
+          </el-button>
+          <el-button @click="resetForm(ruleFormRef)">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
 
     <!-- 显示线索列表信息 -->
     <!-- 表格区域和分页保持不变 -->
@@ -165,20 +224,48 @@
               <el-button type="primary" link>操作</el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item @click="handleEdit(row)">编辑</el-dropdown-item>
+                  <!-- <el-dropdown-item @click="handleEdit(row)">编辑</el-dropdown-item>
                   <el-dropdown-item @click="handleFollow(row)">跟进</el-dropdown-item>
-                  <el-dropdown-item divided @click="handleDelete(row)">删除</el-dropdown-item>
+                  <el-dropdown-item divided @click="handleDelete(row)">删除</el-dropdown-item> -->
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination v-model:current-page="queryParams.PageIndex" v-model:page-size="queryParams.PageSize"
-        :page-sizes="[10, 20, 50, 100]" :total="total" layout="total, sizes, prev, pager, next, jumper"
-        style="margin-top: 16px;" @size-change="handleSizeChange" @current-change="handleCurrentChange" />
-    </el-card>
+      <!-- 分页区域 -->
+      <table>
+        <tbody>
+          <tr>
+            <td>
+              <el-pagination v-model:current-page="queryParams.PageIndex" v-model:page-size="queryParams.PageSize"
+                :page-sizes="[2, 4, 6, 8, 10, 20, 30]" layout="slot, sizes" :total="queryParams.totalCount"
+                prev-text="上一页" next-text="下一页" @size-change="handleSizeChange" @current-change="handleCurrentChange">
+                共{{ queryParams.pageCount }}页 共{{ queryParams.totalCount }}条
+                当前第{{ queryParams.PageIndex }}/{{ queryParams.pageCount }}页
+              </el-pagination>
+            </td>
 
+            <td>
+              <el-pagination v-model:current-page="queryParams.PageIndex" v-model:page-size="queryParams.PageSize"
+                :page-sizes="[2, 4, 6, 8, 10, 20, 30]" layout="slot, prev, pager, next" :total="queryParams.totalCount"
+                prev-text="上一页" next-text="下一页" @size-change="handleSizeChange" @current-change="handleCurrentChange">
+                <el-button :disabled="queryParams.PageIndex == 1" @click="handleCurrentChange(1)">首页</el-button>
+              </el-pagination>
+            </td>
+
+            <td>
+              <el-pagination v-model:current-page="queryParams.PageIndex" v-model:page-size="queryParams.PageSize"
+                :page-sizes="[2, 4, 6, 8, 10, 20, 30]" layout=" slot,jumper" :total="queryParams.totalCount"
+                prev-text="上一页" next-text="下一页" @size-change="handleSizeChange" @current-change="handleCurrentChange">
+                <el-button :disabled="queryParams.PageIndex == queryParams.pageCount"
+                  @click="handleCurrentChange(queryParams.pageCount)">尾页</el-button>
+              </el-pagination>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </el-card>
 
     <!-- 高级筛选弹出框 -->
     <el-dialog v-model="advancedDialogVisible" width="1000px" :close-on-click-modal="false">
@@ -263,7 +350,7 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="线索来源">
               <div class="form-item-flex">
-                <el-select v-model="queryParams.ClueSourceId"  placeholder="请选择">
+                <el-select v-model="queryParams.ClueSourceId" placeholder="请选择">
                   <el-option v-for="item in cluesourceList" :label="item.clueSourceName" :value="item.id" />
                 </el-select>
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
@@ -315,7 +402,7 @@
             </el-form-item></el-col>
           <el-col :span="24"><el-form-item label="行业">
               <div class="form-item-flex">
-                <el-select v-model="queryParams.IndustryId"  placeholder="请选择">
+                <el-select v-model="queryParams.IndustryId" placeholder="请选择">
                   <el-option v-for="item in industryList" :label="item.industryName" :value="item.id" />
                 </el-select>
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
@@ -345,15 +432,97 @@
 import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose } from '@element-plus/icons-vue';
-import { ShowClueList, GetUser,GetClueSource,GetIndustry} from '@/api/CustomerProcess/Clue/clue.api';
+import { ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue } from '@/api/CustomerProcess/Clue/clue.api';
 import moment from 'moment';
 import dayjs from 'dayjs';
+import { useUserStore } from "@/store";
+import type { FormInstance, FormRules } from 'element-plus'
+
+const user = useUserStore();
 
 
+//================添加线索===========================
+const addcluedialogVisible = ref(false);
+interface RuleForm {
+  userId: number | string
+  clueName: string
+  cluePhone: string
+  clueSourceId: number | string
+  clueEmail: string
+  clueWechat: string
+  clueQQ: string
+  companyName: string
+  industryId: number | string
+  address: string
+  remark: string
+  status: number
+}
+
+const ruleFormRef = ref<FormInstance>()
+const ruleForm = reactive<RuleForm>({
+  userId: '',
+  clueName: '',
+  cluePhone: '',
+  clueSourceId: '',
+  clueEmail: '',
+  clueWechat: '',
+  clueQQ: '',
+  companyName: '',
+  industryId: '',
+  address: '',
+  remark: '',
+  status: 0,
+})
+
+const rules = reactive<FormRules<RuleForm>>({
+  clueName: [
+    { required: true, message: '姓名是必填项', trigger: 'blur' },
+  ],
+  cluePhone: [
+    { required: true, message: '电话是必填项', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号', trigger: 'blur', },
+  ],
+})
+
+const submitForm = async (formEl: FormInstance | undefined) => {
+  if (!formEl) return
+  await formEl.validate(async (valid, fields) => {
+    if (valid) {
+      console.log('添加线索参数：', ruleForm);
+      await AddClue(ruleForm)
+        .then((res) => {
+          if(res)
+        {
+          ElMessage.success('添加线索成功');
+          addcluedialogVisible.value = false;
+          resetForm(formEl);
+          fetchClueList(); // 刷新线索列表
+        }
+        else
+        {
+          ElMessage.success('添加线索成功');
+        }
+        })
+        .catch((error) => {
+          console.error('添加线索失败:', error);
+          ElMessage.error('添加线索失败，请稍后再试');
+        });
+    } else {
+      console.log('error submit!', fields)
+    }
+  })
+}
+
+const resetForm = (formEl: FormInstance | undefined) => {
+  if (!formEl) return
+  formEl.resetFields()
+}
+
+//================显示查询参数===========================
 const scopeOptions = [
-  { label: '我负责的', value: 0 },
-  { label: '我创建的', value: 1 },
-  { label: '全部', value: 2 }
+  { label: '我负责的', value: 1 },
+  { label: '我创建的', value: 2 },
+  { label: '全部', value: 0 }
 ];
 const orderOptions = [
   { label: '按最后跟进时间排序', value: 0 },
@@ -362,10 +531,10 @@ const orderOptions = [
 ];
 
 const loading = ref(false);
-const total = ref(0);
 const clueList = ref<any[]>([]);
 const selectedIds = ref<any[]>([]);
 
+//定义查询显示参数
 const queryParams = reactive({
   type: undefined as number | undefined, // 线索类型
   CreatedBy: '', // 创建人uuid
@@ -379,6 +548,8 @@ const queryParams = reactive({
   Keyword: '', // string
   PageIndex: 1, // int32
   PageSize: 10, // int32
+  totalCount: 0, // 总记录数
+  pageCount: 0, // 总页数
   UserIds: [],      // 负责人
   CreatedByIds: [], // 创建人
   ClueCode: '',     // 线索编号
@@ -476,6 +647,7 @@ const userList: any = ref([])
 const selectUser = async () => {
   await GetUser()
     .then(res => {
+       console.log('用户列表', res)
       userList.value = res
     })
 }
@@ -485,6 +657,7 @@ const cluesourceList: any = ref([])
 const selectClueSource = async () => {
   await GetClueSource()
     .then(res => {
+       console.log('线索来源列表', res)
       cluesourceList.value = res
     })
 }
@@ -494,6 +667,7 @@ const industryList: any = ref([])
 const selectIndustry = async () => {
   await GetIndustry()
     .then(res => {
+       console.log('行业列表', res)
       industryList.value = res
     })
 }
@@ -523,6 +697,8 @@ const fetchClueList = async () => {
       Keyword: queryParams.Keyword,
       PageIndex: queryParams.PageIndex,
       PageSize: queryParams.PageSize,
+      totalCount: queryParams.totalCount, // 总记录数
+      pageCount: queryParams.pageCount, // 总页数
       UserIds: queryParams.UserIds,
       CreatedByIds: queryParams.CreatedByIds,
       ClueCode: queryParams.ClueCode,
@@ -546,9 +722,13 @@ const fetchClueList = async () => {
 
     console.log('最终请求参数:', params);
     const res = await ShowClueList(params);
-    clueList.value = res.data
+    clueList.value = res.data;
+    queryParams.totalCount = res.totalCount || 0; // 更新总记录数
+    queryParams.pageCount = res.pageCount || 0; // 更新总页数
   } catch (e) {
     ElMessage.error('获取线索列表失败');
+    queryParams.totalCount = 0; // 重置总记录数
+    queryParams.pageCount = 0; // 重置总页数
   } finally {
     loading.value = false;
   }
@@ -558,6 +738,21 @@ const fetchClueList = async () => {
 const handleQuery = () => {
   queryParams.PageIndex = 1;
   fetchClueList();
+};
+
+//查询查看范围
+const handleScopeChange = (val: number) => {
+  queryParams.type = val;
+  queryParams.AssignedTo = '';
+  queryParams.CreatedBy = '';
+  queryParams.UserIds = [];
+  queryParams.CreatedByIds = [];
+  if (val === 1) {
+    queryParams.AssignedTo = user.userInfo.id || '';
+  } else if (val === 2) {
+    queryParams.CreatedBy = user.userInfo.id || '';
+  }
+  handleQuery();
 };
 
 // 重置查询条件
@@ -587,26 +782,32 @@ const handleResetQuery = () => {
 const handleSelectionChange = (val: any[]) => {
   selectedIds.value = val.map(item => item.id);
 };
+
+//分页
 const handleSizeChange = (val: number) => {
+  console.log(`${val} items per page`)
   queryParams.PageSize = val;
   fetchClueList();
-};
+}
 const handleCurrentChange = (val: number) => {
+  console.log(`current page: ${val}`)
   queryParams.PageIndex = val;
   fetchClueList();
-};
+}
+
+// 添加线索方法
 const handleAddClue = () => {
-  ElMessage.info('添加线索功能开发中...');
+  addcluedialogVisible.value = true;
 };
-const handleEdit = (row: any) => {
-  ElMessage.info('编辑功能开发中...');
-};
-const handleFollow = (row: any) => {
-  ElMessage.info('跟进功能开发中...');
-};
-const handleDelete = (row: any) => {
-  ElMessage.info('删除功能开发中...');
-};
+// const handleEdit = (row: any) => {
+//   ElMessage.info('编辑功能开发中...');
+// };
+// const handleFollow = (row: any) => {
+//   ElMessage.info('跟进功能开发中...');
+// };
+// const handleDelete = (row: any) => {
+//   ElMessage.info('删除功能开发中...');
+// };
 
 
 const handleOrderClick = (value: number) => {
@@ -644,11 +845,13 @@ function filterParams(params: any) {
   return result;
 }
 
+// 钩子函数======================================================
 onMounted(() => {
   fetchClueList();
   selectUser(); // 获取用户列表
   selectClueSource(); // 获取线索来源列表
   selectIndustry(); // 获取行业列表
+  handleScopeChange(1); // 默认查看我负责的线索
 });
 </script>
 
@@ -657,9 +860,9 @@ onMounted(() => {
   padding: 20px;
 }
 
-.search-card {
-  margin-bottom: 20px;
-}
+  .search-card {
+    margin-bottom: 20px;
+  }
 
 .clue-header {
   font-size: 16px;
@@ -701,9 +904,9 @@ onMounted(() => {
 
 .ml16 {
   margin-left: 16px;
-}
+  }
 
-.table-card {
+  .table-card {
   margin-top: 0;
 }
 
@@ -794,7 +997,7 @@ onMounted(() => {
   font-size: 14px;
   color: #303133;
   font-weight: 400;
-  text-align: right;
+    text-align: right;
   flex-shrink: 0;
   margin-left: 40px;
 }

@@ -30,3 +30,27 @@ export const GetIndustry = () => {
     method: "get",
   });
 };
+
+export const AddClue= (data: any) => {
+  return request({
+    url: `${CLUE_BASE_URL}/clue`,
+    method: "post",
+    data,
+  });
+}
+
+
+/** 分页查询参数 */
+export interface CluePageQuery {
+  PageIndex: number;
+  PageSize: number;
+  [key: string]: any; // 其他查询条件
+}
+
+/** 分页返回结构 */
+export interface CluePageResult {
+  totalCount: number;
+  pageCount: number;
+  data: [];
+}
+

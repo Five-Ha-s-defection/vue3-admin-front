@@ -1,12 +1,14 @@
 import request from "@/utils/request";
 
+const CLUE_BASE_URL = "/api/app/clue";
+
 const CustomerAPI = {
   GetCustomerPage(data: any) {
     return request<any, CustomerPageResult>({
       url: `/api/app/customer/show-customer`,
       method: "get",
       params: data,
-    });
+    }); 
   },
 };
 
