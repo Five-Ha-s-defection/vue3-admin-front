@@ -25,7 +25,7 @@
           </el-radio-group> -->
         </div>
         <div style="display: flex; align-items: center; margin-bottom: 8px">
-          <el-button type="primary" style="margin-left: 10px; margin-right: 400px" @click="Addlist">
+          <el-button type="primary" style="margin-left: 10px; margin-right: 350px" @click="Addlist">
             添加收款
           </el-button>
           <el-date-picker
@@ -35,7 +35,7 @@
             start-placeholder="开始时间"
             end-placeholder="结束时间"
             value-format="YYYY-MM-DD"
-            style="width: 30px; margin-right: 12px"
+            style="width: 50px; margin-right: 12px"
             @change="handleDateRangeChange"
           />
           <el-input
@@ -653,9 +653,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onActivated } from "vue";
-import ReceivablesViewAPI, { ReceivablesPageQuery } from "@/api/Finance/receivables.api";
-import PaymentViewAPI, { PaymentSearch,PaymentPageQuery } from "@/api/Finance/payment.api";
-import CustomerAPI, { CustomerPageQuery, CustomerData } from "@/api/CustomerProcess/customer.api";
+import ReceivablesViewAPI from "@/api/Finance/receivables.api";
+import PaymentViewAPI, { PaymentSearch } from "@/api/Finance/payment.api";
+import CustomerAPI from "@/api/CustomerProcess/customer.api";
 import CrmContractAPI from "@/api/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -720,9 +720,11 @@ const searchForm = reactive({
 // 获取收款数据
 const GetPayment = () => {
   loading.value = true;
-  const params: PaymentPageQuery = {
+  const params = {
     PageIndex: pagination.PageIndex,
     PageSize: pagination.PageSize,
+    StartTime: searchForm.StartTime,
+    EndTime: searchForm.EndTime,
     UserId: searchForm.UserId,
     CreatorId: searchForm.CreatorId,
     PaymentCode: searchForm.PaymentCode,
@@ -749,7 +751,7 @@ const receivableList: any = ref([]); // 用于存储应收款列表数据
 // 获取应收款数据
 const GetReceivables = () => {
   loading.value = true;
-  const params: ReceivablesPageQuery = {
+  const params = {
     PageIndex: 1,
     PageSize: 111,
   };
@@ -833,7 +835,6 @@ const search = () => {
   searchForm.CreatorId = "";
   searchForm.CustomerId = "";
   searchForm.ContractId = "";
-  searchForm.PaymentCode = "";
   searchForm.PaymentMethod = "";
   searchForm.PaymentDate = "";
   searchForm.PaymentStatus = "";
@@ -856,11 +857,11 @@ function handleDateRangeChange(val: any) {
 }
 
 // 客户列表数据（实际应从API获取，这里举例）
-const customerList = ref<CustomerData[]>([]);
+const customerList: any = ref([]);
 
 function showCustomer() {
   showCustomerDrawer.value = true;
-  const params: CustomerPageQuery = {
+  const params = {
     PageIndex: 1,
     PageSize: 111,
   };
@@ -869,8 +870,6 @@ function showCustomer() {
     .then((res) => {
       console.log("客户列表数据", res.data);
       customerList.value = res.data;
-      pagination.totalCount = res.totalCount;
-      pagination.pageCount = res.pageCount;
     })
     .finally(() => {
       loading.value = false;
@@ -904,8 +903,8 @@ const GetcontractData = async () => {
   });
   CrmContractAPI.getInfo(pageForm)
     .then((res) => {
-      console.log("合同列表数据", res);
-      contractList.value = res;
+      console.log("合同列表数据", res.data);
+      contractList.value = res.data;
     })
     .finally(() => {
       loading.value = false;
