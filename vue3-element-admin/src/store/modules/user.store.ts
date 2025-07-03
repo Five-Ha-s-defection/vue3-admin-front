@@ -79,6 +79,7 @@ export const useUserStore = defineStore("user", () => {
           }
           //统一字段映射，确保nickname和avatar等存在
           const transformdUser: UserInfo = {
+            id: data.id || "",
             username: data.username,
             realName: data.realName || "",
             avatar: data.avatar || "",

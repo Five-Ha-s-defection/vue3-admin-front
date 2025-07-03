@@ -28,4 +28,41 @@ export const PermissionAPI = {
   savePermissions(data: { roleId: string; permissionIds: string[] }) {
     return request.post("/api/app/role-permission-services/assign-permissions", data);
   },
+
+  /**
+   * 保存权限
+   * @param data 权限信息
+   * @returns 保存权限
+   */
+  addPermission(data: PermissionInfo) {
+    return request.post(`${base}/permission`, data);
+  },
+
+  /**
+   * 删除权限
+   * @param id 权限id
+   * @returns 删除权限
+   */
+  deletePermission(id: string) {
+    return request.delete(`${base}/${id}/permission`);
+  },
+  /**
+   * 修改权限
+   * @param data 权限信息
+   * @returns 修改权限
+   */
+  updatePermission(data: PermissionInfo) {
+    return request.put(`${base}/${data.id}/permission`, data);
+  },
 };
+
+interface PermissionInfo {
+  id?: string;
+  permissionName: string;
+  permissionCode: string;
+  groupName: string; // 分组名，如：客户管理、系统管理等
+  description?: string;
+}
+
+export default PermissionAPI;
+export { PermissionInfo };

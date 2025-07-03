@@ -1,10 +1,15 @@
 <template>
-  <div class="logo">
+  <!-- <div class="logo">
     <transition enter-active-class="animate__animated animate__fadeInLeft">
-      <router-link :key="+collapse" class="wh-full flex-center" to="/">
-        <img :src="logo" class="w20px h20px" style="width: 140px; height: 40px;"/>
+      <router-link v-if="!isCollapse" :key="+collapse" class="wh-full flex-center" to="/">
+        <img :src="logo" class="w20px h20px" style="width: 140px; height: 40px" />
       </router-link>
     </transition>
+  </div> -->
+  <div class="logo-box" :class="collapse ? 'logo-mini' : 'logo-full'">
+    <router-link :key="+collapse" class="wh-full flex-center" to="/">
+      <img :src="logo" class="logo-img" />
+    </router-link>
   </div>
 </template>
 
@@ -35,37 +40,45 @@ defineProps({
 }
 </style>
 
-<style lang="scss">
-// 顶部布局和混合布局的特殊处理
-.layout-top,
-.layout-mix {
-  .logo {
-    background-color: transparent !important;
-
-    .title {
-      color: var(--menu-text);
-    }
+<style lang="scss" scoped>
+.logo-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: $navbar-height;
+  background-color: $sidebar-logo-background;
+  transition: all 0.3s;
+  .logo-img {
+    transition: all 0.3s;
+  }
+  .logo-text {
+    margin-left: 10px;
+    font-size: 20px;
+    font-weight: bold;
+    color: $sidebar-logo-text-color;
+    transition: all 0.3s;
   }
 }
-
-// 宽屏时：openSidebar 状态下显示完整Logo+文字
-.openSidebar {
-  &.layout-top .layout__header-left .logo,
-  &.layout-mix .layout__header-logo .logo {
-    width: $sidebar-width; // 210px，显示logo+文字
+.logo-mini {
+  padding: 0;
+  .logo-img {
+    width: 32px;
+    height: 32px;
   }
-}
-
-// 窄屏时：hideSidebar 状态下只显示Logo图标
-.hideSidebar {
-  &.layout-top .layout__header-left .logo,
-  &.layout-mix .layout__header-logo .logo {
-    width: $sidebar-width-collapsed; // 54px，只显示logo
-  }
-
-  // 隐藏文字，只显示图标
-  .logo .title {
+  .logo-text {
     display: none;
+  }
+}
+.logo-full {
+  padding: 8px 0 8px 12px;
+  .logo-img {
+    width: 120px;
+    height: 36px;
+  }
+  .logo-text {
+    display: inline-block;
+    font-size: 20px;
   }
 }
 </style>

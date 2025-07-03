@@ -54,7 +54,7 @@ export interface UserInfo {
   id?: string; // 修改时需要
   userName: string;
   realName: string;
-  password: string;
+  password?: string;
   avatar?: string;
   //手机号
   phoneInfo: string;
