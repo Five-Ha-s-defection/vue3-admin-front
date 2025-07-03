@@ -424,8 +424,8 @@ import ReceivablesViewAPI, {
   ReceivablesPageQuery,
   ReceivableSearch,
 } from "@/api/Finance/receivables.api";
-import CustomerAPI, { CustomerPageQuery, CustomerData } from "@/api/CustomerProcess/customer.api";
-import CrmContractAPI from "@/api/crmcontract";
+import CustomerAPI from "@/api/CustomerProcess/customer.api"; 
+import CrmContractAPI from "@/api/CrmContract/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
@@ -590,11 +590,11 @@ function handleDateRangeChange(val: any) {
 }
 
 // 客户列表数据（实际应从API获取，这里举例）
-const customerList = ref<CustomerData[]>([]);
+const customerList:any = ref([]);
 
 function showCustomer() {
   showCustomerDrawer.value = true;
-  const params: CustomerPageQuery = {
+  const params = {
     PageIndex: 1,
     PageSize: 111,
   };
