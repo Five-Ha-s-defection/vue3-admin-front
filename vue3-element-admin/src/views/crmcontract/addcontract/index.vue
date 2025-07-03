@@ -14,6 +14,7 @@
         <el-form-item label="所属客户" prop="customerId">
           <el-tag v-if="addContractForm.customerId" type="success">
             {{ addContractForm.customerId }}
+            {{ addContractForm.customerName }}
           </el-tag>
           <el-tag v-else type="info">未选择客户</el-tag>
           <el-button
@@ -282,6 +283,7 @@ import ProductApi from "@/api/CxsApi/CxsProductApi"; // 按你的实际路径引
 // 添加合同表单
 interface addContractForm {
   customerId: string; // 所属客户ID
+  customerName: string; // 所属客户名称
   businessOpportunityId: string; // 选择商机ID
   userId: string; // 负责人ID
   signDate: string; // 签订日期
@@ -313,6 +315,7 @@ interface CreateUpdateReceibablesDto {
 // 添加合同表单
 const addContractForm = reactive<addContractForm>({
   customerId: "",
+  customerName: "",
   businessOpportunityId: "",
   userId: "",
   signDate: "",
@@ -338,6 +341,7 @@ const addContractForm = reactive<addContractForm>({
   },
 });
 
+// 添加应收款表单
 const createUpdateReceibablesDto = reactive<CreateUpdateReceibablesDto>({
   receivableCode: "", // 应收款编号（可选）
   receivablePay: 0, // 应收款金额
