@@ -152,7 +152,7 @@ const treeOptions = ref<any[]>([]);
 
 // 获取菜单数据
 const loadMenuList = async () => {
-  const res = await MenuAPI.getMenuTree();
+  const res: any = await MenuAPI.getMenuTree();
   menuList.value = res;
   treeOptions.value = [
     { id: "0", label: "根目录", children: res.map((item: any) => convertToTreeOption(item)) },
