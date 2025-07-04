@@ -18,8 +18,8 @@
       <el-table-column prop="sort" label="排序" />
       <el-table-column prop="hidden" label="是否隐藏">
         <template #default="{ row }">
-          <el-tag :type="row.hidden ? 'info' : 'success'">
-            {{ row.hidden ? "是" : "否" }}
+          <el-tag :type="row.isVisible ? 'info' : 'success'">
+            {{ row.isVisible ? "否" : "是" }}
           </el-tag>
         </template>
       </el-table-column>
@@ -61,7 +61,7 @@
           <el-input v-model="form.permissionCode" placeholder="如 system:menu:add" />
         </el-form-item>
         <el-form-item label="是否隐藏" prop="hidden">
-          <el-switch v-model="form.hidden" />
+          <el-switch v-model="form.isVisible" />
         </el-form-item>
         <el-form-item label="排序" prop="sort">
           <el-input-number v-model="form.sort" :min="1" />
@@ -100,7 +100,7 @@ const form = reactive<MenuInfo>({
   component: "",
   icon: "",
   permissionCode: "",
-  hidden: false,
+  isVisible: false,
   sort: 1,
 });
 
