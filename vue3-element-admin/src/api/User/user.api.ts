@@ -45,6 +45,13 @@ const UserAPI = {
       roleIds,
     });
   },
+
+  /**
+   * 获取所有用户列表
+   */
+  getAllUsers: () => {
+    return request.get(`/api/app/user-server/user-info-list`);
+  },
 };
 
 export default UserAPI;

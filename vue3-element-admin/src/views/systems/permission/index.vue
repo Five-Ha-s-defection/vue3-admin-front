@@ -1,8 +1,8 @@
 <template>
   <el-card>
     <!-- 顶部操作 -->
-    <div class="mb-4 flex justify-between items-center">
-      <h2>权限管理</h2>
+    <div class="mb-4 flex items-center gap-3 w-full top-action-bar">
+      <h2 class="font-bold text-lg mr-4">权限管理</h2>
       <el-button type="primary" @click="openAddDialog">新增权限</el-button>
     </div>
 
@@ -20,7 +20,14 @@
           </el-tag>
         </template>
 
-        <el-table :data="group.permissions" row-key="id" border size="small" style="width: 100%">
+        <el-table
+          :ref="(el) => setPermissionTableRef(group.groupName, el)"
+          :data="group.permissions"
+          row-key="id"
+          border
+          size="small"
+          style="width: 100%"
+        >
           <el-table-column
             prop="permissionName"
             align="center"
@@ -83,6 +90,9 @@ import type { ElTable } from "element-plus";
 
 // 权限原始数据
 const permissions: any = ref<PermissionInfo[]>([]);
+// 所有分组的表格引用
+const permissionTableRefs = new Map<string, InstanceType<typeof ElTable>>();
+
 // 分组结构：每个分组包含 groupName 和 permissions[]
 const groupedPermissions = ref<{ groupName: string; permissions: PermissionInfo[] }[]>([]);
 
@@ -108,6 +118,17 @@ const rules: FormRules = {
   permissionName: [{ required: true, message: "请输入权限名称", trigger: "blur" }],
   permissionCode: [{ required: true, message: "请输入权限编码", trigger: "blur" }],
   groupName: [{ required: true, message: "请输入分组名称", trigger: "blur" }],
+};
+// 设置每个表格的 ref
+const setPermissionTableRef = (groupName: string, el: Element | ComponentPublicInstance | null) => {
+  if (
+    el &&
+    typeof el === "object" &&
+    "$el" in el &&
+    typeof (el as any).toggleRowExpansion === "function"
+  ) {
+    permissionTableRefs.set(groupName, el as InstanceType<typeof ElTable>);
+  }
 };
 
 // 获取权限并按分组整理
@@ -217,5 +238,13 @@ onMounted(() => {
 }
 .ml-2 {
   margin-left: 8px;
+}
+.top-action-bar {
+  background: #f7f8fa;
+  border-radius: 8px;
+  padding: 16px 0 12px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  max-width: 700px;
 }
 </style>

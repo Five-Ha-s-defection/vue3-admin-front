@@ -22,14 +22,14 @@ const PaymentViewAPI = {
       data,
     });
   },
-  UpdatePayment(id:string,data:any) {
+  UpdatePayment(id: string, data: any) {
     return request({
       url: `/api/app/payment/${id}/payment`,
       method: "put",
       data,
     });
   },
-      //批量删除
+  //批量删除
   BatchDeletePayment(data: string[]) {
     return request({
       url: `/api/app/receivables`,
@@ -41,6 +41,14 @@ const PaymentViewAPI = {
     return request({
       url: `/api/app/payment/${id}`,
       method: "delete",
+    });
+  },
+
+  PaymentInstance(id: string, approverId: string | undefined,data: { isPass: boolean, comment: string }) {
+    return request({
+      url: `/api/app/payment/${id}/approve/${approverId}`,
+      method: "post",
+      params: data,
     });
   },
 };
@@ -60,7 +68,7 @@ export interface PaymentPageResult {
   data: [];
 }
 
-export interface  PaymentSearch {
+export interface PaymentSearch {
   id: string;
   creationTime: string;
   creatorId: string;
@@ -87,7 +95,7 @@ export interface  PaymentSearch {
   customerName: string;
   contractName: string;
   realName: string;
-  creatorRealName:string;
-  auditorNames:string;
+  creatorRealName: string;
+  auditorNames: string;
   paymentMethodName: string;
 }

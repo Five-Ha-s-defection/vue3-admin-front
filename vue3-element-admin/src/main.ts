@@ -3,7 +3,6 @@ import App from "./App.vue";
 import setupPlugins from "@/plugins";
 import router from "@/router"; // 引入布局组件
 import { useUserStore, usePermissionStore } from "@/store";
-import { hasPerm, hasRole } from "./directive/permission";
 // 暗黑主题样式
 import "element-plus/theme-chalk/dark/css-vars.css";
 import "vxe-table/lib/style.css";
@@ -20,8 +19,6 @@ import "default-passive-events";
 
 async function bootstrap() {
   const app = createApp(App);
-  app.directive("has-perm", hasPerm);
-  app.directive("has-role", hasRole);
 
   // 🚨【1】恢复用户信息 & 注册动态路由（必须在 app.use(router) 之前）
   const userInfoStr = localStorage.getItem("userInfo");
