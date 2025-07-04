@@ -1,36 +1,7 @@
 <template>
-  <div class="product-page">
-    <!-- 左侧树形分类 -->
-    <div class="left-tree">
-      <el-tree
-        :data="categoryTree"
-        :props="treeProps"
-        node-key="id"
-        highlight-current
-        @node-click="handleTreeClick"
-      />
-      <div class="record-count">总记录数：{{ total }} 条</div>
-    </div>
-
-    <!-- 右侧内容区 -->
-    <div class="right-content">
-      <!-- 顶部操作栏 -->
-      <div class="toolbar">
-        <el-button type="primary" @click="handleAdd">添加产品</el-button>
-        <el-input
-          v-model="searchKeyword"
-          placeholder="产品名称/产品编号"
-          class="search-input"
-          clearable
-          @keyup.enter="handleSearch"
-        />
-        <el-button @click="GetProductList()">搜索</el-button>
-        <el-button @click="handleExport">导入导出</el-button>
-      </div>
-
       <!-- 产品表格 -->
       <el-table :data="tableData" style="width: 100%">
-        <el-table-column prop="categoryId" label="产品分类" />
+        <el-table-column prop="categoryName" label="产品分类" />
         <el-table-column prop="productImageUrl" label="图片">
           <template #default="scope">
             <el-image :src="scope.row.productImageUrl" style="width: 40px; height: 40px" />
@@ -49,113 +20,92 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" width="120">
-          <template #default="scope">
-            <el-dropdown>
-              <span class="el-dropdown-link">···</span>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="handleEdit()">修改</el-dropdown-item>
-                  <el-dropdown-item @click="handleDelete(scope.row.id)">删除</el-dropdown-item>
-                  <el-dropdown-item @click="handleUpDown()">
-                    {{ scope.row.productStatus === false ? '上架' : '下架' }}
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </template>
-        </el-table-column>
+  <template #default="{row}">
+    <el-dropdown>
+      <span class="el-dropdown-link">···</span>
+      <template #dropdown>
+        <el-dropdown-menu>
+          <el-dropdown-item @click="">修改</el-dropdown-item>
+          <el-dropdown-item @click="productDelete(row)">删除</el-dropdown-item>
+         
+        </el-dropdown-menu>
+      </template>
+    </el-dropdown>
+  </template>
+</el-table-column>
       </el-table>
 
-      <!-- 分页 -->
-      <el-pagination
-        v-model:current-page="page"
-        :page-size="pageSize"
-        :total="total"
-        layout="prev, pager, next"
-        @current-change="handlePageChange"
-      />
-    </div>
-  </div>
+  
+ 
 </template>
 <script setup lang="ts">
 import ProductApi from "@/api/CxsApi/CxsProductApi";
+import { number } from "echarts";
+import { rowContextKey } from "element-plus";
 import { ref, reactive, onMounted } from 'vue';
-import { Search, ArrowDown } from "@element-plus/icons-vue";
-import MenuAPI from "@/api/system/menu.api";
-import { ElMessage, ElMessageBox } from "element-plus";
 
 const router = useRouter();
 const tableData = ref([]);
 const productPage = reactive({
-  PageIndex: 1,
-  PageSize: 10,
+  totalCount:0,
+  pageCount:0,
+  pageIndex:1,
+  pageSize:10,
+  
 })
-const productForm = reactive({
-  "categoryId": "",
-  "parentId": "",
-  "productImageUrl": "",
-  "productBrand": "",
-  "productSupplier": "",
-  "productCode": "",
-  "productDescription": "",
-  "suggestedPrice": 0,
-  "productRemark": "",
-  "productStatus": true,
-  "dealPrice": 0
+const page=reactive({
+  pageIndex:1,
+  pageSize:10
 })
+interface ProductData{
+  id:string,
+  categoryId: string,
+  parentId: string,
+  productImageUrl: string,
+  productBrand:string,
+  productSupplier: string,
+  productCode: string,
+  productDescription: string,
+  suggestedPrice: 0,
+  productRemark: string,
+  productStatus: null,
+  dealPrice: 0
+}
+  
 
-const categoryTree = ref([]); // 分类树数据
-const treeProps = { children: "children", label: "label" };
-const total = ref(0);
-const page = ref(1);
-const pageSize = ref(10);
-const searchKeyword = ref("");
+
 
 const GetProductList = async () => {
+  console.log("请求数据", productPage);  // 打印请求数据，查看分页是否传递正确
   const res: any = await ProductApi.getProductList(productPage);
-  tableData.value = res || [];
-  console.log(res);
+  console.log("接口返回数据", res);
+  if (res) {
+    tableData.value = res.data || [];
+    productPage.totalCount = res.data.totalCount;
+    productPage.pageCount = res.data.pageCount;
+  } else {
+    console.log("没有数据返回");
+  }
 }
 onMounted(() => {
   GetProductList();
 })
-const loading = ref(false);
-function handleDelete(menuId: string) {
-  if (!menuId) {
-    ElMessage.warning("请勾选删除项");
-    return false;
-  }
 
-  ElMessageBox.confirm("确认删除已选中的数据项?", "警告", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning",
-  }).then(
-    () => {
-      loading.value = true;
-      MenuAPI.deleteById(menuId)
-        .then(() => {
-          ElMessage.success("删除成功");
-          GetProductList(); // 重新刷新菜单列表
-        })
-        .finally(() => {
-          loading.value = false;
-        });
-    },
-    () => {
-      ElMessage.info("已取消删除");
+const productDelete = async (row:ProductData ) => {
+  ElMessageBox.confirm('确定要删除这条数据吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(async () => {
+    const res: any = await ProductApi.deleteProduct(row);
+    if (res) {
+      ElMessage.success('删除成功');
+      GetProductList();
     }
-  );
+  }).catch(() => {
+    // 用户取消
+  });
 }
-
-// 事件处理函数（可复用原有逻辑）
-function handleTreeClick() { /* ... */ }
-function handleAdd() { /* ... */ }
-function handleEdit() { /* ... */ }
-function handleUpDown() { /* ... */ }
-function handleSearch() { /* ... */ }
-function handleExport() { /* ... */ }
-function handlePageChange() { /* 查询数据 */ }
 </script>
 <style scoped>
 .product-page {

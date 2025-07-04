@@ -62,9 +62,13 @@ const form = ref({
 
 const categoryOptions = ref([
   // 这里填充你的分类数据
+  {
+    id: 0,
+    categoryName: ""
+  }
 ]);
 
-function handleUploadSuccess(response) {
+function handleUploadSuccess(response: any) {
   form.value.productImageUrl = response.url; // 根据实际返回字段
 }
 function submitForm() {
