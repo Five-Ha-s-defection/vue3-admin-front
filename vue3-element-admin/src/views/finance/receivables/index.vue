@@ -679,7 +679,7 @@ function handleAddSubmit() {
     if (valid) {
       // 这里写实际的添加API调用
       ReceivablesViewAPI.AddReceivable(addupdateForm).then((res) => {
-        if (res.data) {
+        if (res) {
           ElMessage.success("添加成功");
         } else {
           ElMessage.error("添加失败");

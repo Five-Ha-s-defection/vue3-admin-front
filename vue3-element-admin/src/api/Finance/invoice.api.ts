@@ -37,6 +37,13 @@ export const InvoiceViewAPI = {
       method: "delete",
     });
   },
+    InvoiceInstance(id: string, approverId: string | undefined,data: { isPass: boolean, comment: string }) {
+    return request({
+      url: `/api/app/invoice/${id}/approve/${approverId}`,
+      method: "post",
+      params: data,
+    });
+  },
 }
 export default InvoiceViewAPI;
 
