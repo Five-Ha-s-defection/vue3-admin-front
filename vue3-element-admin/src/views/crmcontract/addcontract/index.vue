@@ -12,8 +12,7 @@
       <div class="form-left">
         <div class="form-title">添加合同</div>
         <el-form-item label="所属客户" prop="customerId">
-          <el-tag v-if="addContractForm.customerId" type="success">
-            {{ addContractForm.customerId }}
+          <el-tag v-if="addContractForm.customerName" type="success">
             {{ addContractForm.customerName }}
           </el-tag>
           <el-tag v-else type="info">未选择客户</el-tag>
@@ -31,11 +30,12 @@
             v-model="addContractForm.businessOpportunityId"
             placeholder="请选择商机"
             style="width: 100%"
+            clearable
           >
             <el-option
               v-for="item in opportunityList"
               :key="item.id"
-              :label="item.name"
+              :label="item.businessOpportunityName"
               :value="item.id"
             />
           </el-select>
@@ -45,11 +45,12 @@
             v-model="addContractForm.userId"
             placeholder="请选择负责人"
             style="width: 100%"
+            clearable
           >
             <el-option
               v-for="item in userList"
               :key="item.id"
-              :label="item.name"
+              :label="item.realName"
               :value="item.id"
             />
           </el-select>
@@ -148,7 +149,7 @@
       <div class="form-right">
         <div class="form-title-row">
           <div class="form-title">添加产品</div>
-          <el-button type="primary">提交</el-button>
+          <el-button type="primary" @click="handleSubmit">提交</el-button>
         </div>
         <!-- 添加产品 -->
         <el-button
@@ -250,6 +251,7 @@
       height="350"
       border
       @selection-change="handleProductSelectionChange"
+      @row-click="handleProductRowClick"
     >
       <el-table-column type="selection" width="50" />
       <el-table-column prop="categoryId" label="分类" />
@@ -271,13 +273,105 @@
       <el-button type="primary" @click="handleProductDialogConfirm">确定</el-button>
     </template>
   </el-dialog>
+
+  <!-- 客户弹窗 -->
+  <el-dialog
+    v-model="showCustomerDialog"
+    title="选择客户"
+    width="700px"
+    @open="fetchCustomerDialogList"
+    @close="clearSelectedCustomer"
+  >
+    <div style="margin-bottom: 12px; display: flex">
+      <el-input
+        v-model="customerDialogSearch.customerName"
+        placeholder="搜索客户名称"
+        style="width: 220px; margin-right: 8px"
+        clearable
+        @keyup.enter="
+          () => {
+            customerDialogSearch.PageIndex = 1;
+            fetchCustomerDialogList();
+          }
+        "
+      />
+      <el-button
+        type="primary"
+        :loading="customerDialogLoading"
+        @click="
+          () => {
+            customerDialogSearch.PageIndex = 1;
+            fetchCustomerDialogList();
+          }
+        "
+      >
+        搜索
+      </el-button>
+    </div>
+    <el-table
+      v-loading="customerDialogLoading"
+      :data="customerDialogList"
+      highlight-current-row
+      :row-key="(row) => row.id"
+      :current-row-key="selectedCustomerRow?.id"
+      style="width: 100%"
+      height="350"
+      @current-change="handleSelectCustomer"
+      @row-click="handleSelectCustomer"
+    >
+      <!-- 单选框列 -->
+      <el-table-column label="" width="50" align="center">
+        <template #default="{ row }">
+          <el-radio
+            :model-value="selectedCustomerRow?.id"
+            :label="row.id"
+            @change="() => handleSelectCustomer(row)"
+          ></el-radio>
+        </template>
+      </el-table-column>
+      <el-table-column prop="userId" label="客户编号" />
+      <el-table-column prop="customerName" label="客户名称" />
+      <el-table-column prop="customerPhone" label="联系电话" />
+      <el-table-column prop="creationTime" label="创建时间">
+        <template #default="{ row }">
+          {{ row.creationTime.substring(0, 10) }} {{ row.creationTime.substring(11, 19) }}
+        </template>
+      </el-table-column>
+    </el-table>
+    <div style="margin: 12px 0; text-align: right">
+      <el-pagination
+        small
+        background
+        layout="prev, pager, next"
+        :total="customerDialogTotal"
+        :page-size="customerDialogSearch.PageSize"
+        :current-page="customerDialogSearch.PageIndex"
+        @current-change="
+          (page) => {
+            customerDialogSearch.PageIndex = page;
+            fetchCustomerDialogList();
+          }
+        "
+      />
+    </div>
+    <template #footer>
+      <el-button @click="showCustomerDialog = false">取消</el-button>
+      <el-button type="primary" :disabled="!selectedCustomerRow" @click="handleConfirmCustomer">
+        确定
+      </el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref, shallowRef, onBeforeUnmount, nextTick, computed } from "vue";
+import UserAPI from "@/api/User/user.api";
 import "@wangeditor/editor/dist/css/style.css"; // 引入样式
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
 import ProductApi from "@/api/CxsApi/CxsProductApi"; // 按你的实际路径引入
+import { ElMessage } from "element-plus"; // 引入 ElMessage
+import { ShowBusinessOpportunityList } from "@/api/CustomerProcess/BusinessOpportunity/businessopportunity.api";
+import { ShowCustomerList } from "@/api/CustomerProcess/Customer/customer.api";
 
 //#region 暂存数据结构
 // 添加合同表单
@@ -349,6 +443,7 @@ const createUpdateReceibablesDto = reactive<CreateUpdateReceibablesDto>({
   remark: "", // 备注
 });
 
+// 表单验证规则
 const rules = {
   customerId: [{ required: true, message: "请选择所属客户", trigger: "change" }],
   userId: [{ required: true, message: "请选择负责人", trigger: "change" }],
@@ -545,7 +640,137 @@ function handleProductSelectionChange(selected: any) {
     (item) => selectedIds.includes(item.productId)
   );
 }
+
+function handleProductRowClick(row: any) {
+  // 反查当前行是否已选中
+  const $table = productTableRef.value;
+  if (!$table) return;
+  $table.toggleRowSelection(row);
+}
 //#endregion
+
+//#region 提交
+
+const formRef = ref();
+
+const handleSubmit = async () => {
+  // 验证表单
+  await formRef.value.validate();
+
+  // 验证通过，执行提交逻辑
+  console.log("表单验证通过，开始提交数据：", addContractForm);
+
+  // TODO: 这里添加实际的提交API调用
+  // const response = await ContractApi.addContract(addContractForm);
+
+  // 提交成功提示
+  ElMessage.success("合同添加成功！");
+
+  // 可以在这里添加其他成功后的操作，比如跳转页面或重置表单
+};
+//#endregion
+
+//#region 商机列表
+// 商机下拉相关
+const opportunityList = ref<any[]>([]);
+const opportunityLoading = ref(false);
+const opportunityPage = ref(1);
+const opportunityTotal = ref(0);
+const opportunitySearch = ref({
+  PageIndex: 1,
+  PageSize: 10,
+  businessOpportunityName: "",
+}); // 搜索关键字
+
+// 获取商机列表（分页+搜索）
+const fetchOpportunityList = async () => {
+  opportunityLoading.value = true;
+  try {
+    const res: any = await ShowBusinessOpportunityList(opportunitySearch.value);
+    opportunityList.value = res?.data || [];
+    console.log(opportunityList.value);
+    opportunityTotal.value = res?.totalCount || 0;
+    opportunityPage.value = res?.pageCount || 0;
+  } finally {
+    opportunityLoading.value = false;
+  }
+};
+//#endregion
+
+//#region 用户列表
+const userList = ref<any[]>([]);
+const userLoading = ref(false);
+
+const fetchUserList = async () => {
+  userLoading.value = true;
+  try {
+    const res: any = await UserAPI.getAllUsers();
+    userList.value = res || [];
+    console.log(userList.value);
+  } finally {
+    userLoading.value = false;
+  }
+};
+//#endregion
+
+//#region 客户弹窗相关
+const showCustomerDialog = ref(false);
+const customerDialogList = ref<any[]>([]);
+const customerDialogLoading = ref(false);
+const customerDialogPage = ref(1);
+const customerDialogTotal = ref(0);
+const customerDialogSearch = ref({
+  PageIndex: 1,
+  PageSize: 10,
+  customerName: "",
+});
+const selectedCustomerRow = ref<any>(null);
+
+// 获取客户列表（弹窗用）
+const fetchCustomerDialogList = async () => {
+  customerDialogLoading.value = true;
+  try {
+    const res: any = await ShowCustomerList(customerDialogSearch.value);
+    customerDialogList.value = res?.data || [];
+    customerDialogTotal.value = res?.totalCount || 0;
+    customerDialogPage.value = customerDialogSearch.value.PageIndex;
+  } finally {
+    customerDialogLoading.value = false;
+  }
+};
+
+// 打开弹窗
+const openCustomerDialog = () => {
+  showCustomerDialog.value = true;
+  customerDialogSearch.value.PageIndex = 1;
+  fetchCustomerDialogList();
+};
+
+// 选择客户
+const handleSelectCustomer = (row: any) => {
+  selectedCustomerRow.value = row;
+  addContractForm.customerId = row.id;
+  addContractForm.customerName = row.customerName;
+};
+
+// 确认选择
+const handleConfirmCustomer = () => {
+  if (selectedCustomerRow.value) {
+    showCustomerDialog.value = false;
+  }
+};
+
+function clearSelectedCustomer() {
+  selectedCustomerRow.value = null;
+  addContractForm.customerId = "";
+  addContractForm.customerName = "";
+}
+//#endregion
+
+onMounted(() => {
+  fetchOpportunityList();
+  fetchUserList();
+});
 </script>
 
 <style scoped>
@@ -600,5 +825,11 @@ function handleProductSelectionChange(selected: any) {
 }
 .form-title-row .form-title {
   margin-bottom: 0; /* 去掉原有的下边距 */
+}
+::v-deep .el-radio__label {
+  display: none !important;
+}
+::v-deep .el-table__row.current-row {
+  background: #e6f7ff !important;
 }
 </style>
