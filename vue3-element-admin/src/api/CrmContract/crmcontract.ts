@@ -5,11 +5,20 @@ const CRM_CONTRACT_BASE_URL = "/api/app/crm-contract";
 const CrmContractAPI = {
   //查询合同列表
   getInfo(data: any) {
-    console.log(data);
     return request({
       url: `${CRM_CONTRACT_BASE_URL}/show-crm-contract-list`,
       method: "get",
       params: data,
+    });
+  },
+
+  //添加合同
+  addContract(data: any) {
+    console.log(data);
+    return request({
+      url: `${CRM_CONTRACT_BASE_URL}/crm-contract`,
+      method: "post",
+      data,
     });
   },
 

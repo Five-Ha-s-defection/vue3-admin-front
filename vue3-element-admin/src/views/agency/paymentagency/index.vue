@@ -1,0 +1,781 @@
+<template>
+  <div>
+    <el-card>
+      <!-- 顶部筛选区 -->
+      <div style="margin-bottom: 16px">
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="font-weight: bold; font-size: 16px">我的待审核收款列表</span>
+          <span style="margin-left: 16px; color: #888">总记录数：</span>
+          <span style="color: #409eff; margin-left: 2px">{{ pagination.totalCount }}</span>
+          <span style="color: #888; margin-left: 2px">条</span>
+        </div>
+      </div>
+        
+      <el-table
+        ref="tableRef"
+        v-loading="loading"
+        :data="tableData"
+        border
+        style="width: 100%"
+        empty-text="暂无数据"
+        @selection-change="handleSelectionChange"
+        @row-click="handleRowClick"
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="paymentCode" label="收款编号" />
+        <el-table-column label="状态">
+          <template #default="scope">
+            <span
+              :style="{
+                color:
+                  scope.row.paymentStatus === 0
+                    ? '#faad14'
+                    : scope.row.paymentStatus === 1
+                      ? '#1890ff'
+                      : scope.row.paymentStatus === 2
+                        ? '#52c41a'
+                        : scope.row.paymentStatus === 3
+                          ? '#f5222d'
+                          : '#999',
+              }"
+            >
+              {{
+                scope.row.paymentStatus === 0
+                  ? "待审核"
+                  : scope.row.paymentStatus === 1
+                    ? "审核中"
+                    : scope.row.paymentStatus === 2
+                      ? "已通过"
+                      : scope.row.paymentStatus === 3
+                        ? "已驳回"
+                        : "未知状态"
+              }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="receivablePay" label="应收款" />
+        <el-table-column prop="amount" label="实际收款金额" />
+        <el-table-column prop="paymentMethodName" label="收款方式" />
+        <el-table-column prop="paymentDate" label="收款时间">
+          <template #default="scope">
+            {{ scope.row.paymentDate.substring(0, 10) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="customerName" label="所属客户" />
+        <el-table-column prop="contractName" label="关联合同" />
+        <el-table-column prop="realName" label="负责人" />
+        <el-table-column prop="auditorNames" label="审核人" />
+        <el-table-column prop="creatorRealName" label="创建人" />
+      </el-table>
+
+      <!-- 分页区域 -->
+      <div style="margin-top: 16px; display: flex; justify-content: center">
+        <el-pagination
+          v-model:current-page="pagination.PageIndex"
+          v-model:page-size="pagination.PageSize"
+          :page-sizes="[5, 10, 15, 20]"
+          :total="pagination.totalCount"
+          :background="true"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </el-card>
+
+    <el-drawer
+      v-model="showDetailDrawer"
+      title="收款详情"
+      size="60%"
+      direction="rtl"
+      :with-header="false"
+    >
+      <div style="padding: 24px 32px 0 32px">
+        <!-- 顶部编号和按钮 -->
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <div style="font-weight: bold; font-size: 18px">
+            <el-icon style="color: #409eff; margin-right: 6px">
+              <Document />
+            </el-icon>
+            {{ detailData?.paymentCode || "-" }}
+          </div>
+          <div style="display: flex; gap: 12px">
+            <el-button
+              type="primary"
+              size="small"
+              style="border-radius: 8px; min-width: 70px"
+              @click="handleEditDetail"
+            >
+              修改
+            </el-button>
+            <el-button
+              type="primary"
+              size="small"
+              style="border-radius: 8px; min-width: 70px"
+              @click="handleAuditDetail"
+            >
+              审核
+            </el-button>
+            <el-button
+              type="primary"
+              size="small"
+              style="border-radius: 8px; min-width: 70px"
+              @click="handleRejectDetail"
+            >
+              驳回
+            </el-button>
+            <el-button
+              type="danger"
+              size="small"
+              style="border-radius: 8px; min-width: 70px"
+              @click="handleDelete(detailData)"
+            >
+              删除
+            </el-button>
+          </div>
+        </div>
+
+        <!-- 基本信息分区 -->
+        <div style="margin-top: 24px">
+          <div
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
+            基本信息
+          </div>
+          <el-row :gutter="32">
+            <el-col :span="12">
+              <div class="info-row">
+                <span class="info-label">收款编号：</span>
+                {{ detailData.paymentCode }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">所属客户：</span>
+                <el-link type="primary" :underline="false">{{ detailData?.customerName }}</el-link>
+              </div>
+              <div class="info-row">
+                <span class="info-label">应收款：</span>
+                {{ detailData.receivablePay }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">收款方式：</span>
+                {{ detailData.paymentMethodName }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">负责人：</span>
+                {{ detailData.realName }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">创建人：</span>
+                {{ detailData.creatorRealName }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">备注：</span>
+                {{ detailData.remark || "-" }}
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="info-row">
+                <span class="info-label">状态：</span>
+                <span
+                  :style="{
+                    color:
+                      detailData.paymentStatus === 0
+                        ? '#faad14'
+                        : detailData.paymentStatus === 1
+                          ? '#1890ff'
+                          : detailData.paymentStatus === 2
+                            ? '#52c41a'
+                            : detailData.paymentStatus === 3
+                              ? '#f5222d'
+                              : '#999',
+                  }"
+                >
+                  {{
+                    detailData.paymentStatus === 0
+                      ? "待审核"
+                      : detailData.paymentStatus === 1
+                        ? "审核中"
+                        : detailData.paymentStatus === 2
+                          ? "已通过"
+                          : detailData.paymentStatus === 3
+                            ? "已驳回"
+                            : "未知状态"
+                  }}
+                </span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">关联合同：</span>
+                <el-link type="primary" :underline="false">{{ detailData?.contractName }}</el-link>
+              </div>
+              <div class="info-row">
+                <span class="info-label">实际收款金额：</span>
+                <span style="color: #f5222d">{{ detailData?.amount }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">收款时间：</span>
+                {{ detailData.paymentDate.substring(0, 19).replace("T", "") }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">审核人：</span>
+                {{ detailData.auditorNames }}
+              </div>
+              <div class="info-row">
+                <span class="info-label">创建时间：</span>
+                {{ detailData.creationTime.substring(0, 19).replace("T", "") }}
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 审核信息 -->
+        <div>
+          <div
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
+            审核信息
+          </div>
+        </div>
+        <el-divider content-position="left"></el-divider>
+        <div style="color: #aaa; text-align: center; margin: 16px 0">暂无数据</div>
+
+        <!-- 发票信息 -->
+        <div>
+          <div
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
+            发票信息
+          </div>
+        </div>
+        <el-table :data="invoiceList" style="width: 100%; margin-bottom: 16px">
+          <el-table-column prop="invoiceNumberCode" label="发票编号" />
+          <el-table-column prop="invoiceStatus" label="状态">
+            <template #default="scope">
+              <span v-if="scope.row.invoiceStatus === 0">未开票</span>
+              <span v-else-if="scope.row.invoiceStatus === 1">已开票</span>
+              <span v-else>--</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="amount" label="开票金额" />
+          <el-table-column prop="invoiceType" label="开票类型">
+            <template #default="scope">
+              <span v-if="scope.row.invoiceType === 0">普通发票</span>
+              <span v-else-if="scope.row.invoiceType === 1">专用发票</span>
+              <span v-else>--</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="invoiceDate" label="开票时间">
+            <template #default="scope">
+              {{ scope.row.invoiceDate ? scope.row.invoiceDate.substring(0, 10) : "" }}
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <!-- 操作日志 -->
+        <div>
+          <div
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
+            操作日志
+          </div>
+        </div>
+        <el-divider content-position="left"></el-divider>
+        <div v-if="detailData.approveComments && detailData.approveComments.length">
+          <div
+            v-for="(item, idx) in detailData.approveComments"
+            :key="idx"
+            style="margin-bottom: 8px; display: flex; align-items: center"
+          >
+            <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
+            <span style="color: #1890ff">{{ detailData.creatorRealName }}</span>
+            <span style="margin-left: 8px; color: #999">{{ detailData.approveTimes[idx] }}</span>
+            <span style="margin-left: 8px">{{ item }}</span>
+          </div>
+        </div>
+        <div v-else style="color: #aaa; text-align: center">没有更多了</div>
+      </div>
+    </el-drawer>
+
+    <!-- 修改收款抽屉 -->
+    <el-drawer
+      v-model="showEditDrawer"
+      title="修改收款"
+      size="600px"
+      direction="rtl"
+      :with-header="true"
+    >
+      <el-form ref="editFormRef" :model="editForm" :rules="addRules" label-width="120px">
+        <el-form-item label="所属客户" prop="customerName">
+          <el-input v-model="editForm.customerName" disabled />
+        </el-form-item>
+        <el-form-item label="关联合同" prop="contractId">
+          <el-select
+            v-model="editForm.contractId"
+            placeholder="请选择合同"
+            style="width: 100%"
+            disabled
+          >
+            <el-option
+              v-for="item in contractList"
+              :key="item.id"
+              :label="item.contractName"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关联应收款" prop="receivableId">
+          <el-select
+            v-model="editForm.receivableId"
+            placeholder="请选择应收款"
+            style="width: 100%"
+            disabled
+          >
+            <el-option
+              v-for="item in receivableList"
+              :key="item.id"
+              :label="item.receivablePay"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="负责人" prop="userId">
+          <el-select v-model="editForm.userId" placeholder="请选择负责人" style="width: 100%">
+            <el-option
+              v-for="item in userList"
+              :key="item.id"
+              :label="item.realName"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="收款编号" prop="paymentCode">
+          <el-input v-model="editForm.paymentCode" />
+        </el-form-item>
+        <el-form-item label="收款金额" prop="amount">
+          <el-input v-model="editForm.amount" type="number" />
+        </el-form-item>
+        <el-form-item label="收款方式" prop="paymentMethod">
+          <el-select
+            v-model="editForm.paymentMethod"
+            placeholder="请选择收款方式"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in paymentMethodList"
+              :label="item.paymentMethodName"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="收款时间" prop="paymentDate">
+          <el-date-picker
+            v-model="editForm.paymentDate"
+            type="datetime"
+            placeholder="选择时间"
+            style="width: 100%"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+          />
+        </el-form-item>
+        <el-form-item label="审核人" prop="approverIds">
+          <el-select
+            v-model="editForm.approverIds"
+            multiple
+            placeholder="请选择审核人"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in userList"
+              :key="item.id"
+              :label="item.realName"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="editForm.remark" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleEditSubmit">提交</el-button>
+          <el-button @click="showEditDrawer = false">取消</el-button>
+        </el-form-item>
+      </el-form>
+    </el-drawer>
+
+    <!-- 审核/驳回弹窗 -->
+    <el-dialog
+      v-model="showApproveDialog"
+      :title="approveType == true ? '审核通过' : '审核驳回'"
+      width="400px"
+      :close-on-click-modal="false"
+    >
+      <el-form>
+        <el-form-item label="原因（非必填）" label-width="100px">
+          <el-input
+            v-model="approveComment"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入原因（可不填）"
+            prefix-icon="el-icon-smile"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button type="primary" @click="handleApproveSubmit">提交</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted, onActivated } from "vue";
+import ReceivablesViewAPI from "@/api/Finance/receivables.api";
+import PaymentViewAPI, { PaymentSearch } from "@/api/Finance/payment.api";
+import CrmContractAPI from "@/api/CrmContract/crmcontract";
+import UserAPI from "@/api/User/user.api";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { useRouter, useRoute } from "vue-router";
+import InvoiceViewAPI from "@/api/Finance/invoice.api";
+import { useUserStore } from "@/store";
+
+const store = useUserStore();
+
+const router = useRouter();
+const route = useRoute();
+
+const loading = ref(false);
+const tableData = ref<PaymentSearch[]>([]);
+
+// 分页配置
+const pagination = reactive({
+  PageIndex: 1,
+  PageSize: 10,
+  totalCount: 0,
+  pageCount: 0,
+});
+
+// 查看范围和收款进度筛选
+const currentUserId = store.userInfo.id; // 获取当前登录人ID
+console.log("当前登录人ID", currentUserId);
+
+// 搜索表单
+const searchForm = reactive({
+  UserId: "",
+  CreatorId: "",
+  CustomerId: "",
+  ContractId: "",
+  PaymentCode: "",
+  PaymentMethod: "",
+  PaymentDate: "",
+  PaymentStatus: "",
+  ApproverIds: [],
+  StartTime: "",
+  EndTime: "",
+  scopeType: "all",
+  progressType: "all",
+});
+// 获取收款数据
+const GetPayment = () => {
+  loading.value = true;
+  const params = {
+    PageIndex: pagination.PageIndex,
+    PageSize: pagination.PageSize,
+    StartTime: searchForm.StartTime,
+    EndTime: searchForm.EndTime,
+    UserId: searchForm.UserId,
+    CreatorId: searchForm.CreatorId,
+    PaymentCode: searchForm.PaymentCode,
+    CustomerId: searchForm.CustomerId,
+    ContractId: searchForm.ContractId,
+    PaymentMethod: searchForm.PaymentMethod,
+    PaymentDate: searchForm.PaymentDate,
+    PaymentStatus: searchForm.PaymentStatus,
+    ApproverIds: searchForm.ApproverIds,
+  };
+
+  PaymentViewAPI.GetPaymentPage(params)
+    .then((res) => {
+      // 前端再次过滤，确保只显示待审核和审核中的数据
+      const filteredData = res.data.filter(
+        (item: any) => item.paymentStatus === 0 || item.paymentStatus === 1 && item.approverIds.includes(currentUserId)
+      );
+
+      tableData.value = filteredData;
+      pagination.totalCount = filteredData.length;
+      pagination.pageCount = Math.ceil(filteredData.length / pagination.PageSize);
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+};
+
+const receivableList: any = ref([]); // 用于存储应收款列表数据
+// 获取应收款数据
+const GetReceivables = () => {
+  loading.value = true;
+  const params = {
+    PageIndex: 1,
+    PageSize: 111,
+  };
+
+  ReceivablesViewAPI.GetReceivablesPage(params)
+    .then((res) => {
+      console.log("应收款数据", res);
+
+      receivableList.value = res.data;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+};
+
+// 收款方式列表
+const paymentMethodList: any = ref([]);
+const GetPaymentMethodList = () => {
+  PaymentViewAPI.GetPaymentMeathod()
+    .then((res) => {
+      console.log("收款方式数据", res);
+      paymentMethodList.value = res;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+};
+
+const addRules = {
+  customerId: [{ required: true, message: "请选择客户", trigger: "change" }],
+  contractId: [{ required: true, message: "请选择合同", trigger: "change" }],
+  receivableId: [{ required: false }],
+  userId: [{ required: true, message: "请选择负责人", trigger: "change" }],
+  amount: [{ required: true, message: "请输入收款金额", trigger: "blur" }],
+  paymentMethod: [{ required: true, message: "请选择收款方式", trigger: "change" }],
+  paymentDate: [{ required: true, message: "请选择收款时间", trigger: "change" }],
+  approverIds: [{ required: true, message: "请选择审核人", trigger: "change" }],
+};
+
+// 分页大小改变
+function handleSizeChange(val: number) {
+  pagination.PageSize = val;
+  pagination.PageIndex = 1; // 重置到第一页
+  GetPayment();
+}
+
+// 当前页改变
+function handleCurrentChange(val: number) {
+  pagination.PageIndex = val;
+  GetPayment();
+}
+
+// 获取合同列表数据
+const contractList: any = ref([]);
+//显示查询分页
+const GetcontractData = async () => {
+  const pageForm = reactive({
+    PageIndex: 1,
+    PageSize: 111,
+  });
+  CrmContractAPI.getInfo(pageForm)
+    .then((res) => {
+      console.log("合同列表数据", res.data);
+      contractList.value = res.data;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+};
+
+// 获取负责人列表数据
+const userList: any = ref([]);
+//显示查询分页
+const UserData = async () => {
+  UserAPI.GetUserPage()
+    .then((res) => {
+      console.log("负责人用户列表数据", res);
+      userList.value = res;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+};
+
+// 页面加载时获取数据
+onMounted(() => {
+  GetPayment();
+  GetPaymentMethodList();
+  GetReceivables();
+  GetcontractData();
+  UserData();
+});
+
+// 路由激活时刷新（用于Add.vue返回后刷新列表）
+onActivated(() => {
+  // 判断是否带有刷新标记
+  if (route.query.refresh) {
+    GetPayment();
+    // 清除刷新标记，避免重复刷新
+    router.replace({ query: { ...route.query, refresh: undefined } });
+  }
+});
+
+const tableRef = ref();
+const selectedRows = ref([]); // 存储选中的行
+
+function handleSelectionChange(selection: any) {
+  console.log("handleSelectionChange", selection);
+  selectedRows.value = selection;
+}
+
+
+// 处理表格行点击事件，显示详情抽屉
+const showDetailDrawer = ref(false);
+// 详情数据
+const detailData = ref<any>({});
+// 显示收款详情
+const invoiceList = ref<any[]>([]);
+
+function handleRowClick(row: any) {
+  detailData.value = row;
+  showDetailDrawer.value = true;
+  fetchInvoiceList(row.id);
+}
+// 获取发票列表
+function fetchInvoiceList(paymentId: string) {
+  InvoiceViewAPI.GetInvoicePage({ paymentId, PageIndex: 1, PageSize: 100 })
+    .then((res) => {
+      invoiceList.value = res.data || [];
+    })
+    .catch(() => {
+      invoiceList.value = [];
+    });
+}
+
+// 删除应收款
+function handleDelete(row: any) {
+  detailData.value = row;
+  ElMessageBox.confirm("确定要删除该收款吗？", "提示", {
+    type: "warning",
+  }).then(() => {
+    PaymentViewAPI.DeletePayment(row.id)
+      .then(() => {
+        ElMessage.success("删除成功");
+        GetReceivables(); // 重新加载数据
+      })
+      .catch(() => {
+        ElMessage.error("删除失败");
+      });
+  });
+}
+
+// 修改收款
+const showEditDrawer = ref(false);
+const editFormRef = ref();
+const editForm = reactive({
+  customerId: "",
+  contractId: "",
+  receivableId: "",
+  userId: "",
+  paymentCode: "",
+  amount: null,
+  paymentMethod: "",
+  paymentDate: "",
+  approverIds: [],
+  remark: "",
+  paymentStatus: 0,
+  customerName: "",
+});
+function handleEditDetail() {
+  // 反填数据
+  Object.assign(editForm, detailData.value);
+  showEditDrawer.value = true;
+}
+function handleEditSubmit() {
+  editFormRef.value.validate((valid: boolean) => {
+    if (!valid) return;
+    PaymentViewAPI.UpdatePayment(detailData.value.id, editForm).then((res) => {
+      if (res) {
+        ElMessage.success("修改成功");
+        showEditDrawer.value = false;
+        showDetailDrawer.value = false;
+        GetPayment();
+      } else {
+        ElMessage.error("修改失败");
+      }
+    });
+  });
+}
+
+// 审核/驳回弹窗
+const showApproveDialog = ref(false);
+// 审核/驳回原因
+const approveComment = ref("");
+// 审核/驳回类型
+const approveType = ref(true); // true表示审核通过，false表示审核驳回
+
+const resetApproveForm = (type: true | false) => {
+  approveType.value = type;
+  approveComment.value = "";
+  showApproveDialog.value = true;
+};
+// 审核/驳回
+const handleAuditDetail = () => {
+  resetApproveForm(true);
+};
+
+const handleRejectDetail = () => {
+  resetApproveForm(false);
+};
+
+async function handleApproveSubmit() {
+  if (!detailData.value?.id) return;
+  const params = {
+    isPass: approveType.value,
+    comment: approveComment.value,
+  };
+  const approverId = currentUserId;
+  const id = detailData.value.id;
+  try {
+    await PaymentViewAPI.PaymentInstance(id, approverId, params);
+    ElMessage.success(params.isPass ? "审核通过" : "审核驳回");
+      showApproveDialog.value = false;
+      GetPayment();
+      showDetailDrawer.value = false;
+  } catch {
+    ElMessage.error("操作失败");
+  }
+}
+</script>
+
+<style scoped>
+.info-row {
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.info-label {
+  color: #888;
+  min-width: 90px;
+  display: inline-block;
+}
+</style>

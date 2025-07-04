@@ -12,8 +12,8 @@
       <div class="form-left">
         <div class="form-title">添加合同</div>
         <el-form-item label="所属客户" prop="customerId">
-          <el-tag v-if="addContractForm.customerName" type="success">
-            {{ addContractForm.customerName }}
+          <el-tag v-if="otherInfo.customerName" type="success">
+            {{ otherInfo.customerName }}
           </el-tag>
           <el-tag v-else type="info">未选择客户</el-tag>
           <el-button
@@ -57,7 +57,7 @@
         </el-form-item>
         <el-form-item label="合同金额" prop="contractProceeds">
           <el-input
-            v-model="addContractForm.contractProceeds"
+            v-model.number="addContractForm.contractProceeds"
             type="number"
             placeholder="请输入合同金额"
           />
@@ -67,6 +67,7 @@
             v-model="addContractForm.signDate"
             type="date"
             placeholder="选择签订日期"
+            value-format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
             style="width: 100%"
           />
         </el-form-item>
@@ -78,6 +79,7 @@
             v-model="addContractForm.commencementDate"
             type="date"
             placeholder="选择生效日期"
+            value-format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
             style="width: 100%"
           />
         </el-form-item>
@@ -86,6 +88,7 @@
             v-model="addContractForm.expirationDate"
             type="date"
             placeholder="选择截止日期"
+            value-format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
             style="width: 100%"
           />
         </el-form-item>
@@ -111,15 +114,15 @@
             multiple
           >
             <el-option
-              v-for="item in auditorList"
+              v-for="item in userList"
               :key="item.id"
-              :label="item.name"
+              :label="item.realName"
               :value="item.id"
             />
           </el-select>
         </el-form-item>
         <el-form-item label="合同扫描件">
-          <el-upload
+          <!-- <el-upload
             class="upload-demo"
             action="#"
             :file-list="addContractForm.contractScanning"
@@ -129,10 +132,10 @@
             list-type="picture-card"
           >
             <i class="el-icon-plus"></i>
-          </el-upload>
+          </el-upload> -->
         </el-form-item>
         <el-form-item label="上传附件">
-          <el-upload
+          <!--  <el-upload
             class="upload-demo"
             action="#"
             :file-list="addContractForm.attachment"
@@ -142,7 +145,7 @@
             list-type="text"
           >
             <el-button size="small" type="primary">上传附件</el-button>
-          </el-upload>
+          </el-upload> -->
         </el-form-item>
       </div>
       <!-- 右侧：产品和应收款 -->
@@ -193,27 +196,28 @@
         </div>
         <!-- 添加应收款 -->
         <div class="form-title">添加应收款</div>
-        <el-form-item label="应收款编号" prop="receivableCode">
-          <el-input v-model="createUpdateReceibablesDto.receivableCode" />
+        <el-form-item label="应收款编号" prop="createUpdateReceibablesDto.receivableCode">
+          <el-input v-model="addContractForm.createUpdateReceibablesDto.receivableCode" />
         </el-form-item>
-        <el-form-item label="应收款金额" prop="receivablePay">
+        <el-form-item label="应收款金额" prop="createUpdateReceibablesDto.receivablePay">
           <el-input
-            v-model="createUpdateReceibablesDto.receivablePay"
+            v-model="addContractForm.createUpdateReceibablesDto.receivablePay"
             type="number"
             placeholder="请输入应收款金额"
           />
         </el-form-item>
-        <el-form-item label="应收款时间" prop="receivableDate">
+        <el-form-item label="应收款时间" prop="createUpdateReceibablesDto.receivableDate">
           <el-date-picker
-            v-model="createUpdateReceibablesDto.receivableDate"
+            v-model="addContractForm.createUpdateReceibablesDto.receivableDate"
             type="date"
             placeholder="选择应收款时间"
+            value-format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
             style="width: 100%"
           />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
-            v-model="createUpdateReceibablesDto.remark"
+            v-model="addContractForm.createUpdateReceibablesDto.remark"
             type="textarea"
             :rows="3"
             placeholder="请输入备注"
@@ -260,11 +264,7 @@
           <el-image :src="row.imgUrl" style="width: 40px; height: 40px" fit="cover" />
         </template>
       </el-table-column>
-      <el-table-column
-        prop="productBrand"
-        :v-model="AddCrmcontractandProductDto.name"
-        label="产品名称"
-      />
+      <el-table-column prop="productBrand" label="产品名称" />
       <el-table-column prop="id" label="产品编号" />
       <el-table-column prop="dealPrice" label="价格" />
     </el-table>
@@ -280,7 +280,6 @@
     title="选择客户"
     width="700px"
     @open="fetchCustomerDialogList"
-    @close="clearSelectedCustomer"
   >
     <div style="margin-bottom: 12px; display: flex">
       <el-input
@@ -364,7 +363,8 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, shallowRef, onBeforeUnmount, nextTick, computed } from "vue";
+import { reactive, ref, shallowRef, onBeforeUnmount, nextTick, computed, watch } from "vue";
+import CrmContractAPI from "@/api/CrmContract/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import "@wangeditor/editor/dist/css/style.css"; // 引入样式
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
@@ -374,10 +374,16 @@ import { ShowBusinessOpportunityList } from "@/api/CustomerProcess/BusinessOppor
 import { ShowCustomerList } from "@/api/CustomerProcess/Customer/customer.api";
 
 //#region 暂存数据结构
+const otherInfo = reactive({
+  customerName: "", // 所属客户名称
+  productName: "",
+  category: "",
+  price: 0,
+});
+
 // 添加合同表单
 interface addContractForm {
   customerId: string; // 所属客户ID
-  customerName: string; // 所属客户名称
   businessOpportunityId: string; // 选择商机ID
   userId: string; // 负责人ID
   signDate: string; // 签订日期
@@ -398,18 +404,21 @@ interface addContractForm {
   createUpdateReceibablesDto: CreateUpdateReceibablesDto; // 应收款表信息
 }
 
-// 添加应收款表单
+// 应收款表字段
 interface CreateUpdateReceibablesDto {
-  receivableCode?: string; // 应收款编号（可选）
+  customerId: string; // 客户ID
+  contractId: string; // 合同ID
+  userId: string; // 负责人ID
+  receivableCode: string; // 应收款编号（可选）
   receivablePay: number; // 应收款金额
   receivableDate: string; // 应收款时间
   remark: string; // 备注
+  paymentId: string; // 收款ID
 }
 
 // 添加合同表单
 const addContractForm = reactive<addContractForm>({
   customerId: "",
-  customerName: "",
   businessOpportunityId: "",
   userId: "",
   signDate: "",
@@ -420,29 +429,24 @@ const addContractForm = reactive<addContractForm>({
   contractTerms: "",
   auditorIds: [],
   contractScanning: "",
-  attachment: "",
+  attachment: "string",
   contractProceeds: 0,
   currentStep: 0,
-  approveComments: [],
-  approveTimes: [],
+  approveComments: ["string"],
+  approveTimes: ["2025-07-04T11:12:21.337Z"],
   paymentStatus: 0,
   addCrmcontractandProductDto: [],
   createUpdateReceibablesDto: {
+    customerId: "3fa85f64-5717-4562-b3fc-2c963f66afa6", // 客户ID
+    contractId: "3fa85f64-5717-4562-b3fc-2c963f66afa6", // 合同ID
+    userId: "3fa85f64-5717-4562-b3fc-2c963f66afa6", // 负责人ID
     receivableCode: "", // 应收款编号（可选）
     receivablePay: 0, // 应收款金额
     receivableDate: "", // 应收款时间
     remark: "", // 备注
+    paymentId: "3fa85f64-5717-4562-b3fc-2c963f66afa6", // 收款ID
   },
 });
-
-// 添加应收款表单
-const createUpdateReceibablesDto = reactive<CreateUpdateReceibablesDto>({
-  receivableCode: "", // 应收款编号（可选）
-  receivablePay: 0, // 应收款金额
-  receivableDate: "", // 应收款时间
-  remark: "", // 备注
-});
-
 // 表单验证规则
 const rules = {
   customerId: [{ required: true, message: "请选择所属客户", trigger: "change" }],
@@ -454,9 +458,15 @@ const rules = {
   dealer: [{ required: true, message: "请输入经销商", trigger: "blur" }],
   contractTerms: [{ required: true, message: "请输入合同条款", trigger: "blur" }],
   auditorIds: [{ required: true, message: "请选择审核人", trigger: "blur" }],
-  receivableCode: [{ required: true, message: "请输入应收款编号", trigger: "blur" }],
-  receivablePay: [{ required: true, message: "请输入应收款金额", trigger: "blur" }],
-  receivableDate: [{ required: true, message: "请选择应收款时间", trigger: "blur" }],
+  "createUpdateReceibablesDto.receivableCode": [
+    { required: true, message: "请输入应收款编号", trigger: "blur" },
+  ],
+  "createUpdateReceibablesDto.receivablePay": [
+    { required: true, message: "请输入应收款金额", trigger: "blur" },
+  ],
+  "createUpdateReceibablesDto.receivableDate": [
+    { required: true, message: "请选择应收款时间", trigger: "blur" },
+  ],
 };
 
 //#endregion
@@ -489,9 +499,6 @@ onBeforeUnmount(() => {
 interface AddCrmcontractandProductDto {
   crmContractId: string;
   productId: string;
-  name?: string; // 新增
-  category?: string; // 新增
-  price?: number; // 新增
   buyProductNum: number;
   sellPrice: number;
   sumPrice: number;
@@ -499,11 +506,8 @@ interface AddCrmcontractandProductDto {
 
 // 添加产品表单
 const AddCrmcontractandProductDto = reactive<AddCrmcontractandProductDto>({
-  crmContractId: "",
+  crmContractId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
   productId: "",
-  name: "",
-  category: "",
-  price: 0,
   buyProductNum: 0,
   sellPrice: 0,
   sumPrice: 0,
@@ -553,7 +557,6 @@ function openProductDialog() {
   selectedProductIds.value = addContractForm.addCrmcontractandProductDto.map(
     (item) => item.productId
   );
-  console.log(selectedProductIds.value);
   fetchProductList();
 }
 
@@ -584,19 +587,16 @@ function handleProductSearch() {
 function handleProductDialogConfirm() {
   // 获取当前选中的产品
   const currentSelectedIds = productSelection.value.map((item) => item.id);
-  console.log(currentSelectedIds);
 
   // 找出新增的产品（当前选中但不在已添加列表中的）
   const existingIds = addContractForm.addCrmcontractandProductDto.map((item) => item.productId);
   const newProducts = productSelection.value.filter((item) => !existingIds.includes(item.id));
-
-  console.log(newProducts);
-
+  console.log(addContractForm.addCrmcontractandProductDto);
   // 添加新选中的产品到表单
   if (newProducts.length > 0) {
     addContractForm.addCrmcontractandProductDto.push(
       ...newProducts.map((item) => ({
-        crmContractId: "", // 新增时为空
+        crmContractId: "3fa85f64-5717-4562-b3fc-2c963f66afa6", // 新增时为空
         productId: item.id,
         name: item.productBrand, // 产品名称
         category: item.categoryId, // 产品分类
@@ -639,6 +639,7 @@ function handleProductSelectionChange(selected: any) {
   addContractForm.addCrmcontractandProductDto = addContractForm.addCrmcontractandProductDto.filter(
     (item) => selectedIds.includes(item.productId)
   );
+  console.log(addContractForm.addCrmcontractandProductDto);
 }
 
 function handleProductRowClick(row: any) {
@@ -655,13 +656,9 @@ const formRef = ref();
 
 const handleSubmit = async () => {
   // 验证表单
-  await formRef.value.validate();
+  // await formRef.value.validate();
 
-  // 验证通过，执行提交逻辑
-  console.log("表单验证通过，开始提交数据：", addContractForm);
-
-  // TODO: 这里添加实际的提交API调用
-  // const response = await ContractApi.addContract(addContractForm);
+  await CrmContractAPI.addContract(addContractForm);
 
   // 提交成功提示
   ElMessage.success("合同添加成功！");
@@ -688,7 +685,6 @@ const fetchOpportunityList = async () => {
   try {
     const res: any = await ShowBusinessOpportunityList(opportunitySearch.value);
     opportunityList.value = res?.data || [];
-    console.log(opportunityList.value);
     opportunityTotal.value = res?.totalCount || 0;
     opportunityPage.value = res?.pageCount || 0;
   } finally {
@@ -706,7 +702,6 @@ const fetchUserList = async () => {
   try {
     const res: any = await UserAPI.getAllUsers();
     userList.value = res || [];
-    console.log(userList.value);
   } finally {
     userLoading.value = false;
   }
@@ -750,7 +745,7 @@ const openCustomerDialog = () => {
 const handleSelectCustomer = (row: any) => {
   selectedCustomerRow.value = row;
   addContractForm.customerId = row.id;
-  addContractForm.customerName = row.customerName;
+  otherInfo.customerName = row.customerName;
 };
 
 // 确认选择
@@ -760,17 +755,19 @@ const handleConfirmCustomer = () => {
   }
 };
 
-function clearSelectedCustomer() {
-  selectedCustomerRow.value = null;
-  addContractForm.customerId = "";
-  addContractForm.customerName = "";
-}
 //#endregion
+
+//#region 钩子函数
+// 监听 totalAmount，实时反填到应收款金额
+watch(totalAmount, (newVal) => {
+  addContractForm.createUpdateReceibablesDto.receivablePay = Number(newVal);
+});
 
 onMounted(() => {
   fetchOpportunityList();
   fetchUserList();
 });
+//#endregion
 </script>
 
 <style scoped>

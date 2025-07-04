@@ -15,24 +15,8 @@ const ProductApi = {
   //删除产品
   deleteProduct(data: any) {
     return request({
-      url: `${PRODUCT_BASE_URL}/product/${data.DeleteId}`,
+      url: `${PRODUCT_BASE_URL}/${data.id}/d-product`,
       method: "delete",
-    });
-  },
-
-  //删除多个产品
-  deleteManyProducts(data: any) {
-    return request({
-      url: `${PRODUCT_BASE_URL}/many-product`,
-      method: "delete",
-    });
-  },
-
-  //查询产品详情
-  getProductDetail(data: any) {
-    return request({
-      url: `${PRODUCT_BASE_URL}/product/${data.GetId}`,
-      method: "get",
     });
   },
 
@@ -43,5 +27,26 @@ const ProductApi = {
       method: "put",
     });
   },
+  /**
+   * 产品修改状态
+   */
+  updProductState(id: string, state: boolean) {
+    return request({
+      url: `${PRODUCT_BASE_URL}/${id}/upd-product-state`,
+      method: "put",
+      params: { state },
+    });
+  },
+  /**
+   * 导出全部产品分类
+   */
+  exportAllProductCategoryTo() {
+    return request({
+      url: `${PRODUCT_BASE_URL}/export-all-product-category-to`,
+      method: "get",
+      responseType: "blob", // 导出文件必须加
+    });
+  },
 };
+
 export default ProductApi;
