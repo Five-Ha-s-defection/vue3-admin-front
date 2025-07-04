@@ -1,6 +1,6 @@
 import request from "@/utils/request";
 
-const PRODUCT_BASE_URL = "/api/app/product";
+const PRODUCT_BASE_URL = '/api/app/product';
 
 const ProductApi = {
   //获取产品列表
@@ -12,10 +12,10 @@ const ProductApi = {
     });
   },
 
-  //删除产品
-  deleteProduct(data: any) {
-    return request({
-      url: `${PRODUCT_BASE_URL}/product/${data.DeleteId}`,
+//删除产品
+deleteProduct(data:any){
+  return request({
+    url: `${PRODUCT_BASE_URL}/${data.id}/d-product`,
       method: "delete",
     });
   },

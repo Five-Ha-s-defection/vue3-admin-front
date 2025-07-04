@@ -427,7 +427,7 @@ import { reactive, onMounted, ref } from "vue";
 import { Search, ArrowDown, Document } from "@element-plus/icons-vue";
 import CrmContractAPI from "@/api/CrmContract/crmcontract";
 import UserAPI from "@/api/User/user.api";
-import CustomerAPI from "@/api/CustomerProcess/customer.api";
+import CustomerAPI from "@/api/CustomerProcess/Customer/customer.api";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -629,7 +629,10 @@ const handleRowClick = (row: ContractItem) => {
 //#endregion
 
 const goAddContract = () => {
-  router.push("/crmcontract/addcontract");
+  router.push({
+    path: "/crmcontract/addcontract",
+    query: { _t: Date.now() },
+  });
 };
 
 onMounted(() => {
