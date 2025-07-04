@@ -377,7 +377,7 @@
 import { ref, reactive, onMounted, onActivated } from "vue";
 import ReceivablesViewAPI from "@/api/Finance/receivables.api";
 import PaymentViewAPI, { PaymentSearch } from "@/api/Finance/payment.api";
-import CustomerAPI from "@/api/CustomerProcess/customer.api";
+import CustomerAPI from "@/api/CustomerProcess/Customer/customer.api";
 import CrmContractAPI from "@/api/CrmContract/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
