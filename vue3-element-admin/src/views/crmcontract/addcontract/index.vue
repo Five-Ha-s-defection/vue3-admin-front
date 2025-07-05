@@ -1,128 +1,129 @@
 <template>
-  <el-form
-    ref="formRef"
-    :model="addContractForm"
-    :rules="rules"
-    label-width="110px"
-    class="add-contract-form"
-    size="small"
-  >
-    <div class="form-main">
-      <!-- 左侧：合同基本信息 -->
-      <div class="form-left">
-        <div class="form-title">添加合同</div>
-        <el-form-item label="所属客户" prop="customerId">
-          <el-tag v-if="otherInfo.customerName" type="success">
-            {{ otherInfo.customerName }}
-          </el-tag>
-          <el-tag v-else type="info">未选择客户</el-tag>
-          <el-button
-            type="primary"
-            size="small"
-            style="margin-left: 8px"
-            @click="openCustomerDialog"
-          >
-            选择客户
-          </el-button>
-        </el-form-item>
-        <el-form-item label="选择商机" prop="businessOpportunityId">
-          <el-select
-            v-model="addContractForm.businessOpportunityId"
-            placeholder="请选择商机"
-            style="width: 100%"
-            clearable
-          >
-            <el-option
-              v-for="item in opportunityList"
-              :key="item.id"
-              :label="item.businessOpportunityName"
-              :value="item.id"
+  <div>
+    <el-form
+      ref="formRef"
+      :model="addContractForm"
+      :rules="rules"
+      label-width="110px"
+      class="add-contract-form"
+      size="small"
+    >
+      <div class="form-main">
+        <!-- 左侧：合同基本信息 -->
+        <div class="form-left">
+          <div class="form-title">添加合同</div>
+          <el-form-item label="所属客户" prop="customerId">
+            <el-tag v-if="otherInfo.customerName" type="success">
+              {{ otherInfo.customerName }}
+            </el-tag>
+            <el-tag v-else type="info">未选择客户</el-tag>
+            <el-button
+              type="primary"
+              size="small"
+              style="margin-left: 8px"
+              @click="openCustomerDialog"
+            >
+              选择客户
+            </el-button>
+          </el-form-item>
+          <el-form-item label="选择商机" prop="businessOpportunityId">
+            <el-select
+              v-model="addContractForm.businessOpportunityId"
+              placeholder="请选择商机"
+              style="width: 100%"
+              clearable
+            >
+              <el-option
+                v-for="item in opportunityList"
+                :key="item.id"
+                :label="item.businessOpportunityName"
+                :value="item.id"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="负责人" prop="userId">
+            <el-select
+              v-model="addContractForm.userId"
+              placeholder="请选择负责人"
+              style="width: 100%"
+              clearable
+            >
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="合同金额" prop="contractProceeds">
+            <el-input
+              v-model.number="addContractForm.contractProceeds"
+              type="number"
+              placeholder="请输入合同金额"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="负责人" prop="userId">
-          <el-select
-            v-model="addContractForm.userId"
-            placeholder="请选择负责人"
-            style="width: 100%"
-            clearable
-          >
-            <el-option
-              v-for="item in userList"
-              :key="item.id"
-              :label="item.realName"
-              :value="item.id"
+          </el-form-item>
+          <el-form-item label="签订日期" prop="signDate">
+            <el-date-picker
+              v-model="addContractForm.signDate"
+              type="date"
+              placeholder="选择签订日期"
+              value-format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
+              style="width: 100%"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="合同金额" prop="contractProceeds">
-          <el-input
-            v-model.number="addContractForm.contractProceeds"
-            type="number"
-            placeholder="请输入合同金额"
-          />
-        </el-form-item>
-        <el-form-item label="签订日期" prop="signDate">
-          <el-date-picker
-            v-model="addContractForm.signDate"
-            type="date"
-            placeholder="选择签订日期"
-            value-format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="合同名称" prop="contractName">
-          <el-input v-model="addContractForm.contractName" placeholder="请输入合同名称" />
-        </el-form-item>
-        <el-form-item label="生效日期" prop="commencementDate">
-          <el-date-picker
-            v-model="addContractForm.commencementDate"
-            type="date"
-            placeholder="选择生效日期"
-            value-format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="截止日期" prop="expirationDate">
-          <el-date-picker
-            v-model="addContractForm.expirationDate"
-            type="date"
-            placeholder="选择截止日期"
-            value-format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="经销商" prop="dealer">
-          <el-input v-model="addContractForm.dealer" placeholder="请输入经销商" />
-        </el-form-item>
+          </el-form-item>
+          <el-form-item label="合同名称" prop="contractName">
+            <el-input v-model="addContractForm.contractName" placeholder="请输入合同名称" />
+          </el-form-item>
+          <el-form-item label="生效日期" prop="commencementDate">
+            <el-date-picker
+              v-model="addContractForm.commencementDate"
+              type="date"
+              placeholder="选择生效日期"
+              value-format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
+              style="width: 100%"
+            />
+          </el-form-item>
+          <el-form-item label="截止日期" prop="expirationDate">
+            <el-date-picker
+              v-model="addContractForm.expirationDate"
+              type="date"
+              placeholder="选择截止日期"
+              value-format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
+              style="width: 100%"
+            />
+          </el-form-item>
+          <el-form-item label="经销商" prop="dealer">
+            <el-input v-model="addContractForm.dealer" placeholder="请输入经销商" />
+          </el-form-item>
 
-        <el-form-item label="合同条款" prop="contractTerms">
-          <Toolbar style="border: 1px solid #ccc" :editor="editorRef" :mode="mode" />
-          <Editor
-            v-model="addContractForm.contractTerms"
-            style="border: 1px solid #ccc; height: 400px; width: 100%; overflow-y: auto"
-            :default-config="editorConfig"
-            :mode="mode"
-            @on-created="handleCreated"
-          />
-        </el-form-item>
-        <el-form-item label="审核人" prop="auditorIds">
-          <el-select
-            v-model="addContractForm.auditorIds"
-            placeholder="请选择审核人"
-            style="width: 100%"
-            multiple
-          >
-            <el-option
-              v-for="item in userList"
-              :key="item.id"
-              :label="item.realName"
-              :value="item.id"
+          <el-form-item label="合同条款" prop="contractTerms">
+            <Toolbar style="border: 1px solid #ccc" :editor="editorRef" :mode="mode" />
+            <Editor
+              v-model="addContractForm.contractTerms"
+              style="border: 1px solid #ccc; height: 400px; width: 100%; overflow-y: auto"
+              :default-config="editorConfig"
+              :mode="mode"
+              @on-created="handleCreated"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="合同扫描件">
-          <!-- <el-upload
+          </el-form-item>
+          <el-form-item label="审核人" prop="auditorIds">
+            <el-select
+              v-model="addContractForm.auditorIds"
+              placeholder="请选择审核人"
+              style="width: 100%"
+              multiple
+            >
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="合同扫描件">
+            <!-- <el-upload
             class="upload-demo"
             action="#"
             :file-list="addContractForm.contractScanning"
@@ -133,9 +134,9 @@
           >
             <i class="el-icon-plus"></i>
           </el-upload> -->
-        </el-form-item>
-        <el-form-item label="上传附件">
-          <!--  <el-upload
+          </el-form-item>
+          <el-form-item label="上传附件">
+            <!--  <el-upload
             class="upload-demo"
             action="#"
             :file-list="addContractForm.attachment"
@@ -146,220 +147,225 @@
           >
             <el-button size="small" type="primary">上传附件</el-button>
           </el-upload> -->
-        </el-form-item>
-      </div>
-      <!-- 右侧：产品和应收款 -->
-      <div class="form-right">
-        <div class="form-title-row">
-          <div class="form-title">添加产品</div>
-          <el-button type="primary" @click="handleSubmit">提交</el-button>
+          </el-form-item>
         </div>
-        <!-- 添加产品 -->
+        <!-- 右侧：产品和应收款 -->
+        <div class="form-right">
+          <div class="form-title-row">
+            <div class="form-title">添加产品</div>
+            <el-button type="primary" @click="handleSubmit">提交</el-button>
+          </div>
+          <!-- 添加产品 -->
+          <el-button
+            type="primary"
+            size="small"
+            style="margin-bottom: 8px"
+            @click="openProductDialog"
+          >
+            添加产品
+          </el-button>
+          <el-table
+            :data="addContractForm.addCrmcontractandProductDto"
+            style="width: 100%; height: 300px; margin-bottom: 16px"
+          >
+            <el-table-column prop="name" label="产品名称" />
+            <el-table-column prop="category" label="产品分类" />
+            <el-table-column prop="price" label="价格" />
+            <el-table-column label="售价">
+              <template #default="{ row }">
+                <el-input
+                  v-model.number="row.sellPrice"
+                  size="small"
+                  @input="updateSumPrice(row)"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column label="数量">
+              <template #default="{ row }">
+                <el-input
+                  v-model.number="row.buyProductNum"
+                  size="small"
+                  @input="updateSumPrice(row)"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column label="合计">
+              <template #default="{ row }">
+                {{ row.sumPrice ? row.sumPrice.toFixed(2) : "0.00" }}
+              </template>
+            </el-table-column>
+          </el-table>
+          <div style="text-align: right; margin-bottom: 16px">
+            合计：
+            <span style="color: #409eff">{{ totalAmount.toFixed(2) }}</span>
+          </div>
+          <!-- 添加应收款 -->
+          <div class="form-title">添加应收款</div>
+          <el-form-item label="应收款编号" prop="createUpdateReceibablesDto.receivableCode">
+            <el-input v-model="addContractForm.createUpdateReceibablesDto.receivableCode" />
+          </el-form-item>
+          <el-form-item label="应收款金额" prop="createUpdateReceibablesDto.receivablePay">
+            <el-input
+              v-model="addContractForm.createUpdateReceibablesDto.receivablePay"
+              type="number"
+              placeholder="请输入应收款金额"
+            />
+          </el-form-item>
+          <el-form-item label="应收款时间" prop="createUpdateReceibablesDto.receivableDate">
+            <el-date-picker
+              v-model="addContractForm.createUpdateReceibablesDto.receivableDate"
+              type="date"
+              placeholder="选择应收款时间"
+              value-format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
+              style="width: 100%"
+            />
+          </el-form-item>
+          <el-form-item label="备注" prop="remark">
+            <el-input
+              v-model="addContractForm.createUpdateReceibablesDto.remark"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入备注"
+            />
+          </el-form-item>
+        </div>
+      </div>
+    </el-form>
+
+    <!-- 产品列表和多选 -->
+    <el-dialog
+      v-model="showProductDialog"
+      title="选择产品"
+      width="800px"
+      @close="productSelection = []"
+    >
+      <div style="margin-bottom: 12px">
+        <el-input
+          v-model="productSearch.ProductBrand"
+          placeholder="搜索产品名称"
+          style="width: 240px; margin-right: 8px"
+          clearable
+          @keyup.enter="handleProductSearch"
+        />
+        <el-button type="primary" :loading="productLoading" @click="handleProductSearch">
+          搜索
+        </el-button>
+      </div>
+      <el-table
+        ref="productTableRef"
+        v-loading="productLoading"
+        :data="productList"
+        :row-key="'id'"
+        style="width: 100%"
+        height="350"
+        border
+        @selection-change="handleProductSelectionChange"
+        @row-click="handleProductRowClick"
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="categoryId" label="分类" />
+        <el-table-column prop="imgUrl" label="图片" width="80">
+          <template #default="{ row }">
+            <el-image :src="row.imgUrl" style="width: 40px; height: 40px" fit="cover" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="productBrand" label="产品名称" />
+        <el-table-column prop="id" label="产品编号" />
+        <el-table-column prop="dealPrice" label="价格" />
+      </el-table>
+      <template #footer>
+        <el-button @click="showProductDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleProductDialogConfirm">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 客户弹窗 -->
+    <el-dialog
+      v-model="showCustomerDialog"
+      title="选择客户"
+      width="700px"
+      @open="fetchCustomerDialogList"
+    >
+      <div style="margin-bottom: 12px; display: flex">
+        <el-input
+          v-model="customerDialogSearch.customerName"
+          placeholder="搜索客户名称"
+          style="width: 220px; margin-right: 8px"
+          clearable
+          @keyup.enter="
+            () => {
+              customerDialogSearch.PageIndex = 1;
+              fetchCustomerDialogList();
+            }
+          "
+        />
         <el-button
           type="primary"
-          size="small"
-          style="margin-bottom: 8px"
-          @click="openProductDialog"
+          :loading="customerDialogLoading"
+          @click="
+            () => {
+              customerDialogSearch.PageIndex = 1;
+              fetchCustomerDialogList();
+            }
+          "
         >
-          添加产品
+          搜索
         </el-button>
-        <el-table
-          :data="addContractForm.addCrmcontractandProductDto"
-          style="width: 100%; height: 300px; margin-bottom: 16px"
-        >
-          <el-table-column prop="name" label="产品名称" />
-          <el-table-column prop="category" label="产品分类" />
-          <el-table-column prop="price" label="价格" />
-          <el-table-column label="售价">
-            <template #default="{ row }">
-              <el-input v-model.number="row.sellPrice" size="small" @input="updateSumPrice(row)" />
-            </template>
-          </el-table-column>
-          <el-table-column label="数量">
-            <template #default="{ row }">
-              <el-input
-                v-model.number="row.buyProductNum"
-                size="small"
-                @input="updateSumPrice(row)"
-              />
-            </template>
-          </el-table-column>
-          <el-table-column label="合计">
-            <template #default="{ row }">
-              {{ row.sumPrice ? row.sumPrice.toFixed(2) : "0.00" }}
-            </template>
-          </el-table-column>
-        </el-table>
-        <div style="text-align: right; margin-bottom: 16px">
-          合计：
-          <span style="color: #409eff">{{ totalAmount.toFixed(2) }}</span>
-        </div>
-        <!-- 添加应收款 -->
-        <div class="form-title">添加应收款</div>
-        <el-form-item label="应收款编号" prop="createUpdateReceibablesDto.receivableCode">
-          <el-input v-model="addContractForm.createUpdateReceibablesDto.receivableCode" />
-        </el-form-item>
-        <el-form-item label="应收款金额" prop="createUpdateReceibablesDto.receivablePay">
-          <el-input
-            v-model="addContractForm.createUpdateReceibablesDto.receivablePay"
-            type="number"
-            placeholder="请输入应收款金额"
-          />
-        </el-form-item>
-        <el-form-item label="应收款时间" prop="createUpdateReceibablesDto.receivableDate">
-          <el-date-picker
-            v-model="addContractForm.createUpdateReceibablesDto.receivableDate"
-            type="date"
-            placeholder="选择应收款时间"
-            value-format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input
-            v-model="addContractForm.createUpdateReceibablesDto.remark"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入备注"
-          />
-        </el-form-item>
       </div>
-    </div>
-  </el-form>
-
-  <!-- 产品列表和多选 -->
-  <el-dialog
-    v-model="showProductDialog"
-    title="选择产品"
-    width="800px"
-    @close="productSelection = []"
-  >
-    <div style="margin-bottom: 12px">
-      <el-input
-        v-model="productSearch.ProductBrand"
-        placeholder="搜索产品名称"
-        style="width: 240px; margin-right: 8px"
-        clearable
-        @keyup.enter="handleProductSearch"
-      />
-      <el-button type="primary" :loading="productLoading" @click="handleProductSearch">
-        搜索
-      </el-button>
-    </div>
-    <el-table
-      ref="productTableRef"
-      v-loading="productLoading"
-      :data="productList"
-      :row-key="'id'"
-      style="width: 100%"
-      height="350"
-      border
-      @selection-change="handleProductSelectionChange"
-      @row-click="handleProductRowClick"
-    >
-      <el-table-column type="selection" width="50" />
-      <el-table-column prop="categoryId" label="分类" />
-      <el-table-column prop="imgUrl" label="图片" width="80">
-        <template #default="{ row }">
-          <el-image :src="row.imgUrl" style="width: 40px; height: 40px" fit="cover" />
-        </template>
-      </el-table-column>
-      <el-table-column prop="productBrand" label="产品名称" />
-      <el-table-column prop="id" label="产品编号" />
-      <el-table-column prop="dealPrice" label="价格" />
-    </el-table>
-    <template #footer>
-      <el-button @click="showProductDialog = false">取消</el-button>
-      <el-button type="primary" @click="handleProductDialogConfirm">确定</el-button>
-    </template>
-  </el-dialog>
-
-  <!-- 客户弹窗 -->
-  <el-dialog
-    v-model="showCustomerDialog"
-    title="选择客户"
-    width="700px"
-    @open="fetchCustomerDialogList"
-  >
-    <div style="margin-bottom: 12px; display: flex">
-      <el-input
-        v-model="customerDialogSearch.customerName"
-        placeholder="搜索客户名称"
-        style="width: 220px; margin-right: 8px"
-        clearable
-        @keyup.enter="
-          () => {
-            customerDialogSearch.PageIndex = 1;
-            fetchCustomerDialogList();
-          }
-        "
-      />
-      <el-button
-        type="primary"
-        :loading="customerDialogLoading"
-        @click="
-          () => {
-            customerDialogSearch.PageIndex = 1;
-            fetchCustomerDialogList();
-          }
-        "
+      <el-table
+        v-loading="customerDialogLoading"
+        :data="customerDialogList"
+        highlight-current-row
+        :row-key="(row) => row.id"
+        :current-row-key="selectedCustomerRow?.id"
+        style="width: 100%"
+        height="350"
+        @current-change="handleSelectCustomer"
+        @row-click="handleSelectCustomer"
       >
-        搜索
-      </el-button>
-    </div>
-    <el-table
-      v-loading="customerDialogLoading"
-      :data="customerDialogList"
-      highlight-current-row
-      :row-key="(row) => row.id"
-      :current-row-key="selectedCustomerRow?.id"
-      style="width: 100%"
-      height="350"
-      @current-change="handleSelectCustomer"
-      @row-click="handleSelectCustomer"
-    >
-      <!-- 单选框列 -->
-      <el-table-column label="" width="50" align="center">
-        <template #default="{ row }">
-          <el-radio
-            :model-value="selectedCustomerRow?.id"
-            :label="row.id"
-            @change="() => handleSelectCustomer(row)"
-          ></el-radio>
-        </template>
-      </el-table-column>
-      <el-table-column prop="userId" label="客户编号" />
-      <el-table-column prop="customerName" label="客户名称" />
-      <el-table-column prop="customerPhone" label="联系电话" />
-      <el-table-column prop="creationTime" label="创建时间">
-        <template #default="{ row }">
-          {{ row.creationTime.substring(0, 10) }} {{ row.creationTime.substring(11, 19) }}
-        </template>
-      </el-table-column>
-    </el-table>
-    <div style="margin: 12px 0; text-align: right">
-      <el-pagination
-        small
-        background
-        layout="prev, pager, next"
-        :total="customerDialogTotal"
-        :page-size="customerDialogSearch.PageSize"
-        :current-page="customerDialogSearch.PageIndex"
-        @current-change="
-          (page) => {
-            customerDialogSearch.PageIndex = page;
-            fetchCustomerDialogList();
-          }
-        "
-      />
-    </div>
-    <template #footer>
-      <el-button @click="showCustomerDialog = false">取消</el-button>
-      <el-button type="primary" :disabled="!selectedCustomerRow" @click="handleConfirmCustomer">
-        确定
-      </el-button>
-    </template>
-  </el-dialog>
+        <!-- 单选框列 -->
+        <el-table-column label="" width="50" align="center">
+          <template #default="{ row }">
+            <el-radio
+              :model-value="selectedCustomerRow?.id"
+              :label="row.id"
+              @change="() => handleSelectCustomer(row)"
+            ></el-radio>
+          </template>
+        </el-table-column>
+        <el-table-column prop="userId" label="客户编号" />
+        <el-table-column prop="customerName" label="客户名称" />
+        <el-table-column prop="customerPhone" label="联系电话" />
+        <el-table-column prop="creationTime" label="创建时间">
+          <template #default="{ row }">
+            {{ row.creationTime.substring(0, 10) }} {{ row.creationTime.substring(11, 19) }}
+          </template>
+        </el-table-column>
+      </el-table>
+      <div style="margin: 12px 0; text-align: right">
+        <el-pagination
+          small
+          background
+          layout="prev, pager, next"
+          :total="customerDialogTotal"
+          :page-size="customerDialogSearch.PageSize"
+          :current-page="customerDialogSearch.PageIndex"
+          @current-change="
+            (page) => {
+              customerDialogSearch.PageIndex = page;
+              fetchCustomerDialogList();
+            }
+          "
+        />
+      </div>
+      <template #footer>
+        <el-button @click="showCustomerDialog = false">取消</el-button>
+        <el-button type="primary" :disabled="!selectedCustomerRow" @click="handleConfirmCustomer">
+          确定
+        </el-button>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
