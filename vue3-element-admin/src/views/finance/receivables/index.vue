@@ -349,6 +349,43 @@
               </el-col>
             </el-row>
           </div>
+          <!-- 操作日志 -->
+        <div>
+          <div
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
+            操作日志
+          </div>
+        </div>
+        <el-divider content-position="left"></el-divider>
+        <div v-if="recordlist && recordlist.length">
+          <div
+            v-for="item in recordlist"
+            :key="item.id"
+            style="margin-bottom: 8px; display: flex; align-items: center"
+          >
+            <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
+            <span style="color: #1890ff">
+              <!-- 操作人ID（如有名字可替换为名字） -->
+              {{ item.creatorName || "-" }}
+            </span>
+            <span style="margin-left: 8px; color: #999">
+              <!-- 操作时间 -->
+              {{ item.creationTime ? item.creationTime.replace("T", " ").substring(0, 16) : "-" }}
+            </span>
+            <span style="margin-left: 8px">
+              <!-- 操作内容 -->
+              {{ item.action || "-" }}
+            </span>
+          </div>
+        </div>
+        <div v-else style="color: #aaa; text-align: center">没有更多了</div>
         </div>
       </el-drawer>
 
@@ -430,6 +467,7 @@ import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 import { useUserStore } from "@/store";
+import RecordAPI from "@/api/Record/record.api";
 const store = useUserStore();
 
 const router = useRouter();
@@ -490,7 +528,6 @@ const GetReceivables = () => {
   const params: ReceivablesPageQuery = {
     PageIndex: pagination.PageIndex,
     PageSize: pagination.PageSize,
-    //receivableCode: searchForm.receivableCode,
     StartTime: searchForm.StartTime,
     EndTime: searchForm.EndTime,
     ReceivableCode: searchForm.ReceivableCode,
@@ -500,6 +537,7 @@ const GetReceivables = () => {
     ReceivablePay: searchForm.ReceivablePay,
     CreatorId: searchForm.CreatorId,
     scopeType: searchForm.scopeType,
+    ReceivableDate: searchForm.ReceivableDate,
     progressType: searchForm.progressType,
   };
 
@@ -585,7 +623,7 @@ function handleSearch() {
 // 监听时间范围变化，自动同步到 StartTime 和 EndTime，并自动查询
 function handleDateRangeChange(val: any) {
   searchForm.StartTime = val?.[0] || "";
-  searchForm.EndTime = val?.[1] || "";
+  searchForm.EndTime = val?.[0] || "";
   GetReceivables();
 }
 
@@ -755,6 +793,25 @@ const detailData = ref<any>(null);
 function handleRowClick(row: any) {
   detailData.value = row;
   showDetailDrawer.value = true;
+  RecordData(row.id); // 获取操作日志列表数据
+}
+
+// 获取操作日志列表数据
+const recordlist: any = ref([]);
+//显示查询分页
+const RecordData = async (id:any) => {
+  const params = {
+    bizType: "receivables",
+  }
+  console.log("操作日志列表数据id",id);
+  try {
+    const list = await RecordAPI.GetRecord(params, id);
+    console.log("操作日志列表数据:", list);
+    recordlist.value = list || [];
+  } catch (err: any) {
+    console.error("获取操作日志列表失败:", err.message);
+  }
+   
 }
 
 // 删除应收款
