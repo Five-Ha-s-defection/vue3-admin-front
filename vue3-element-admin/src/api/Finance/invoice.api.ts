@@ -22,6 +22,12 @@ export const InvoiceViewAPI = {
       data,
     });
   },
+  GetInvoicePayment(PaymentId: string) {
+    return request({
+      url: `/api/app/invoice/logs/${PaymentId}`,
+      method: "get",
+    });
+  },
     //批量删除
   BatchDeleteInvoice(data: string[]) {
     return request({

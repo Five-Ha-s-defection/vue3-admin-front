@@ -26,12 +26,14 @@
         </div>
         <div style="display: flex; align-items: center; margin-bottom: 8px">
           <el-button type="primary" style="margin-left: 10px; margin-right: 350px" @click="Addlist">
-            添加收款
+            添加发票
           </el-button>
-          <el-date-picker v-model="dateRange" type="daterange" range-separator="-" start-placeholder="开始时间"
+          <el-date-picker
+v-model="dateRange" type="daterange" range-separator="-" start-placeholder="开始时间"
             end-placeholder="结束时间" value-format="YYYY-MM-DD" style="width: 50px; margin-right: 12px"
             @change="handleDateRangeChange" />
-          <el-input v-model="searchForm.InvoiceNumberCode" placeholder="发票编号(不含符号)"
+          <el-input
+v-model="searchForm.InvoiceNumberCode" placeholder="发票编号(不含符号)"
             style="width: 200px; margin-left: 16px" clearable />
           <el-button type="primary" style="margin-left: 8px; margin-right: 10px" @click="search()">
             高级搜索
@@ -56,7 +58,8 @@
           </el-row>
         </div>
       </div>
-      <el-table ref="tableRef" v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据"
+      <el-table
+ref="tableRef" v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据"
         @selection-change="handleSelectionChange" @row-click="handleRowClick">
         <el-table-column type="selection" width="50" />
         <el-table-column prop="invoiceNumberCode" label="发票编号" />
@@ -111,13 +114,14 @@
 
       <!-- 分页区域 -->
       <div style="margin-top: 16px; display: flex; justify-content: center">
-        <el-pagination v-model:current-page="pagination.PageIndex" v-model:page-size="pagination.PageSize"
+        <el-pagination
+v-model:current-page="pagination.PageIndex" v-model:page-size="pagination.PageSize"
           :page-sizes="[5, 10, 15, 20]" :total="pagination.totalCount" :background="true"
           layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
           @current-change="handleCurrentChange" />
       </div>
 
-      <!-- 添加应收款弹窗 -->
+      <!-- 添加发票弹窗 -->
       <el-dialog v-model="showAddDialog" title="添加发票" width="1000px" @close="resetAddForm">
         <el-form ref="addFormRef" :model="addForm" :rules="addRules" label-width="120px">
           <el-row :gutter="40">
@@ -154,7 +158,8 @@
                 <el-input v-model="addForm.taxAmount" type="number" placeholder="请输入税额" />
               </el-form-item>
               <el-form-item label="开票日期" prop="invoiceDate" required>
-                <el-date-picker v-model="addForm.invoiceDate" type="datetime" placeholder="选择开票日期" style="width: 100%"
+                <el-date-picker
+v-model="addForm.invoiceDate" type="datetime" placeholder="选择开票日期" style="width: 100%"
                   value-format="YYYY-MM-DDTHH:mm:ss" />
               </el-form-item>
               <el-form-item label="开票类型" prop="invoiceType" required>
@@ -170,9 +175,11 @@
                 </el-select>
               </el-form-item>
               <el-form-item label="发票图片" prop="invoiceImg">
-                <el-upload class="avatar-uploader" action="https://localhost:44341/api/app/common/upload-file"
+                <el-upload
+class="avatar-uploader" action="https://localhost:44341/api/app/common/upload-file"
                   :show-file-list="false" :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
-                  <img v-if="addForm.invoiceImg" :src="addForm.invoiceImg" class="avatar"
+                  <img
+v-if="addForm.invoiceImg" :src="addForm.invoiceImg" class="avatar"
                     style="width: 35px; height: 45px" />
                   <el-icon v-else class="avatar-uploader-icon">
                     <Plus />
@@ -225,10 +232,12 @@
           <el-button @click="showCustomerDrawer = false">取消</el-button>
         </div>
         <el-table :data="customerList" style="width: 100%" highlight-current-row>
-          <el-table-column type="selection" width="50" :selectable="() => true" :reserve-selection="false"
+          <el-table-column
+type="selection" width="50" :selectable="() => true" :reserve-selection="false"
             :show-overflow-tooltip="false" :fixed="true" :label="''">
             <template #default="{ row }">
-              <el-radio :model-value="selectedCustomer && selectedCustomer.id" :label="row.id"
+              <el-radio
+:model-value="selectedCustomer && selectedCustomer.id" :label="row.id"
                 @change="() => handleCustomerRadio(row)" />
             </template>
           </el-table-column>
@@ -279,8 +288,12 @@
           </el-form-item>
           <!-- 开票时间 -->
           <el-form-item label="开票时间">
-            <el-date-picker v-model="searchForm.InvoiceDate" type="daterange" range-separator="-"
-              start-placeholder="开始时间" end-placeholder="结束时间" value-format="YYYY-MM-DD" style="width: 100%" />
+            <el-date-picker
+              v-model="searchForm.InvoiceDate"
+              type="date"
+              placeholder="选择时间"
+              style="width: 100%"
+            />
           </el-form-item>
           <!-- 开票状态 -->
           <el-form-item label="开票状态">
@@ -311,7 +324,7 @@
               <el-icon style="color: #409eff; margin-right: 6px">
                 <Document />
               </el-icon>
-              {{ detailData?.paymentCode || "-" }}
+              {{ detailData?.invoiceNumberCode || "-" }}
             </div>
             <div>
               <el-button type="primary" size="small" @click="handleEditDetail">修改</el-button>
@@ -321,12 +334,23 @@
             </div>
           </div>
         </div>
-        <div style="padding: 24px 32px 0 32px; color: #fff; background: #181818; min-height: 100vh">
-
-          <el-row :gutter="40">
+        <!-- 基本信息 -->
+        <div style="margin-top: 24px">
+          <div
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
+            基本信息
+          </div>
+          <el-row :gutter="32">
             <!-- 左侧 基础信息 -->
             <el-col :span="12">
-              <div style="font-weight: bold; font-size: 20px; margin-bottom: 24px">基础信息</div>
+              <div style="font-weight: bold; font-size: 20px;">基础信息</div>
               <div class="info-row">
                 <span class="info-label">所属客户：</span>
                 {{ detailData?.customerName || "-" }}
@@ -337,7 +361,7 @@
               </div>
               <div class="info-row">
                 <span class="info-label">关联收款：</span>
-                {{ detailData?.amount || "-" }}
+                {{ detailData?.paymentAmount || "-" }}
               </div>
               <div class="info-row">
                 <span class="info-label">负责人：</span>
@@ -382,7 +406,7 @@
             </el-col>
             <!-- 右侧 发票信息 -->
             <el-col :span="12">
-              <div style="font-weight: bold; font-size: 20px; margin-bottom: 24px">发票信息</div>
+              <div style="font-weight: bold; font-size: 20px;">发票信息</div>
               <div class="info-row">
                 <span class="info-label">已有发票信息：</span>
                 {{ detailData?.inoviceTitle || "-" }}
@@ -414,6 +438,43 @@
             </el-col>
           </el-row>
         </div>
+        <!-- 操作日志 -->
+        <div>
+          <div
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
+            操作日志
+          </div>
+        </div>
+        <el-divider content-position="left"></el-divider>
+        <div v-if="recordlist && recordlist.length">
+          <div
+            v-for="item in recordlist"
+            :key="item.id"
+            style="margin-bottom: 8px; display: flex; align-items: center"
+          >
+            <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
+            <span style="color: #1890ff">
+              <!-- 操作人ID（如有名字可替换为名字） -->
+              {{ item.creatorName || "-" }}
+            </span>
+            <span style="margin-left: 8px; color: #999">
+              <!-- 操作时间 -->
+              {{ item.creationTime ? item.creationTime.replace("T", " ").substring(0, 16) : "-" }}
+            </span>
+            <span style="margin-left: 8px">
+              <!-- 操作内容 -->
+              {{ item.action || "-" }}
+            </span>
+          </div>
+        </div>
+        <div v-else style="color: #aaa; text-align: center">没有更多了</div>
       </el-drawer>
 
       <!-- 修改发票弹窗 -->
@@ -453,7 +514,8 @@
                 <el-input v-model="editForm.taxAmount" type="number" placeholder="请输入税额" />
               </el-form-item>
               <el-form-item label="开票日期" prop="invoiceDate" required>
-                <el-date-picker v-model="editForm.invoiceDate" type="datetime" placeholder="选择开票日期" style="width: 100%"
+                <el-date-picker
+v-model="editForm.invoiceDate" type="datetime" placeholder="选择开票日期" style="width: 100%"
                   value-format="YYYY-MM-DDTHH:mm:ss" />
               </el-form-item>
               <el-form-item label="开票类型" prop="invoiceType" required>
@@ -469,9 +531,11 @@
                 </el-select>
               </el-form-item>
               <el-form-item label="发票图片" prop="invoiceImg">
-                <el-upload class="avatar-uploader" action="https://localhost:44341/api/app/common/upload-file"
+                <el-upload
+class="avatar-uploader" action="https://localhost:44341/api/app/common/upload-file"
                   :show-file-list="false" :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
-                  <img v-if="editForm.invoiceImg" :src="editForm.invoiceImg" class="avatar"
+                  <img
+v-if="editForm.invoiceImg" :src="editForm.invoiceImg" class="avatar"
                     style="width: 35px; height: 45px" />
                   <el-icon v-else class="avatar-uploader-icon">
                     <Plus />
@@ -528,6 +592,7 @@ import CustomerAPI, { CustomerData } from "@/api/CustomerProcess/Customer/custom
 import CrmContractAPI from "@/api/CrmContract/crmcontract";
 import PaymentViewAPI from "@/api/Finance/payment.api";
 import UserAPI from "@/api/User/user.api";
+import RecordAPI from "@/api/Record/record.api";
 import InvoiceViewAPI, { InvoicePageQuery } from "@/api/Finance/invoice.api";
 import { ElMessage, ElMessageBox } from "element-plus";
 import type { UploadProps } from "element-plus";
@@ -603,6 +668,17 @@ const GetInvoice = () => {
   const params: InvoicePageQuery = {
     PageIndex: pagination.PageIndex,
     PageSize: pagination.PageSize,
+    StartTime: searchForm.StartTime,
+    EndTime: searchForm.EndTime,
+    UserId: searchForm.UserId,
+    CreatorId: searchForm.CreatorId,
+    CustomerId: searchForm.CustomerId,
+    ContractId: searchForm.ContractId,
+    InvoiceNumberCode: searchForm.InvoiceNumberCode,
+    InvoiceType: searchForm.InvoiceType,
+    InvoiceDate: searchForm.InvoiceDate,
+    InvoiceStatus: searchForm.InvoiceStatus,
+    ApproverIds: searchForm.ApproverIds,
   };
 
   InvoiceViewAPI.GetInvoicePage(params)
@@ -688,6 +764,18 @@ function handleCurrentChange(val: number) {
 const showAdvancedSearch = ref(false);
 const search = () => {
   showAdvancedSearch.value = true;
+  searchForm.StartTime = "";
+  searchForm.EndTime = "";
+  searchForm.UserId = "";
+  searchForm.CreatorId = "";
+  searchForm.CustomerId = "";
+  searchForm.ContractId = "";
+  searchForm.InvoiceNumberCode = "";
+  searchForm.InvoiceType = "";
+  searchForm.InvoiceStatus = "";
+  searchForm.ApproverIds = [];
+  searchForm.InvoiceDate = [];
+  GetInvoice(); // 获取合同列表
 };
 
 // 搜索
@@ -701,7 +789,7 @@ function handleSearch() {
 // 监听时间范围变化，自动同步到 StartTime 和 EndTime，并自动查询
 function handleDateRangeChange(val: any) {
   searchForm.StartTime = val?.[0] || "";
-  searchForm.EndTime = val?.[1] || "";
+  searchForm.EndTime = val?.[0] || "";
   GetInvoice();
 }
 
@@ -754,8 +842,8 @@ const GetcontractData = async () => {
   });
   CrmContractAPI.getInfo(pageForm)
     .then((res) => {
-      console.log("合同列表数据", res);
-      contractList.value = res;
+      console.log("合同列表数据", res.data);
+      contractList.value = res.data;
     })
     .finally(() => {
       loading.value = false;
@@ -786,7 +874,7 @@ const GetPaymentData = async () => {
 
   PaymentViewAPI.GetPaymentPage(params)
     .then((res) => {
-      console.log("收款列表数据", res);
+      console.log("收款列表数据", res.data);
       paymentList.value = res.data;
     })
     .finally(() => {
@@ -812,6 +900,8 @@ const InvoiceData = async () => {
     });
 };
 
+
+
 // 重置添加表单
 function resetAddForm() {
   addForm.contractId = "";
@@ -827,6 +917,7 @@ function handleAddSubmit() {
     if (valid) {
       // 这里写实际的添加API调用
       InvoiceViewAPI.AddInvoice(addForm).then((res) => {
+        debugger;
         if (res) {
           ElMessage.success("添加成功");
         } else {
@@ -893,13 +984,33 @@ const detailData = ref<any>(null);
 // 显示详情抽屉
 function handleRowClick(row: any) {
   detailData.value = row;
+  console.log("点击行数据", row);
   showDetailDrawer.value = true;
+  RecordData(row.id); // 获取操作日志列表数据
 }
 
-// 删除应收款
+// 获取操作日志列表数据
+const recordlist: any = ref([]);
+//显示查询分页
+const RecordData = async (id:any) => {
+  const params = {
+    bizType: "invoice",
+  }
+  console.log("操作日志列表数据id",id);
+  try {
+    const list = await RecordAPI.GetRecord(params, id);
+    console.log("操作日志列表数据:", list);
+    recordlist.value = list || [];
+  } catch (err: any) {
+    console.error("获取操作日志列表失败:", err.message);
+  }
+   
+}
+
+// 删除发票
 function handleDelete(row: any) {
   detailData.value = row;
-  ElMessageBox.confirm("确定要删除该应收款吗？", "提示", {
+  ElMessageBox.confirm("确定要删除该发票吗？", "提示", {
     type: "warning",
   }).then(() => {
     InvoiceViewAPI.DeleteInvoice(row.id)
@@ -958,8 +1069,11 @@ const editForm = reactive({
 function handleEditDetail() {
   // 反填数据
   Object.assign(editForm, detailData.value);
+  console.log("111",detailData.value);
+  console.log("222",editForm);
   showEditDrawer.value = true;
 }
+
 
 // 提交修改
 function handleEditSubmit() {
@@ -998,7 +1112,7 @@ const beforeAvatarUpload: UploadProps["beforeUpload"] = (rawFile) => {
 .info-row {
   margin-bottom: 18px;
   font-size: 18px;
-  color: #fff;
+  color: #0f0f0f;
 }
 
 .info-label {
@@ -1008,3 +1122,5 @@ const beforeAvatarUpload: UploadProps["beforeUpload"] = (rawFile) => {
   font-size: 18px;
 }
 </style>
+
+
