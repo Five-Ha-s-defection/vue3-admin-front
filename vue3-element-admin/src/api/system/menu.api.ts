@@ -116,7 +116,7 @@ export interface MenuInfo {
   component: string;
   icon: string;
   permissionCode: string;
-  hidden: boolean;
+  isVisible: boolean;
   sort: number;
 }
 

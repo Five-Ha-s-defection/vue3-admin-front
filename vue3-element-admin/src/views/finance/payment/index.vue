@@ -752,8 +752,8 @@ const GetcontractData = async () => {
   });
   CrmContractAPI.getInfo(pageForm)
     .then((res) => {
-      console.log("合同列表数据", res);
-      contractList.value = res;
+      console.log("合同列表数据", res.data);
+      contractList.value = res.data;
     })
     .finally(() => {
       loading.value = false;
