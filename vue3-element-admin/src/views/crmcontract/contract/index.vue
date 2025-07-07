@@ -88,7 +88,7 @@
     </el-card>
 
     <!-- 高级搜索组件 -->
-    <el-dialog v-model="showAdvancedSearch" title="高级搜索" width="50%" destroy-on-close>
+    <el-dialog v-model="showAdvancedSearch" title="高级搜索" width="60%" destroy-on-close>
       <div class="search-form">
         <!-- 满足条件 -->
         <div class="form-item">
@@ -148,14 +148,22 @@
         </div>
 
         <!-- 所属客户 -->
-        <div class="form-item">
+        <div style="display: flex; align-items: center">
           <span class="label">所属客户</span>
-          <el-radio-group v-model="searchForm.CustomerId" size="small" class="flexstyle">
-            <el-radio :label="0">未选择客户</el-radio>
-          </el-radio-group>
-          <el-button type="primary" size="small" style="margin-left: 10px" @click="selectCustomer">
-            选择客户
-          </el-button>
+          <template v-if="searchForm.CustomerId">
+            <el-tag
+              type="success"
+              closable
+              style="margin-right: 10px"
+              @close="clearSelectedCustomer"
+            >
+              {{ getSelectedCustomerName() }}
+            </el-tag>
+          </template>
+          <template v-else>
+            <span style="color: #aaa; margin-right: 10px">未选择客户</span>
+          </template>
+          <el-button type="primary" size="small" @click="selectCustomer">选择客户</el-button>
           <el-tooltip content="选择需要筛选的客户" placement="top">
             <el-icon><QuestionFilled /></el-icon>
           </el-tooltip>
@@ -270,14 +278,21 @@
         <el-button type="primary" @click="handleCustomerSubmit">提交</el-button>
         <el-button @click="showCustomerDialog = false">取消</el-button>
       </div>
-      <el-table :data="customerList" style="width: 100%" highlight-current-row>
+      <el-table
+        :data="customerList"
+        style="width: 100%; height: 600px"
+        highlight-current-row
+        @row-click="handleCustomerRowClick"
+      >
         <el-table-column label="" width="50" align="center">
           <template #default="{ row }">
             <el-radio
               :model-value="selectedCustomerId"
               :label="row.id"
               @change="() => handleCustomerRadio(row)"
-            />
+            >
+              <span style="display: none">{{ row.id }}</span>
+            </el-radio>
           </template>
         </el-table-column>
         <el-table-column prop="id" label="客户编号" />
@@ -423,8 +438,6 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted, ref } from "vue";
-import { Search, ArrowDown, Document } from "@element-plus/icons-vue";
 import CrmContractAPI from "@/api/CrmContract/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import CustomerAPI from "@/api/CustomerProcess/Customer/customer.api";
@@ -478,8 +491,27 @@ const pageinfo = reactive({
 const showAdvancedSearch = ref(false);
 
 // 高级搜索取消
+function resetSearchForm() {
+  searchForm.SearchTimeType = 0;
+  searchForm.BeginTime = "";
+  searchForm.EndTime = "";
+  searchForm.CheckType = 0;
+  searchForm.UserIds = [];
+  searchForm.CreateUserIds = [];
+  searchForm.CustomerId = "";
+  searchForm.ContractName = "";
+  searchForm.SignDate = "";
+  searchForm.CommencementDate = "";
+  searchForm.ExpirationDate = "";
+  searchForm.Dealer = "";
+  searchForm.ContractProceeds = 0;
+  searchForm.PageIndex = 1;
+  searchForm.PageSize = 10;
+}
 const handleCancel = () => {
+  resetSearchForm();
   showAdvancedSearch.value = false;
+  getTableData();
 };
 
 // 高级搜索确认
@@ -639,6 +671,22 @@ onMounted(() => {
   getTableData();
   getUsers();
 });
+
+// 获取选中客户名称
+function getSelectedCustomerName() {
+  const customer = customerList.value.find((item) => item.id === searchForm.CustomerId);
+  return customer ? customer.customerName : "未知客户";
+}
+
+// 清除选中客户
+function clearSelectedCustomer() {
+  searchForm.CustomerId = "";
+  selectedCustomerId.value = "";
+}
+
+function handleCustomerRowClick(row: CustomerItem) {
+  selectedCustomerId.value = row.id;
+}
 </script>
 
 <style scoped>
