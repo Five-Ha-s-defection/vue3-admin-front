@@ -1,6 +1,15 @@
 <template>
   <div>
     <el-card>
+      <!-- 顶部筛选区 -->
+      <div style="margin-bottom: 16px">
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="font-weight: bold; font-size: 16px">待审核收款列表</span>
+          <span style="margin-left: 16px; color: #888">总记录数：</span>
+          <span style="color: #409eff; margin-left: 2px">{{ pagination.totalCount }}</span>
+          <span style="color: #888; margin-left: 2px">条</span>
+        </div>
+      </div>
       <el-table ref="tableRef" v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据"
         @selection-change="handleSelectionChange" @row-click="handleRowClick">
         <el-table-column type="selection" width="50" />
@@ -49,7 +58,7 @@
         <el-table-column prop="customerName" label="所属客户" />
         <el-table-column prop="contractName" label="关联合同" />
         <el-table-column prop="realName" label="负责人" />
-        <el-table-column prop="auditorNames" label="审核人" />
+        <el-table-column prop="currentAuditorName" label="审核人" />
         <el-table-column prop="creatorRealName" label="创建人" />
       </el-table>
 
@@ -115,11 +124,11 @@
             </div>
           </div>
         </div>
-        <div style="padding: 24px 32px 0 32px; color: #fff; background: #181818; min-height: 100vh">
+        <div style="padding: 24px 32px 0 32px; color: #fff;min-height: 100vh">
           <el-row :gutter="40">
             <!-- 左侧 基础信息 -->
             <el-col :span="12">
-              <div style="font-weight: bold; font-size: 20px; margin-bottom: 24px">基础信息</div>
+              <div style="font-weight: bold; font-size: 20px;">基础信息</div>
               <div class="info-row">
                 <span class="info-label">所属客户：</span>
                 {{ detailData?.customerName || "-" }}
@@ -130,7 +139,7 @@
               </div>
               <div class="info-row">
                 <span class="info-label">关联收款：</span>
-                {{ detailData?.amount || "-" }}
+                {{ detailData?.paymentAmount || "-" }}
               </div>
               <div class="info-row">
                 <span class="info-label">负责人：</span>
@@ -175,7 +184,7 @@
             </el-col>
             <!-- 右侧 发票信息 -->
             <el-col :span="12">
-              <div style="font-weight: bold; font-size: 20px; margin-bottom: 24px">发票信息</div>
+              <div style="font-weight: bold; font-size: 20px;">发票信息</div>
               <div class="info-row">
                 <span class="info-label">已有发票信息：</span>
                 {{ detailData?.inoviceTitle || "-" }}
@@ -207,6 +216,73 @@
             </el-col>
           </el-row>
         </div>
+
+        <!-- 审核信息 -->
+        <div
+          style="
+            font-weight: bold;
+            font-size: 15px;
+            border-left: 3px solid #faad14;
+            padding-left: 8px;
+            margin-bottom: 18px;
+          "
+        >
+          审核信息
+        </div>
+        <el-divider content-position="left"></el-divider>
+        <div v-if="detailData.approveComments && detailData.approveComments.length">
+          <div
+            v-for="(comment, idx) in detailData.approveComments"
+            :key="idx"
+            style="margin-bottom: 8px; display: flex; align-items: center"
+          >
+            <el-icon style="margin-right: 4px"><el-icon-user /></el-icon>
+            <span style="color: #1890ff">{{ getUserNameById(detailData.approverIds?.[idx]) }}</span>
+            <span style="margin-left: 8px; color: #999">
+              {{ detailData.approveTimes?.[idx]?.replace("T", " ").substring(0, 16) || "-" }}
+            </span>
+            <span style="margin-left: 8px">{{ comment || "-" }}</span>
+          </div>
+        </div>
+        <div v-else style="color: #aaa; text-align: center">没有更多了</div>
+
+        <!-- 操作日志 -->
+        <div>
+          <div
+            style="
+              font-weight: bold;
+              font-size: 15px;
+              border-left: 3px solid #faad14;
+              padding-left: 8px;
+              margin-bottom: 18px;
+            "
+          >
+            操作日志
+          </div>
+        </div>
+        <el-divider content-position="left"></el-divider>
+        <div v-if="recordlist && recordlist.length">
+          <div
+            v-for="item in recordlist"
+            :key="item.id"
+            style="margin-bottom: 8px; display: flex; align-items: center"
+          >
+            <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
+            <span style="color: #1890ff">
+              <!-- 操作人ID（如有名字可替换为名字） -->
+              {{ item.creatorName || "-" }}
+            </span>
+            <span style="margin-left: 8px; color: #999">
+              <!-- 操作时间 -->
+              {{ item.creationTime ? item.creationTime.replace("T", " ").substring(0, 16) : "-" }}
+            </span>
+            <span style="margin-left: 8px">
+              <!-- 操作内容 -->
+              {{ item.action || "-" }}
+            </span>
+          </div>
+        </div>
+        <div v-else style="color: #aaa; text-align: center">没有更多了</div>
       </el-drawer>
 
       <!-- 修改发票弹窗 -->
@@ -341,6 +417,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import type { UploadProps } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 import { useUserStore } from "@/store";
+import RecordAPI from "@/api/Record/record.api";
 
 const store = useUserStore();
 
@@ -368,6 +445,8 @@ const pagination = reactive({
 });
 
 const currentUserId = store.userInfo.id; // 获取当前登录人ID
+const currentUserName = store.userInfo.realName; // 获取当前登录人姓名
+console.log("当前登录人", currentUserName);
 console.log("当前登录人ID", currentUserId);
 
 // 搜索表单
@@ -409,9 +488,8 @@ const GetInvoice = () => {
       console.log("发票数据", res);
 // 前端再次过滤，确保只显示待审核和审核中的数据
       const filteredData = res.data.filter(
-        (item: any) => item.invoiceStatus === 0 || item.invoiceStatus === 1 && item.approverIds.includes(currentUserId)
-      );
-
+        (item: any) => (item.invoiceStatus === 0 || item.invoiceStatus === 1) && item.currentAuditorName=== currentUserName) // 只显示当前登录人审核中的数据
+      debugger;
       tableData.value = filteredData;
       pagination.totalCount = filteredData.length;
       pagination.pageCount = Math.ceil(filteredData.length / pagination.PageSize);
@@ -616,6 +694,24 @@ const detailData = ref<any>(null);
 function handleRowClick(row: any) {
   detailData.value = row;
   showDetailDrawer.value = true;
+  RecordData(row.id); // 获取操作日志列表数据
+}
+
+// 获取操作日志列表数据
+const recordlist: any = ref([]);
+//显示查询分页
+const RecordData = async (id:any) => {
+  const params = {
+    bizType: "invoice",
+  }
+  console.log("操作日志列表数据id",id);
+  try {
+    const list = await RecordAPI.GetRecord(params, id);
+    console.log("操作日志列表数据:", list);
+    recordlist.value = list || [];
+  } catch (err: any) {
+    console.error("获取操作日志列表失败:", err.message);
+  }
 }
 
 // 删除应收款
@@ -680,6 +776,7 @@ const editForm = reactive({
 function handleEditDetail() {
   // 反填数据
   Object.assign(editForm, detailData.value);
+  console.log("111",detailData.value);
   showEditDrawer.value = true;
 }
 
@@ -700,6 +797,14 @@ function handleEditSubmit() {
   });
 }
 
+// 通过用户ID获取用户姓名(审核信息)
+function getUserNameById(id: any) {
+  const user = userList.value.find((u: any) => u.id === id);
+  return user ? user.realName : id || "-";
+}
+
+
+// 处理上传的发票图片
 const handleAvatarSuccess = (val: any) => {
   addForm.invoiceImg = val;
 };
@@ -757,7 +862,7 @@ async function handleApproveSubmit() {
 .info-row {
   margin-bottom: 18px;
   font-size: 18px;
-  color: #fff;
+  color: #101010;
 }
 
 .info-label {

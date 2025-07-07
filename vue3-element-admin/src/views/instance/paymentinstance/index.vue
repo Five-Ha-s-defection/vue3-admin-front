@@ -229,20 +229,34 @@
           </el-row>
         </div>
 
-        <!-- 审核信息 -->
-        <div>
-          <div style="
-              font-weight: bold;
-              font-size: 15px;
-              border-left: 3px solid #faad14;
-              padding-left: 8px;
-              margin-bottom: 18px;
-            ">
-            审核信息
-          </div>
+         <!-- 审核信息 -->
+        <div
+          style="
+            font-weight: bold;
+            font-size: 15px;
+            border-left: 3px solid #faad14;
+            padding-left: 8px;
+            margin-bottom: 18px;
+          "
+        >
+          审核信息
         </div>
         <el-divider content-position="left"></el-divider>
-        <div style="color: #aaa; text-align: center; margin: 16px 0">暂无数据</div>
+        <div v-if="detailData.approveComments && detailData.approveComments.length">
+          <div
+            v-for="(comment, idx) in detailData.approveComments"
+            :key="idx"
+            style="margin-bottom: 8px; display: flex; align-items: center"
+          >
+            <el-icon style="margin-right: 4px"><el-icon-user /></el-icon>
+            <span style="color: #1890ff">{{ getUserNameById(detailData.approverIds?.[idx]) }}</span>
+            <span style="margin-left: 8px; color: #999">
+              {{ detailData.approveTimes?.[idx]?.replace("T", " ").substring(0, 16) || "-" }}
+            </span>
+            <span style="margin-left: 8px">{{ comment || "-" }}</span>
+          </div>
+        </div>
+        <div v-else style="color: #aaa; text-align: center">没有更多了</div>
 
         <!-- 发票信息 -->
         <div>
@@ -282,24 +296,38 @@
 
         <!-- 操作日志 -->
         <div>
-          <div style="
+          <div
+            style="
               font-weight: bold;
               font-size: 15px;
               border-left: 3px solid #faad14;
               padding-left: 8px;
               margin-bottom: 18px;
-            ">
+            "
+          >
             操作日志
           </div>
         </div>
         <el-divider content-position="left"></el-divider>
-        <div v-if="detailData.approveComments && detailData.approveComments.length">
-          <div v-for="(item, idx) in detailData.approveComments" :key="idx"
-            style="margin-bottom: 8px; display: flex; align-items: center">
+        <div v-if="recordlist && recordlist.length">
+          <div
+            v-for="item in recordlist"
+            :key="item.id"
+            style="margin-bottom: 8px; display: flex; align-items: center"
+          >
             <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
-            <span style="color: #1890ff">{{ detailData.creatorRealName }}</span>
-            <span style="margin-left: 8px; color: #999">{{ detailData.approveTimes[idx] }}</span>
-            <span style="margin-left: 8px">{{ item }}</span>
+            <span style="color: #1890ff">
+              <!-- 操作人ID（如有名字可替换为名字） -->
+              {{ item.creatorName || "-" }}
+            </span>
+            <span style="margin-left: 8px; color: #999">
+              <!-- 操作时间 -->
+              {{ item.creationTime ? item.creationTime.replace("T", " ").substring(0, 16) : "-" }}
+            </span>
+            <span style="margin-left: 8px">
+              <!-- 操作内容 -->
+              {{ item.action || "-" }}
+            </span>
           </div>
         </div>
         <div v-else style="color: #aaa; text-align: center">没有更多了</div>
@@ -384,6 +412,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 import InvoiceViewAPI from "@/api/Finance/invoice.api";
 import { useUserStore } from "@/store";
+import RecordAPI from "@/api/Record/record.api";
 
 const store = useUserStore();
 
@@ -653,22 +682,42 @@ const showDetailDrawer = ref(false);
 // 详情数据
 const detailData = ref<any>({});
 // 显示收款详情
-const invoiceList = ref<any[]>([]);
+const invoiceList = ref<any>([]);
 
 function handleRowClick(row: any) {
   detailData.value = row;
   showDetailDrawer.value = true;
   fetchInvoiceList(row.id);
+  RecordData(row.id); // 获取操作日志数据
 }
 // 获取发票列表
-function fetchInvoiceList(paymentId: string) {
-  InvoiceViewAPI.GetInvoicePage({ paymentId, PageIndex: 1, PageSize: 100 })
+function fetchInvoiceList(PaymentId: string) {
+  console.log("获取发票列表", PaymentId);
+  InvoiceViewAPI.GetInvoicePayment(PaymentId)
     .then((res) => {
-      invoiceList.value = res.data || [];
+      invoiceList.value = res || [];
     })
     .catch(() => {
       invoiceList.value = [];
     });
+}
+
+// 获取操作日志列表数据
+const recordlist: any = ref([]);
+//显示查询分页
+const RecordData = async (id:any) => {
+  const params = {
+    bizType: "payment",
+  }
+  console.log("操作日志列表数据id",id);
+  try {
+    const list = await RecordAPI.GetRecord(params, id);
+    console.log("操作日志列表数据:", list);
+    recordlist.value = list || [];
+  } catch (err: any) {
+    console.error("获取操作日志列表失败:", err.message);
+  }
+   
 }
 
 // 删除应收款
@@ -724,6 +773,12 @@ function handleEditSubmit() {
       }
     });
   });
+}
+
+// 通过用户ID获取用户姓名(审核信息)
+function getUserNameById(id: any) {
+  const user = userList.value.find((u: any) => u.id === id);
+  return user ? user.realName : id || "-";
 }
 
 // 审核/驳回弹窗

@@ -16,7 +16,7 @@
     <div class="right-content">
       <!-- 工具栏 -->
       <div class="toolbar">
-        <el-button type="primary">添加产品</el-button>
+        <el-button type="primary" @click="goToAddProduct()">添加产品</el-button>
         <el-input
           class="search-input"
           placeholder="产品名称/产品编号"
@@ -31,7 +31,7 @@
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item @click="handleImport">导入</el-dropdown-item>
+              <!-- <el-dropdown-item @click="handleImport">导入</el-dropdown-item> -->
               <el-dropdown-item @click="handleExportCategory">导出全部产品</el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -206,6 +206,10 @@ const toggleStatus = async (row: any) => {
   } catch (e) {
     ElMessage.error("状态修改失败");
   }
+};
+
+const goToAddProduct = () => {
+  router.push("/cxsmanagment/addproduct");
 };
 </script>
 <style scoped>

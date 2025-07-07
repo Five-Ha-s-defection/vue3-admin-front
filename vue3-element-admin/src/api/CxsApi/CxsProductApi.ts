@@ -19,6 +19,13 @@ const ProductApi = {
       method: "delete",
     });
   },
+  addProduct(data: any) {
+    return request({
+      url: `${PRODUCT_BASE_URL}/product`,
+      method: `post`,
+      data,
+    });
+  },
 
   //修改产品
   updateProduct(data: any) {
