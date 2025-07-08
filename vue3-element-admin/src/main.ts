@@ -3,6 +3,7 @@ import App from "./App.vue";
 import setupPlugins from "@/plugins";
 import router from "@/router"; // 引入布局组件
 import { useUserStore, usePermissionStore } from "@/store";
+import { setupElIcons } from "./plugins/icons";
 // 暗黑主题样式
 import "element-plus/theme-chalk/dark/css-vars.css";
 import "vxe-table/lib/style.css";
@@ -37,6 +38,7 @@ async function bootstrap() {
   app.use(router);
   // 安装所有插件（pinia、i18n、element-plus 等）
   app.use(setupPlugins);
+  setupElIcons(app); // 注册 Element-plus 图标
   // 🚨【3】挂载 Vue 应用
   app.mount("#app");
 }

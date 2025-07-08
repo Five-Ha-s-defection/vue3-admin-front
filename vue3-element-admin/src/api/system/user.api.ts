@@ -375,8 +375,6 @@ export interface PasswordChangeForm {
   oldPassword?: string;
   /** 新密码 */
   newPassword?: string;
-  /** 确认新密码 */
-  confirmPassword?: string;
 }
 
 /** 修改手机表单 */
