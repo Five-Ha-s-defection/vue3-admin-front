@@ -28,11 +28,11 @@ export const useUserStore = defineStore("user", () => {
     return new Promise<void>((resolve, reject) => {
       AuthAPI.login(LoginFormData)
         .then((data) => {
-          if (!data.token) {
+          if (!data.accessToken) {
             ElMessage.error("登录失败");
             return reject(new Error("登录失败"));
           }
-          const accessToken = data.token;
+          const accessToken = data.accessToken;
           const refreshToken = data.refreshToken || "";
           // 保存记住我状态和token
           rememberMe.value = LoginFormData.rememberMe;
@@ -158,9 +158,9 @@ export const useUserStore = defineStore("user", () => {
     return new Promise<void>((resolve, reject) => {
       AuthAPI.refreshToken(refreshToken)
         .then((data) => {
-          const { token, refreshToken: newRefreshToken } = data;
+          const { accessToken, refreshToken: newRefreshToken } = data;
           // 更新令牌，保持当前记住我状态
-          Auth.setTokens(token, newRefreshToken, Auth.getRememberMe());
+          Auth.setTokens(accessToken, newRefreshToken, Auth.getRememberMe());
           resolve();
         })
         .catch((error) => {

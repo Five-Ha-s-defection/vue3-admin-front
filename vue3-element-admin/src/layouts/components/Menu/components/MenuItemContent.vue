@@ -1,10 +1,9 @@
 <template>
   <!-- 菜单图标 -->
   <template v-if="icon">
-    <el-icon v-if="isElIcon" class="menu-icon">
-      <component :is="iconComponent" />
-    </el-icon>
-    <div v-else :class="`i-svg:${icon}`" class="menu-icon" />
+    <!-- 图标 -->
+    <component :is="resolvedIcon" v-if="resolvedIcon" class="menu-icon" />
+    <div v-else class="i-svg:menu menu-icon" />
   </template>
   <template v-else>
     <div class="i-svg:menu menu-icon" />
@@ -14,6 +13,7 @@
 </template>
 
 <script setup lang="ts">
+import * as Icons from "@element-plus/icons-vue";
 import { translateRouteTitle } from "@/utils/i18n";
 
 const props = defineProps<{
@@ -21,14 +21,17 @@ const props = defineProps<{
   title?: string;
 }>();
 
-const isElIcon = computed(() => props.icon?.startsWith("el-icon"));
-const iconComponent = computed(() => props.icon?.replace("el-icon-", ""));
+// 将字符串 icon 转换为 ElementPlus 图标组件
+const resolvedIcon = computed(() => {
+  if (!props.icon) return null;
+  const componentName = props.icon.charAt(0).toUpperCase() + props.icon.slice(1);
+  return (Icons as Record<string, any>)[componentName] || null;
+});
 </script>
 
 <style lang="scss" scoped>
 .menu-icon {
   display: inline-flex;
-  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   width: 18px;
