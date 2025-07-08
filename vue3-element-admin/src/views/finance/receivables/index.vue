@@ -126,7 +126,12 @@
               placeholder="请选择合同"
               style="width: 100%"
             >
-              <el-option v-for="item in contractList" :label="item.contractName" :value="item.id" />
+              <el-option
+                v-for="item in contractList"
+                :key="item.id"
+                :label="item.contractName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="负责人" prop="userId">
@@ -135,7 +140,12 @@
               placeholder="请输入负责人"
               style="width: 100%"
             >
-              <el-option v-for="item in userList" :label="item.realName" :value="item.id" />
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="应收款编号" prop="receivableCode">
@@ -218,7 +228,7 @@
         <el-form :model="searchForm" label-width="100px" label-position="right">
           <el-form-item label="负责人" prop="userId">
             <el-select v-model="searchForm.UserId" placeholder="请输入负责人" style="width: 100%">
-              <el-option v-for="item in userList" :label="item.realName" :value="item.id" />
+              <el-option v-for="item in userList" :label="item.realName" :value="item.id" :key="item.id"/>
             </el-select>
           </el-form-item>
           <el-form-item label="创建人">
@@ -350,42 +360,42 @@
             </el-row>
           </div>
           <!-- 操作日志 -->
-        <div>
-          <div
-            style="
-              font-weight: bold;
-              font-size: 15px;
-              border-left: 3px solid #faad14;
-              padding-left: 8px;
-              margin-bottom: 18px;
-            "
-          >
-            操作日志
+          <div>
+            <div
+              style="
+                font-weight: bold;
+                font-size: 15px;
+                border-left: 3px solid #faad14;
+                padding-left: 8px;
+                margin-bottom: 18px;
+              "
+            >
+              操作日志
+            </div>
           </div>
-        </div>
-        <el-divider content-position="left"></el-divider>
-        <div v-if="recordlist && recordlist.length">
-          <div
-            v-for="item in recordlist"
-            :key="item.id"
-            style="margin-bottom: 8px; display: flex; align-items: center"
-          >
-            <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
-            <span style="color: #1890ff">
-              <!-- 操作人ID（如有名字可替换为名字） -->
-              {{ item.creatorName || "-" }}
-            </span>
-            <span style="margin-left: 8px; color: #999">
-              <!-- 操作时间 -->
-              {{ item.creationTime ? item.creationTime.replace("T", " ").substring(0, 16) : "-" }}
-            </span>
-            <span style="margin-left: 8px">
-              <!-- 操作内容 -->
-              {{ item.action || "-" }}
-            </span>
+          <el-divider content-position="left"></el-divider>
+          <div v-if="recordlist && recordlist.length">
+            <div
+              v-for="item in recordlist"
+              :key="item.id"
+              style="margin-bottom: 8px; display: flex; align-items: center"
+            >
+              <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
+              <span style="color: #1890ff">
+                <!-- 操作人ID（如有名字可替换为名字） -->
+                {{ item.creatorName || "-" }}
+              </span>
+              <span style="margin-left: 8px; color: #999">
+                <!-- 操作时间 -->
+                {{ item.creationTime ? item.creationTime.replace("T", " ").substring(0, 16) : "-" }}
+              </span>
+              <span style="margin-left: 8px">
+                <!-- 操作内容 -->
+                {{ item.action || "-" }}
+              </span>
+            </div>
           </div>
-        </div>
-        <div v-else style="color: #aaa; text-align: center">没有更多了</div>
+          <div v-else style="color: #aaa; text-align: center">没有更多了</div>
         </div>
       </el-drawer>
 
@@ -799,11 +809,11 @@ function handleRowClick(row: any) {
 // 获取操作日志列表数据
 const recordlist: any = ref([]);
 //显示查询分页
-const RecordData = async (id:any) => {
+const RecordData = async (id: any) => {
   const params = {
     bizType: "receivables",
-  }
-  console.log("操作日志列表数据id",id);
+  };
+  console.log("操作日志列表数据id", id);
   try {
     const list = await RecordAPI.GetRecord(params, id);
     console.log("操作日志列表数据:", list);
@@ -811,8 +821,7 @@ const RecordData = async (id:any) => {
   } catch (err: any) {
     console.error("获取操作日志列表失败:", err.message);
   }
-   
-}
+};
 
 // 删除应收款
 function handleDelete(row: any) {
