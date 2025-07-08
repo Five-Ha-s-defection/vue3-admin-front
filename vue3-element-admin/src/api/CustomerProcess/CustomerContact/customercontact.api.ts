@@ -2,7 +2,6 @@ import request from "@/utils/request";
 
 const CustomerContact_BASE_URL = "/api/app/customer-contact";
 
-
 // 添加客户联系人
 export const AddCustomerContact = (data: any) => {
   return request({
@@ -10,7 +9,7 @@ export const AddCustomerContact = (data: any) => {
     method: "post",
     data,
   });
-}
+};
 
 // 显示客户联系人
 export const ShowCustomerContactList = (data: any) => {
@@ -19,7 +18,7 @@ export const ShowCustomerContactList = (data: any) => {
     method: "get",
     params: data,
   });
-}
+};
 
 // 获取客户联系人详情
 export const GetCustomerContactDetail = (id: string) => {
@@ -27,7 +26,7 @@ export const GetCustomerContactDetail = (id: string) => {
     url: `${CustomerContact_BASE_URL}/${id}/customer-contact-by-id`,
     method: "get",
   });
-}
+};
 
 // 删除客户联系人
 export const DeleteCustomerContact = (id: string) => {
@@ -35,7 +34,7 @@ export const DeleteCustomerContact = (id: string) => {
     url: `${CustomerContact_BASE_URL}/${id}/del-customer-contact`,
     method: "delete",
   });
-}
+};
 
 // 修改客户联系人
 export const UpdateCustomerContact = (id: string, data: any) => {
@@ -44,7 +43,7 @@ export const UpdateCustomerContact = (id: string, data: any) => {
     method: "put",
     data,
   });
-}
+};
 
 // 获取客户下拉框
 export const GetCustomerSelect = () => {
@@ -52,9 +51,15 @@ export const GetCustomerSelect = () => {
     url: `${CustomerContact_BASE_URL}/customer-list`,
     method: "get",
   });
-}
+};
 
-//============差一个获取联系人关系下拉框=====================================
+//获取联系人关系下拉框
+export const GetContactRelationSelect = () => {
+  return request({
+    url: `${CustomerContact_BASE_URL}/contact-relation-list`,
+    method: "get",
+  });
+};
 
 //获取角色下拉框
 export const GetRoleSelect = () => {

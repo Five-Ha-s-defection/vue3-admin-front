@@ -60,6 +60,12 @@ export default defineConfig(({ mode }: ConfigEnv) => {
           target: env.VITE_APP_API_URL,
           rewrite: (path) => path.replace(new RegExp("^" + env.VITE_APP_BASE_API), ""),
         },
+        '/api': {
+          target: 'https://localhost:44341', // 后端实际地址
+          changeOrigin: true,
+          secure: false, // 如果后端是自签名https证书，需加此项
+          rewrite: path => path.replace(/^\/api/, '/api')
+        }
       },
     },
     plugins: [
