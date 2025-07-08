@@ -143,7 +143,6 @@ const productPage = reactive({
   pageIndex: 1,
   pageSize: 10,
   categoryId: undefined,
-
   productImageUrl: "",
   productBrand: "",
   productSupplier: "",
@@ -164,10 +163,10 @@ interface ProductData {
   productSupplier: string;
   productCode: string;
   productDescription: string;
-  suggestedPrice: 0;
+  suggestedPrice: undefined;
   productRemark: string;
-  productStatus: null;
-  dealPrice: 0;
+  productStatus: undefined;
+  dealPrice: undefined;
 }
 
 const searchValue = ref("");
