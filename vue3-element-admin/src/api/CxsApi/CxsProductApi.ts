@@ -19,6 +19,8 @@ const ProductApi = {
       method: "delete",
     });
   },
+
+  //添加产品
   addProduct(data: any) {
     return request({
       url: `${PRODUCT_BASE_URL}/product`,
@@ -52,6 +54,27 @@ const ProductApi = {
       url: `${PRODUCT_BASE_URL}/export-all-product-category-to`,
       method: "get",
       responseType: "blob", // 导出文件必须加
+    });
+  },
+  /**
+   *
+   * 树形
+   */
+  listtree() {
+    return request({
+      url: `${PRODUCT_BASE_URL}/categery-cascade-list`,
+      method: "get",
+    });
+  },
+  /**
+   详情返回：
+   * @param id
+   * @returns
+   */
+  getProductDetail(id: string) {
+    return request({
+      url: `${PRODUCT_BASE_URL}/${id}/product-id`,
+      method: "get",
     });
   },
 };

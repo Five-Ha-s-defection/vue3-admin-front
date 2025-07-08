@@ -9,7 +9,9 @@
         default-expand-all
         highlight-current
         style="background: #f8f8f8"
+        @node-click="handleNodeClick"
       />
+
       <div class="record-count">总记录数：{{ productPage.totalCount }} 条</div>
     </div>
     <!-- 右侧内容 -->
@@ -63,7 +65,7 @@
               <span class="el-dropdown-link">···</span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item @click="">修改</el-dropdown-item>
+                  <el-dropdown-item @click="goToUpdateProduct(row.id)">修改</el-dropdown-item>
                   <el-dropdown-item @click="productDelete(row)">删除</el-dropdown-item>
                   <el-dropdown-item @click="toggleStatus(row)">
                     {{ row.productStatus === false ? "上架" : "下架" }}
@@ -74,14 +76,16 @@
           </template>
         </el-table-column>
       </el-table>
-      <!-- 分页 -->
+      <!-- 分页控件 -->
       <el-pagination
         background
-        layout="prev, pager, next, jumper, ->, total"
+        layout="total, sizes, prev, pager, next, jumper"
         :total="productPage.totalCount"
         :page-size="productPage.pageSize"
         :current-page="productPage.pageIndex"
+        :page-sizes="[3, 5, 10, 20, 50]"
         @current-change="handlePageChange"
+        @size-change="handleSizeChange"
         style="margin-top: 16px; justify-content: center"
       />
     </div>
@@ -89,6 +93,7 @@
 </template>
 <script setup lang="ts">
 import ProductApi from "@/api/CxsApi/CxsProductApi";
+
 import { number } from "echarts";
 import { rowContextKey } from "element-plus";
 import { ref, reactive, onMounted } from "vue";
@@ -101,11 +106,9 @@ const productPage = reactive({
   pageCount: 0,
   pageIndex: 1,
   pageSize: 10,
+  categoryId: undefined,
 });
-const page = reactive({
-  pageIndex: 1,
-  pageSize: 10,
-});
+
 interface ProductData {
   id: string;
   categoryId: string;
@@ -122,42 +125,33 @@ interface ProductData {
 }
 
 const searchValue = ref("");
-const treeData = ref([
-  {
-    id: 1,
-    label: "测试",
-    children: [
-      {
-        id: 2,
-        label: "test",
-        children: [{ id: 3, label: "过审服务" }],
-      },
-    ],
-  },
-]);
-const defaultProps = {
-  children: "children",
-  label: "label",
-};
-
-function handlePageChange(page: number) {
-  productPage.pageIndex = page;
-  GetProductList();
-}
 
 const GetProductList = async () => {
-  console.log("请求数据", productPage); // 打印请求数据，查看分页是否传递正确
   const res: any = await ProductApi.getProductList(productPage);
-  console.log("接口返回数据", res);
   if (res) {
     tableData.value = res.data || [];
-    productPage.totalCount = res.data.totalCount;
-    productPage.pageCount = res.data.pageCount;
+    productPage.totalCount = res.totalCount ?? 0; // 关键：赋值
+    productPage.pageCount = res.pageCount ?? 0;
   } else {
-    console.log("没有数据返回");
+    tableData.value = [];
+    productPage.totalCount = 0;
+    productPage.pageCount = 0;
   }
 };
+
+const handlePageChange = (page: number) => {
+  productPage.pageIndex = page;
+  GetProductList();
+};
+
+const handleSizeChange = (size: number) => {
+  productPage.pageSize = size;
+  productPage.pageIndex = 1;
+  GetProductList();
+};
+
 onMounted(() => {
+  Gettree();
   GetProductList();
 });
 
@@ -210,6 +204,41 @@ const toggleStatus = async (row: any) => {
 
 const goToAddProduct = () => {
   router.push("/cxsmanagment/addproduct");
+};
+
+const defaultProps = {
+  children: "children",
+  label: "categoryName",
+};
+const treeData = ref<any[]>([]);
+const Gettree = async () => {
+  const res: any = await ProductApi.listtree();
+  let tree = res;
+  // 如果接口返回的是 res.data.data，则用 let tree = res.data.data;
+  treeData.value = [
+    {
+      id: undefined,
+      categoryName: "全部产品",
+      children: tree,
+    },
+  ];
+};
+
+function handleNodeClick(node: any) {
+  productPage.categoryId = node.id;
+  productPage.pageIndex = 1;
+  GetProductList();
+}
+
+function showAllProducts() {
+  productPage.categoryId = undefined;
+  productPage.pageIndex = 1;
+  GetProductList();
+}
+
+const goToUpdateProduct = (id: any) => {
+  router.push(`/cxsmanagment/updateproduct?id=${id}`);
+  console.log(id);
 };
 </script>
 <style scoped>

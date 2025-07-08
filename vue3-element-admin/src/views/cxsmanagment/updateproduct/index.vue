@@ -10,11 +10,15 @@
       label-width="120px"
       style="max-width: 900px; margin: 30px auto"
     >
-      <h2>添加产品</h2>
-      <el-form-item label="产品分类" prop="categoryId">
+      <h2>修改产品</h2>
+      <el-form-item label="产品分类" prop="categoryId" required>
         <el-select v-model="form.categoryId" placeholder="选择分类">
-          <el-option label="分类A" :value="'00000000-0000-0000-0000-000000000001'" />
-          <el-option label="分类B" :value="'00000000-0000-0000-0000-000000000002'" />
+          <el-option
+            v-for="item in categoryList"
+            :key="item.id"
+            :label="item.categoryName"
+            :value="item.id"
+          />
         </el-select>
       </el-form-item>
 
@@ -25,8 +29,14 @@
           :show-file-list="false"
           :on-success="handleAvatarSuccess"
           :before-upload="beforeAvatarUpload"
+          name="file"
         >
-          <img v-if="form.productImageUrl" :src="form.productImageUrl" class="avatar" />
+          <img
+            v-if="form.productImageUrl"
+            :src="form.productImageUrl"
+            class="avatar"
+            style="object-fit: contain; background: #fff"
+          />
           <el-icon v-else><upload /></el-icon>
           <div>上传图片</div>
         </el-upload>
@@ -63,21 +73,29 @@
       <el-form-item label="成交价" prop="dealPrice">
         <el-input v-model.number="form.dealPrice" placeholder="请输入成交价" type="number" />
       </el-form-item>
+
+      <el-form-item>
+        <el-button type="primary" @click="submitForm">提交</el-button>
+      </el-form-item>
     </el-form>
   </div>
 </template>
 
-<script setup>
-import { ref, reactive } from "vue";
+<script setup lang="ts">
+import { ref, reactive, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Upload } from "@element-plus/icons-vue";
-import ProductApi from "@/api/CxsApi/CxsProductApi";
-import { useRoute, useRouter, onMounted } from "vue-router";
+import ProductApi from "@/api/CxsApi/CxsProductApi"; // 路径根据实际情况调整
+// import CategoryApi from "@/api/CxsApi/CxsCategoryApi"; // 请根据实际路径引入
 
+const route = useRoute();
+const router = useRouter();
 const formRef = ref();
+
 const form = reactive({
+  id: "",
   categoryId: "",
-  parentId: "", // 可选，暂时不展示在表单
   productImageUrl: "",
   productBrand: "",
   productSupplier: "",
@@ -95,60 +113,91 @@ const rules = {
   productSupplier: [{ required: true, message: "请输入供应商", trigger: "blur" }],
 };
 
-function handleAvatarSuccess(response, file) {
-  // 假设后端返回图片URL在response.data.url
-  if (response && response.data && response.data.url) {
-    form.productImageUrl = response.data.url;
-  } else {
-    // 兼容本地预览
-    form.productImageUrl = URL.createObjectURL(file.raw);
+const categoryList = ref<{ id: string; categoryName: string }[]>([]);
+
+// 获取分类列表（请替换为实际API）
+const getCategoryList = async () => {
+  // const res = await CategoryApi.getCategoryList();
+  // categoryList.value = res.data || [];
+  // 示例数据
+  categoryList.value = [
+    { id: "00000000-0000-0000-0000-000000000001", categoryName: "分类A" },
+    { id: "00000000-0000-0000-0000-000000000002", categoryName: "分类B" },
+  ];
+};
+
+function handleAvatarSuccess(response: any) {
+  console.log("上传返回：", response);
+
+  if (typeof response === "string") {
+    form.productImageUrl = response;
+    ElMessage.success("图片修改成功");
+    return;
   }
-}
-function beforeAvatarUpload(file) {
-  const isJPG = file.type === "image/jpeg" || file.type === "image/png";
-  const isLt2M = file.size / 1024 / 1024 < 2;
-  if (!isJPG) {
-    ElMessage.error("上传图片只能是 JPG/PNG 格式!");
+  if (response && (response.data || response.url || response.result)) {
+    form.productImageUrl = response.data || response.url || response.result;
+    ElMessage.success("图片修改成功");
+    return;
   }
-  if (!isLt2M) {
-    ElMessage.error("上传图片大小不能超过 2MB!");
+  if (response && response.code === 0 && response.data) {
+    form.productImageUrl = response.data;
+    ElMessage.success("图片修改成功");
+    return;
   }
-  return isJPG && isLt2M;
+  ElMessage.error("图片修改失败");
 }
 
-function submitForm() {
-  formRef.value.validate(async (valid) => {
-    if (valid) {
-      const submitData = {
-        categoryId: form.categoryId,
-        parentId: form.parentId,
-        productImageUrl: form.productImageUrl,
-        productBrand: form.productBrand,
-        productSupplier: form.productSupplier,
-        productCode: form.productCode,
-        productDescription: form.productDescription,
-        suggestedPrice: form.suggestedPrice,
-        productRemark: form.productRemark,
-        productStatus: form.productStatus,
-        dealPrice: form.dealPrice,
-      };
-      try {
-        await ProductApi.addProduct(submitData);
-        ElMessage.success("提交成功！");
-        // 可选：跳转回产品列表页
-        // router.push('/cxsmanagment/product');
-      } catch (e) {
-        ElMessage.error("提交失败，请重试");
-      }
-    } else {
-      ElMessage.error("请完善表单信息");
-      return false;
-    }
-  });
+function beforeAvatarUpload(file: File) {
+  const isJPGorPNG = file.type === "image/jpeg" || file.type === "image/png";
+  const isLt2M = file.size / 1024 / 1024 < 2;
+  if (!isJPGorPNG) ElMessage.error("上传图片只能是 JPG/PNG 格式!");
+  if (!isLt2M) ElMessage.error("上传图片大小不能超过 2MB!");
+  return isJPGorPNG && isLt2M;
 }
+
+const submitForm = async () => {
+  try {
+    await formRef.value.validate();
+    const res: any = await ProductApi.updateProduct(form);
+    if (res && (res.success || res.code === 0)) {
+      ElMessage.success(res.message || "修改成功");
+      router.push("/cxsmanagment/product");
+    } else {
+      ElMessage.error(res?.message || "修改失败");
+    }
+  } catch (error: any) {
+    ElMessage.error(error?.message || "修改失败");
+    console.error("修改产品异常：", error);
+  }
+};
+
+const getDetail = async () => {
+  const idRaw = route.query.id;
+  const id = Array.isArray(idRaw) ? idRaw[0] : idRaw;
+  if (!id) return;
+  const res = await ProductApi.getProductDetail(id);
+  if (res && res.data) {
+    Object.assign(form, res.data); // 自动反填
+  }
+};
+
+onMounted(() => {
+  getDetail();
+});
 </script>
 
 <style scoped>
+.add-product-page {
+  position: relative;
+  min-height: 100vh;
+  background: #f7f9fb;
+}
+.submit-btn-wrapper {
+  position: absolute;
+  top: 24px;
+  right: 40px;
+  z-index: 10;
+}
 .avatar-uploader {
   display: flex;
   flex-direction: column;
@@ -165,16 +214,5 @@ function submitForm() {
   width: 178px;
   height: 178px;
   display: block;
-}
-.add-product-page {
-  position: relative;
-  min-height: 100vh;
-  background: #f7f9fb;
-}
-.submit-btn-wrapper {
-  position: absolute;
-  top: 24px;
-  right: 40px;
-  z-index: 10;
 }
 </style>
