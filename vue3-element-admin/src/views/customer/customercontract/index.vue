@@ -438,7 +438,7 @@ const GetCustomerContract = async () => {
   };
 
   CustomerContactAPI.ShowCustomerContactList(params)
-    .then((res) => {
+    .then((res: any) => {
       console.log("联系人信息", res.data);
 
       tableData.value = res.data;
