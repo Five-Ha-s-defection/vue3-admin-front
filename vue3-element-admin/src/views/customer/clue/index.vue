@@ -22,7 +22,7 @@
             <span class="clue-label">线索状态</span>
             <el-checkbox-group v-model="queryParams.Status" @change="handleQuery">
               <el-checkbox v-for="item in statusOptions" :key="item.value" :label="item.value">{{ item.label
-                }}</el-checkbox>
+              }}</el-checkbox>
             </el-checkbox-group>
           </div>
         </el-col>
@@ -115,7 +115,7 @@
         </el-form-item>
 
         <el-form-item label="电话" prop="cluePhone">
-          <el-input v-model="ruleForm.cluePhone" maxlength="11" show-word-limit/>
+          <el-input v-model="ruleForm.cluePhone" maxlength="11" show-word-limit />
         </el-form-item>
 
         <el-form-item label="线索来源">
@@ -159,14 +159,232 @@
       </el-form>
     </el-dialog>
 
+    <!-- 弹出抽屉，显示线索详情 -->
+    <el-drawer v-model="table" direction="rtl" size="60%" :with-header="false">
+      <div class="clue-detail-new-container">
+        <!-- 顶部横向信息区：线索名称和操作按钮 -->
+        <div class="drawer-top-row">
+          <!-- 线索名称 -->
+          <div class="drawer-title-big">{{ currentClue?.clueName || '-' }}</div>
+          <!-- 右侧操作按钮区 -->
+          <div class="drawer-btns">
+            <el-button type="primary">转客户</el-button>
+            <el-button>放弃</el-button>
+            <el-button>转移</el-button>
+            <el-button type="danger">删除</el-button>
+          </div>
+        </div>
+        <!-- 线索基础信息区，横向排列 -->
+        <div class="drawer-info-row">
+          <!-- 负责人 -->
+          <div class="info-item"><span>负责人</span>{{ currentClue?.userName || '--' }}</div>
+          <!-- 最后跟进时间，若无效则显示自定义图标 -->
+          <div class="info-item">
+            <span>最后跟进</span>
+            <template v-if="isValidTime(currentClue?.lastFollowTime)">
+              {{ moment(currentClue.lastFollowTime).format('YYYY-MM-DD HH:mm') }}
+            </template>
+            <template v-else>
+              <StopIcon style="font-size:32px;color:#bbb;" />
+            </template>
+          </div>
+          <!-- 下次联系时间，若无效则显示自定义图标 -->
+          <div class="info-item">
+            <span>下次联系时间</span>
+            <template v-if="isValidTime(currentClue?.nextContactTime)">
+              {{ moment(currentClue.nextContactTime).format('YYYY-MM-DD HH:mm') }}
+            </template>
+            <template v-else>
+              <StopIcon style="font-size:32px;color:#bbb;" />
+            </template>
+          </div>
+          <!-- 创建时间 -->
+          <div class="info-item"><span>创建时间</span>{{ currentClue?.creationTime ?
+            moment(currentClue.creationTime).format('YYYY-MM-DD HH:mm') : '--' }}</div>
+          <!-- 创建人 -->
+          <div class="info-item"><span>创建人</span>{{ currentClue?.createName || '--' }}</div>
+          <!-- 状态，带颜色标签 -->
+          <div class="info-item">
+            <span>状态</span>
+            <el-tag :class="['status-text']" :type="getStatusType(currentClue?.status)">
+              {{ getStatusText(currentClue?.status) }}
+            </el-tag>
+          </div>
+        </div>
+
+        <!-- 线索详情标题和分割线 -->
+        <div class="clue-detail-title-row">
+          <span class="clue-detail-title">线索详情</span>
+          <!-- 详情tab右下角的"修改"按钮 -->
+          <div class="detail-row-btn">
+            <el-button type="primary" size="small">修改</el-button>
+          </div>
+        </div>
+        <el-divider class="divider-mt" />
+        <!-- 详情tab区 -->
+        <el-tabs v-model="activeTab" class="clue-detail-tabs" style="position:relative;">
+          <!-- 线索详情tab，分两列展示 -->
+          <div class="detail-table-flex">
+            <!-- 左侧信息列 -->
+            <div class="detail-table-col">
+              <div class="detail-row"><span>线索编号</span>{{ currentClue?.clueCode || '--' }}</div>
+              <div class="detail-row">
+                <span>电话</span>
+                <span>
+                  {{ displayValue(currentClue?.cluePhone) }}
+                  <el-icon v-if="currentClue?.cluePhone" class="phone-icon">
+                    <Phone />
+                  </el-icon>
+                </span>
+              </div>
+              <div class="detail-row"><span>邮箱</span>{{ displayValue(currentClue?.clueEmail) }}</div>
+              <div class="detail-row"><span>QQ</span>{{ displayValue(currentClue?.clueQQ) }}</div>
+              <div class="detail-row"><span>行业</span>{{ displayValue(currentClue?.industryName) }}</div>
+            </div>
+            <!-- 右侧信息列 -->
+            <div class="detail-table-col">
+              <div class="detail-row"><span>姓名</span>{{ displayValue(currentClue?.clueName) }}</div>
+              <div class="detail-row"><span>线索来源</span>{{ displayValue(currentClue?.clueSourceName) }}</div>
+              <div class="detail-row"><span>微信号</span>{{ displayValue(currentClue?.clueWechat) }}</div>
+              <div class="detail-row"><span>公司名称</span>{{ displayValue(currentClue?.companyName) }}</div>
+              <div class="detail-row"><span>地址</span>{{ displayValue(currentClue?.address) }}</div>
+            </div>
+          </div>
+          <!-- 联系记录tab -->
+          <el-tab-pane label="联系记录" name="contact">
+            <div class="contact-records">
+              <!-- 添加联系记录按钮 -->
+              <el-button type="primary" icon="Edit" @click="AddCommunication()">添加联系记录</el-button>
+              <!-- 联系记录列表 -->
+              <div class="contact-list">
+                <div class="contact-item" v-for="item in contactList" :key="item.id">
+                  <div class="contact-meta">
+                    <span class="contact-type">{{ item.typeName }}</span>
+                    <span class="contact-time">{{ item.time }}</span>
+                    <span class="contact-user">{{ user.userInfo.realName }} 联系了</span>
+                    <el-button link icon="Edit" size="small" />
+                    <el-button link icon="Delete" size="small" />
+                  </div>
+                  <div class="contact-content">{{ item.content }}</div>
+                </div>
+                <!-- 没有联系记录时显示空状态 -->
+                <el-empty v-if="!contactList.length" description="暂无联系记录" :image-size="80" />
+              </div>
+            </div>
+          </el-tab-pane>
+          <!-- 附件tab -->
+          <el-tab-pane label="附件" name="attachment">
+            <div style="padding:32px 0;text-align:center;color:#bbb;">暂无附件</div>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+    </el-drawer>
+
+    <!-- 添加联系记录弹出框 -->
+    <el-dialog v-model="addcommunicationdialogVisible" title="添加联系记录" width="900">
+      <!-- <div class="drawer-bottom-form" style="padding: 32px 32px 24px 32px;"> -->
+      <el-form ref="communicationruleFormRef" style="max-width: 600px" :model="communicationruleForm"
+        :rules="communicationrules" label-width="auto">
+        <!-- 富文本编辑器区域 -->
+        <el-form-item>
+          <el-input v-model="communicationruleForm.content" type="textarea" :rows="12" placeholder=""
+            style="margin-bottom: 32px; border-radius: 8px;" />
+        </el-form-item>
+
+        <!-- 附件上传和底部表单区 -->
+        <el-form-item>
+          <el-button type="default"
+            style="height:26px;width:140px;font-size:12px;border-radius:6px;display:flex;align-items:center;justify-content:center;"
+            @click="uploadDialogVisible = true">
+            <el-icon style="font-size:24px;margin-right:8px;">
+              <Upload />
+            </el-icon>
+            上传附件
+            </el-button>
+          <!-- 已上传文件名回显 -->
+          <div v-if="fileList.length" style="margin-top:8px;">
+            <div v-for="file in fileList" :key="file.uid" style="font-size:13px;color:#666;">
+              {{ file.name }}
+            </div>
+          </div>
+        </el-form-item>
+
+        <el-form-item>
+          <el-select v-model="communicationruleForm.expectedDateId" placeholder="沟通类型" style="width:140px;">
+            <el-option v-for="item in communicationtypeList" :label="item.communicationTypeName" :value="item.id" />
+          </el-select>
+        </el-form-item>
+
+        <!-- 只有勾选保存为模板时才显示自定义回复下拉框 -->
+        <el-form-item v-if="communicationruleForm.isServe">
+          <el-select v-model="communicationruleForm.customReplyId" placeholder="自定义回复" style="width:140px;"
+            :disabled="!communicationruleForm.expectedDateId">
+            <template v-if="customReplyList.length">
+              <el-option v-for="item in customReplyList" :key="item.id" :label="item.customReplyName"
+                :value="item.id" />
+            </template>
+            <template v-else>
+              <el-option disabled label="无数据" value="" />
+            </template>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-date-picker v-model="communicationruleForm.nextContactTime" placeholder="下次联系时间" style="width:140px;" />
+        </el-form-item>
+
+        <el-form-item>
+          <el-checkbox v-model="communicationruleForm.isServe" style="margin-right:8px;">保存为跟进模板</el-checkbox>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" @click="communicationsubmitForm(communicationruleFormRef)">
+            添加记录
+            </el-button>
+          <el-button @click="communicationresetForm(communicationruleFormRef)">重置</el-button>
+        </el-form-item>
+      </el-form>
+      <!--</div> -->
+    </el-dialog>
+
+    <!-- 上传附件弹出框 -->
+    <el-dialog v-model="uploadDialogVisible" title="上传附件" width="600">
+      <el-upload ref="uploadRef" v-model:file-list="fileList" action="/api/app/common/upload-file" :multiple="true"
+        :auto-upload="false" :on-success="handleUploadSuccess" :on-remove="handleUploadRemove" :limit="5"
+        :on-exceed="handleUploadExceed" :on-progress="handleUploadProgress" list-type="text">
+        <template #trigger>
+          <el-button type="primary">选择文件</el-button>
+      </template>
+        <el-button type="success" style="margin-left: 12px;" @click="submitUpload">开始上传</el-button>
+        <template #file="{ file }">
+          <span>{{ file.name }}</span>
+          <span v-if="uploadStatusMap[file.uid] === 'uploading'">
+            <el-progress :percentage="uploadProgressMap[file.uid] || 0"
+              style="width: 100px; display: inline-block; margin-left: 12px;" />
+          </span>
+          <span v-else-if="uploadStatusMap[file.uid] === 'success'"
+            style="color: #67c23a; margin-left: 12px;">上传成功</span>
+          <span v-else>
+            <el-button type="danger" size="small" @click.stop="handleRemoveFile(file)">删除</el-button>
+          </span>
+        </template>
+      </el-upload>
+      <template #footer>
+        <el-button @click="uploadDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 显示线索列表信息 -->
     <!-- 表格区域和分页保持不变 -->
     <el-card class="table-card" shadow="never">
-      <el-table v-loading="loading" :data="clueList" style="width: 100%" @selection-change="handleSelectionChange">
+      <el-table v-loading="loading" :data="clueList" style="width: 100%" @selection-change="handleSelectionChange"
+        @row-click="handleRowClick">
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column label="状态" prop="status" width="80" align="center">
           <template #default="{ row }">
-            <el-tag>{{ getStatusText(row.status) }}</el-tag>
+            <el-tag :type="getStatusType(row.status)">
+              {{ getStatusText(row.status) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="姓名" prop="clueName" min-width="100" />
@@ -217,20 +435,19 @@
         </el-table-column>
         <el-table-column label="负责人" prop="userName" min-width="100" />
         <el-table-column label="创建人" prop="createName" min-width="100" />
-        <!-- <el-table-column label="录入方式"  min-width="100" /> -->
         <el-table-column label="操作" width="120" align="center">
-          <template #default="{ row }">
+          <!-- <template #default="{ row }">
             <el-dropdown>
               <el-button type="primary" link>操作</el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <!-- <el-dropdown-item @click="handleEdit(row)">编辑</el-dropdown-item>
+                  <el-dropdown-item @click="handleEdit(row)">编辑</el-dropdown-item>
                   <el-dropdown-item @click="handleFollow(row)">跟进</el-dropdown-item>
-                  <el-dropdown-item divided @click="handleDelete(row)">删除</el-dropdown-item> -->
+                  <el-dropdown-item divided @click="handleDelete(row)">删除</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
-          </template>
+          </template> -->
         </el-table-column>
       </el-table>
       <!-- 分页区域 -->
@@ -431,14 +648,250 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
-import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose } from '@element-plus/icons-vue';
+import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload } from '@element-plus/icons-vue';
 import { ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue } from '@/api/CustomerProcess/Clue/clue.api';
+import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
 import moment from 'moment';
 import dayjs from 'dayjs';
 import { useUserStore } from "@/store";
-import type { FormInstance, FormRules } from 'element-plus'
+import type { FormInstance, FormRules, UploadInstance, UploadUserFile, UploadFile, UploadProgressEvent } from 'element-plus'
+import StopIcon from '@/components/icons/StopIcon.vue'
 
 const user = useUserStore();
+
+//=================显示联系记录====================
+const contactList = ref<any[]>([]);
+
+// 获取联系记录列表
+const fetchContactList = async () => {
+  console.log('fetchContactList被调用，currentClueId.value=', currentClueId.value);
+  if (!currentClueId.value) {
+    contactList.value = [];
+    return;
+  }
+  try {
+    const res = await GetContactCommunication(currentClueId.value);
+    console.log('GetContactCommunication返回的res:', res);
+    if (Array.isArray(res)) {
+      contactList.value = res.map((item: any) => ({
+        id: item.id,
+        typeName: item.communicationTypeName || '',
+        time: item.nextContactTime ? moment(item.nextContactTime).format('YYYY-MM-DD HH:mm') : '',
+        userName: item.userName || '',
+        content: item.content || ''
+      }));
+      console.log('映射后 contactList', contactList.value);
+    } else {
+      contactList.value = [];
+    }
+  } catch (e) {
+    contactList.value = [];
+    console.error('接口请求异常', e);
+  }
+};
+
+
+//=================添加联系记录====================
+const addcommunicationdialogVisible = ref(false);
+const uploadDialogVisible = ref(false);
+
+const AddCommunication = () => {
+  // 赋值当前线索id
+  communicationruleForm.clueId = currentClue.value?.id || ''
+  // 重置所有表单字段
+  communicationruleForm.customerId = ''
+  communicationruleForm.businessOpportunityId = ''
+  communicationruleForm.content = ''
+  communicationruleForm.attachmentUrl = ''
+  communicationruleForm.expectedDateId = ''
+  communicationruleForm.nextContactTime = ''
+  communicationruleForm.followUpStatus = 1
+  communicationruleForm.comments = ''
+  communicationruleForm.customReplyId = '' // 重置自定义回复
+  addcommunicationdialogVisible.value = true;
+
+  // 清空上传文件相关数据
+  fileList.value = [] // 清空已选文件
+  uploadProgressMap.value = {} // 清空进度
+  uploadStatusMap.value = {}   // 清空状态
+
+  // 如果用el-form的resetFields也可以加上
+  if (communicationruleFormRef.value) {
+    communicationruleFormRef.value.resetFields()
+  }
+}
+
+interface communicationRuleForm {
+  customerId: number | string
+  clueId: number | string
+  businessOpportunityId: number | string
+  content: string
+  attachmentUrl: string
+  expectedDateId: number | string
+  nextContactTime: string
+  followUpStatus: number
+  comments: string
+  customReplyId: number | string
+  isServe: boolean
+}
+
+const communicationruleFormRef = ref<FormInstance>()
+const communicationruleForm = reactive<communicationRuleForm>({
+  customerId: '',
+  clueId: '',
+  businessOpportunityId: '',
+  content: '',
+  attachmentUrl: '',
+  expectedDateId: '',
+  nextContactTime: '',
+  followUpStatus: 1, // 0:未跟进，1:已跟进
+  comments: '',
+  customReplyId: '',
+  isServe: false, // 是否保存为模版
+})
+
+const communicationrules = reactive<FormRules<communicationRuleForm>>({
+  content: [
+    { required: true, message: '请填写沟通记录', trigger: 'blur' },
+  ],
+  expectedDateId: [
+    { required: true, message: '请选择沟通类型', trigger: 'blur' },
+  ],
+})
+
+const communicationsubmitForm = async (formEl: FormInstance | undefined) => {
+  if (!formEl) return
+  await formEl.validate(async (valid, fields) => {
+    if (valid) {
+      console.log('添加沟通记录参数：', communicationruleForm);
+      console.log('提交前 attachmentUrl:', communicationruleForm.attachmentUrl);
+      await AddContactCommunication(communicationruleForm)
+        .then((res) => {
+          if (res) {
+            ElMessage.success('添加沟通记录成功');
+            addcommunicationdialogVisible.value = false;
+            communicationresetForm(formEl);
+            // 刷新联系记录列表
+            // ShowContactCommunicationList({ clueId: currentClue.value.id })
+          }
+          else {
+            ElMessage.success('添加沟通记录成功');
+          }
+        })
+        .catch((error) => {
+          console.error('添加沟通记录失败:', error);
+          ElMessage.error('添加沟通记录失败，请稍后再试');
+        });
+    } else {
+      console.log('error submit!', fields)
+    }
+  })
+}
+
+const communicationresetForm = (formEl: FormInstance | undefined) => {
+  if (!formEl) return
+  formEl.resetFields() // 重置表单字段
+  // 重置所有表单字段
+  communicationruleForm.customerId = ''
+  communicationruleForm.businessOpportunityId = ''
+  communicationruleForm.content = ''
+  communicationruleForm.attachmentUrl = ''
+  communicationruleForm.expectedDateId = ''
+  communicationruleForm.nextContactTime = ''
+  communicationruleForm.followUpStatus = 1
+  communicationruleForm.comments = ''
+  communicationruleForm.customReplyId = '' // 重置自定义回复
+  addcommunicationdialogVisible.value = true;
+
+  // 清空上传文件相关数据
+  fileList.value = [] // 清空已选文件
+  uploadProgressMap.value = {} // 清空进度
+  uploadStatusMap.value = {}   // 清空状态
+}
+
+//=======================上传文件=========================================
+// el-upload 组件的引用，用于手动触发上传等操作
+const uploadRef = ref<UploadInstance>()
+
+// 已选择的文件列表，绑定到 el-upload 的 v-model:file-list
+const fileList = ref<UploadUserFile[]>([])
+
+// 文件上传进度映射，key为文件uid，value为进度百分比
+const uploadProgressMap = ref<Record<string, number>>({})
+
+// 文件上传状态映射，key为文件uid，value为'success'或'uploading'
+const uploadStatusMap = ref<Record<string, string>>({})
+
+// 手动触发 el-upload 的上传方法（点击"开始上传"按钮时调用）
+const submitUpload = () => {
+  uploadRef.value?.submit();
+}
+
+// 上传进度回调，实时更新进度条和状态
+const handleUploadProgress = (event: UploadProgressEvent, file: UploadFile) => {
+  // 更新当前文件的上传进度
+  uploadProgressMap.value[file.uid] = Math.floor(event.percent || 0);
+  // 标记当前文件为"上传中"状态
+  uploadStatusMap.value[file.uid] = "uploading";
+}
+
+const handleUploadSuccess = (response: any, file: UploadFile, fileListArr: UploadUserFile[]) => {
+  // 标记当前文件上传进度为100%，状态为success
+  uploadProgressMap.value[file.uid] = 100;
+  uploadStatusMap.value[file.uid] = "success";
+
+  // 只取所有上传成功的文件的 response 字段（你的后端返回的就是url字符串），拼接成逗号分隔的字符串
+  communicationruleForm.attachmentUrl = fileListArr
+    .filter(f => f.status === 'success' && f.response) // 只要status为success且有response
+    .map(f => f.response) // 取response（即url字符串）
+    .join(',');
+
+  // 检查所有文件是否都上传成功（加f.uid判断，避免TS报错）
+  const allSuccess = fileListArr.every(f => f.uid && uploadStatusMap.value[f.uid] === "success");
+  if (allSuccess && fileListArr.length > 0) {
+    uploadDialogVisible.value = false; // 关闭上传弹窗
+    ElMessage.success('全部文件上传成功！');
+  }
+
+  // 调试用，打印当前文件列表和attachmentUrl
+  console.log('handleUploadSuccess fileListArr:', fileListArr);
+  console.log('attachmentUrl:', communicationruleForm.attachmentUrl);
+}
+
+const handleUploadRemove = (file: UploadFile, fileListArr: UploadUserFile[]) => {
+  // 删除进度和状态映射中的对应项
+  delete uploadProgressMap.value[file.uid];
+  delete uploadStatusMap.value[file.uid];
+
+  // 重新拼接所有已上传成功文件的url，赋值给attachmentUrl
+  communicationruleForm.attachmentUrl = fileListArr
+    .filter(f => f.status === 'success' && f.response)
+    .map(f => f.response)
+    .join(',');
+}
+
+const handleRemoveFile = (file: UploadFile) => {
+  // 手动触发el-upload的remove
+  uploadRef.value?.handleRemove(file)
+}
+
+const handleUploadExceed = () => {
+  ElMessage.warning(`最多只能上传5个文件！`)
+}
+
+//=================弹出抽屉========================
+const table = ref(false)
+const currentClue = ref<any>(null) // 当前选中的线索数据
+const activeTab = ref('detail') // tabs切换
+
+// 处理表格行点击事件
+const handleRowClick = (row: any) => {
+  console.log('handleRowClick被调用，row.id=', row.id);
+  currentClue.value = row;
+  currentClueId.value = row.id;
+  table.value = true;
+  fetchContactList();
+}
 
 
 //================添加线索===========================
@@ -491,17 +944,15 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       console.log('添加线索参数：', ruleForm);
       await AddClue(ruleForm)
         .then((res) => {
-          if(res)
-        {
-          ElMessage.success('添加线索成功');
-          addcluedialogVisible.value = false;
-          resetForm(formEl);
-          fetchClueList(); // 刷新线索列表
-        }
-        else
-        {
-          ElMessage.success('添加线索成功');
-        }
+          if (res) {
+            ElMessage.success('添加线索成功');
+            addcluedialogVisible.value = false;
+            resetForm(formEl);
+            fetchClueList(); // 刷新线索列表
+          }
+          else {
+            ElMessage.success('添加线索成功');
+          }
         })
         .catch((error) => {
           console.error('添加线索失败:', error);
@@ -642,12 +1093,57 @@ const getStatusText = (status: number | string) => {
   }
 };
 
+// 获取状态标签类型
+const getStatusType = (status: number | string) => {
+  const s = Number(status);
+  switch (s) {
+    case 0: return "primary";    // 未跟进 蓝色
+    case 1: return "warning"; // 跟进中 橙色
+    case 2: return "success"; // 已转换 绿色
+    default: return "info";
+  }
+};
+
+// // 编辑线索
+// const handleEditClue = () => {
+//   ElMessage.info('编辑功能开发中...');
+// };
+
+// // 添加跟进
+// const handleAddFollow = () => {
+//   ElMessage.info('添加跟进功能开发中...');
+// };
+
+//下拉框绑定自定义回复列表
+const customReplyList: any = ref([])
+const selectCustomReply = async (typeId: string | number) => {
+  if (!typeId) {
+    customReplyList.value = [];
+    return;
+  }
+  await GetCustomReplyByType(typeId)
+    .then(res => {
+      customReplyList.value = res || [];
+      console.log('自定义回复列表', customReplyList.value);
+  });
+};
+
+//下拉框绑定沟通类型列表
+const communicationtypeList: any = ref([])
+const selectCommunicationType = async () => {
+  await GetCommunicationType()
+    .then(res => {
+      console.log('沟通类型列表', res)
+      communicationtypeList.value = res
+    })
+};
+
 // 下拉框绑定用户列表
 const userList: any = ref([])
 const selectUser = async () => {
   await GetUser()
     .then(res => {
-       console.log('用户列表', res)
+      console.log('用户列表', res)
       userList.value = res
     })
 }
@@ -657,7 +1153,7 @@ const cluesourceList: any = ref([])
 const selectClueSource = async () => {
   await GetClueSource()
     .then(res => {
-       console.log('线索来源列表', res)
+      console.log('线索来源列表', res)
       cluesourceList.value = res
     })
 }
@@ -667,7 +1163,7 @@ const industryList: any = ref([])
 const selectIndustry = async () => {
   await GetIndustry()
     .then(res => {
-       console.log('行业列表', res)
+      console.log('行业列表', res)
       industryList.value = res
     })
 }
@@ -809,7 +1305,9 @@ const handleAddClue = () => {
 //   ElMessage.info('删除功能开发中...');
 // };
 
-
+// 处理排序点击事件
+// 0: 按最后跟进时间排序, 1: 按下次联系时间排序, 2: 按创建时间排序
+// 如果当前排序字段与点击的字段相同，则切换升降序；否则设置为降序
 const handleOrderClick = (value: number) => {
   if (queryParams.OrderBy === value) {
     queryParams.OrderDesc = !queryParams.OrderDesc;
@@ -820,6 +1318,8 @@ const handleOrderClick = (value: number) => {
   fetchClueList();
 };
 
+// 处理查询参数，过滤掉不必要的参数
+// 例如空字符串、undefined、null等
 function filterParams(params: any) {
   const result: any = {};
   Object.keys(params).forEach(key => {
@@ -845,14 +1345,63 @@ function filterParams(params: any) {
   return result;
 }
 
+// 判断时间是否有效
+function isValidTime(val: any) {
+  if (!val) return false
+  // 兼容各种格式
+  return !(
+    val === '0001-01-01 00:00:00' ||
+    val === '0001-01-01T00:00:00' ||
+    val === '0001-01-01T00:00:00.000Z'
+  )
+}
+
+// 显示空值处理函数
+function displayValue(val: any) {
+  // 你可以根据实际情况扩展
+  if (
+    val === undefined ||
+    val === null ||
+    val === '' ||
+    val === 'string' ||
+    val === 'null' ||
+    val === 'undefined'
+  ) {
+    return '--'
+  }
+  return val
+}
+
+// 监听沟通类型和"保存为模板"勾选变化，动态获取自定义回复
+watch([
+  () => communicationruleForm.expectedDateId,
+  () => communicationruleForm.isServe
+], async ([typeId, isServe]) => {
+  if (isServe && typeId) {
+    await selectCustomReply(typeId);
+  } else {
+    customReplyList.value = [];
+    communicationruleForm.customReplyId = '';
+  }
+});
+
 // 钩子函数======================================================
+const currentClueId = ref<string>(''); // 当前线索id，实际赋值方式根据你的业务调整
+
 onMounted(() => {
   fetchClueList();
   selectUser(); // 获取用户列表
   selectClueSource(); // 获取线索来源列表
   selectIndustry(); // 获取行业列表
   handleScopeChange(1); // 默认查看我负责的线索
+
+  selectCommunicationType(); // 获取沟通类型列表
+  fetchContactList(); // 获取联系记录列表
+  // selectCustomReply(); // 获取自定义回复列表 - 移至watch中
+  console.log('clueList:', clueList.value);
 });
+
+
 </script>
 
 <style scoped>
@@ -1075,5 +1624,332 @@ onMounted(() => {
 
 .arrow-icon.active {
   color: #1765ff;
+}
+
+/* 抽屉详情样式 */
+.clue-detail-container {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e4e7ed;
+  margin-bottom: 20px;
+}
+
+.drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-icon {
+  font-size: 20px;
+  color: #409eff;
+}
+
+.title-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.detail-section {
+  margin-bottom: 24px;
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0;
+}
+
+.section-content {
+  background: #fff;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  min-height: 32px;
+}
+
+.info-label {
+  width: 100px;
+  color: #606266;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.info-value {
+  color: #303133;
+  font-size: 14px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.phone-icon {
+  color: #409eff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.follow-records {
+  min-height: 200px;
+}
+
+.no-records {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.remark-content {
+  background: #f5f7fa;
+  border-radius: 4px;
+  padding: 12px;
+  color: #606266;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 60px;
+}
+
+/* 抽屉详情新样式 */
+.clue-detail-new-container {
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.drawer-title-big {
+  font-size: 24px;
+  font-weight: bold;
+  color: #303133;
+  flex: 1;
+  margin-right: 20px;
+}
+
+.drawer-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.drawer-info-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  color: #606266;
+}
+
+.info-item span {
+  color: #909399;
+  margin-right: 5px;
+}
+
+.status-text {
+  font-weight: bold;
+  color: #67c23a;
+  /* 成功状态颜色 */
+}
+
+.clue-detail-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-table-flex {
+  display: flex;
+  justify-content: center;
+  gap: 180px;
+  margin: 0 auto 20px auto;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e4e7ed;
+  max-width: 1000px;
+  min-width: 700px;
+}
+
+.detail-table-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  color: #303133;
+}
+
+.detail-row span {
+  color: #909399;
+  margin-right: 10px;
+}
+
+.detail-row-btn {
+  text-align: right;
+  margin-top: 20px;
+}
+
+.contact-records {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  flex: 1;
+}
+
+.add-contact-input {
+  margin-bottom: 15px;
+}
+
+.contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.contact-item {
+  background: #f5f7fa;
+  border-radius: 6px;
+  padding: 12px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.contact-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.contact-type {
+  background: #ecf5ff;
+  color: #409eff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.contact-time {
+  color: #909399;
+  font-size: 13px;
+}
+
+.contact-user {
+  color: #606266;
+  font-size: 13px;
+}
+
+.contact-content {
+  color: #303133;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+
+.divider-mt {
+  margin-top: 20px;
+}
+
+.detail-right {
+  flex: 1;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.clue-detail-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+  margin-top: 10px;
+}
+
+.clue-detail-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #222;
+  line-height: 1;
+  margin-left: 2px;
+}
+
+.drawer-bottom-form {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.drawer-bottom-form .el-input__inner {
+  border-radius: 8px;
+}
+
+.drawer-bottom-form .el-textarea__inner {
+  border-radius: 8px;
+}
+
+.drawer-bottom-form .el-date-editor.el-input,
+.drawer-bottom-form .el-date-editor.el-input__inner {
+  border-radius: 8px;
+}
+
+.drawer-bottom-form .el-checkbox__inner {
+  border-radius: 4px;
+}
+
+.drawer-bottom-form .el-button {
+  border-radius: 6px;
 }
 </style>
