@@ -31,7 +31,7 @@ export const InvoiceViewAPI = {
     //批量删除
   BatchDeleteInvoice(data: string[]) {
     return request({
-      url: `/api/app/receivables`,
+      url: `/api/app/invoice`,
       method: "delete",
       data,
     });

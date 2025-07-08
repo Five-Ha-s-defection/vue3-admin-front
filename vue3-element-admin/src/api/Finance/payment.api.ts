@@ -32,7 +32,7 @@ const PaymentViewAPI = {
   //批量删除
   BatchDeletePayment(data: string[]) {
     return request({
-      url: `/api/app/receivables`,
+      url: `/api/app/payment/all`,
       method: "delete",
       data,
     });
