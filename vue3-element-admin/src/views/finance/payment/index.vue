@@ -120,7 +120,13 @@
         <el-table-column prop="customerName" label="所属客户" />
         <el-table-column prop="contractName" label="关联合同" />
         <el-table-column prop="realName" label="负责人" />
-        <el-table-column prop="auditorNames" label="审核人" />
+        <el-table-column prop="auditorNames" label="审核人" >
+          <template #default="scope">
+            <span class="ellipsis-cell">
+              {{ scope.row.auditorNames || "-" }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="creatorRealName" label="创建人" />
       </el-table>
 
@@ -142,7 +148,7 @@
       <el-dialog v-model="showAddDialog" title="添加收款" width="600px" @close="resetAddForm">
         <el-form ref="addFormRef" :model="addForm" :rules="addRules" label-width="120px">
           <el-form-item label="所属客户" prop="customerName">
-            <el-button type="primary" @click="showCustomer()">选择客户</el-button>
+            <el-button type="primary" @click="showCustomer('add')">选择客户</el-button>
             <span style="margin-left: 10px; color: #999">
               {{ addForm.customerName || "未选择客户" }}
             </span>
@@ -257,26 +263,28 @@
         </div>
         <el-table :data="customerList" style="width: 100%" highlight-current-row>
           <el-table-column
-            type="selection"
             width="50"
-            :selectable="() => true"
-            :reserve-selection="false"
-            :show-overflow-tooltip="false"
             :fixed="true"
-            :label="''"
+            label=""
           >
             <template #default="{ row }">
               <el-radio
                 :model-value="selectedCustomer && selectedCustomer.id"
                 :label="row.id"
                 @change="() => handleCustomerRadio(row)"
-              />
+              >
+              &nbsp;
+              </el-radio>
             </template>
           </el-table-column>
-          <el-table-column prop="id" label="客户编号" />
+          <el-table-column prop="customerCode" label="客户编号" />
           <el-table-column prop="customerName" label="客户名称" />
           <el-table-column prop="customerPhone" label="联系电话" />
-          <el-table-column prop="creationTime" label="创建时间" />
+          <el-table-column prop="creationTime" label="创建时间" >
+            <template #default="scope">
+            {{ scope.row.creationTime.substring(0, 19).replace("T", " ") }}
+          </template>
+          </el-table-column>
         </el-table>
       </el-drawer>
 
@@ -310,9 +318,9 @@
             </el-select>
           </el-form-item>
           <el-form-item label="所属客户" prop="customerName">
-            <el-button type="primary" @click="showCustomer()">选择客户</el-button>
+            <el-button type="primary" @click="showCustomer('search')">选择客户</el-button>
             <span style="margin-left: 10px; color: #999">
-              {{ searchForm.CustomerId || "未选择客户" }}
+              {{ searchForm.CustomerName || "未选择客户" }}
             </span>
           </el-form-item>
           <el-form-item label="关联合同">
@@ -799,6 +807,7 @@ const searchForm = reactive({
   UserId: "",
   CreatorId: "",
   CustomerId: "",
+  CustomerName:"",
   ContractId: "",
   PaymentCode: "",
   PaymentMethod: "",
@@ -952,8 +961,11 @@ function handleDateRangeChange(val: any) {
 
 // 客户列表数据（实际应从API获取，这里举例）
 const customerList = ref([]);
+// 客户选择
+const customerMode = ref<"add" | "search">("add");
 
-function showCustomer() {
+function showCustomer(mode: "add" | "search") {
+   customerMode.value = mode;
   showCustomerDrawer.value = true;
   const params = {
     PageIndex: 1,
@@ -984,8 +996,13 @@ function handleCustomerSubmit() {
     ElMessage.warning("请选择客户");
     return;
   }
-  addForm.customerId = selectedCustomer.value.id;
-  addForm.customerName = selectedCustomer.value.customerName;
+  if (customerMode.value === "add") {
+    addForm.customerId = selectedCustomer.value.id;
+    addForm.customerName = selectedCustomer.value.customerName;
+  } else if (customerMode.value === "search") {
+    searchForm.CustomerId = selectedCustomer.value.id;
+    searchForm.CustomerName = selectedCustomer.value.customerName;
+  }
   showCustomerDrawer.value = false;
 }
 
@@ -1093,7 +1110,7 @@ function handleBatchDelete() {
   }).then(() => {
     // 这里假设你有批量删除API
     const ids: string[] = selectedRows.value.map((item: any) => item.id);
-    ReceivablesViewAPI.BatchDeleteReceivables(ids).then(() => {
+    PaymentViewAPI.BatchDeletePayment(ids).then(() => {
       // 提示用户
       ElMessage.success("删除成功");
       // 刷新表格
@@ -1221,5 +1238,11 @@ function getUserNameById(id: any) {
   color: #888;
   min-width: 90px;
   display: inline-block;
+}
+.ellipsis-cell {
+  white-space: nowrap;      /* 禁止换行 */
+  overflow: hidden;         /* 隐藏溢出内容 */
+  text-overflow: ellipsis;  /* 显示省略号（可选） */
+  max-width: 100%;          /* 确保不超出单元格 */
 }
 </style>

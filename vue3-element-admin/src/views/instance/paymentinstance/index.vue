@@ -90,11 +90,10 @@
           <el-button @click="showCustomerDrawer = false">取消</el-button>
         </div>
         <el-table :data="customerList" style="width: 100%" highlight-current-row>
-          <el-table-column type="selection" width="50" :selectable="() => true" :reserve-selection="false"
-            :show-overflow-tooltip="false" :fixed="true" :label="''">
+          <el-table-column width="50"  :fixed="true" :label="''">
             <template #default="{ row }">
               <el-radio :model-value="selectedCustomer && selectedCustomer.id" :label="row.id"
-                @change="() => handleCustomerRadio(row)" />
+                @change="() => handleCustomerRadio(row)" >&nbsp;</el-radio>
             </template>
           </el-table-column>
           <el-table-column prop="id" label="客户编号" />
@@ -274,9 +273,32 @@
           <el-table-column prop="invoiceNumberCode" label="发票编号" />
           <el-table-column prop="invoiceStatus" label="状态">
             <template #default="scope">
-              <span v-if="scope.row.invoiceStatus === 0">未开票</span>
-              <span v-else-if="scope.row.invoiceStatus === 1">已开票</span>
-              <span v-else>--</span>
+              <span
+                :style="{
+                  color:
+                    scope.row.invoiceStatus === 0
+                      ? '#faad14'
+                      : scope.row.invoiceStatus === 1
+                        ? '#1890ff'
+                        : scope.row.invoiceStatus === 2
+                          ? '#52c41a'
+                          : scope.row.invoiceStatus === 3
+                            ? '#f5222d'
+                            : '#999',
+                }"
+              >
+                {{
+                  scope.row.invoiceStatus === 0
+                    ? "待审核"
+                    : scope.row.invoiceStatus === 1
+                      ? "审核中"
+                      : scope.row.invoiceStatus === 2
+                        ? "已通过"
+                        : scope.row.invoiceStatus === 3
+                          ? "已驳回"
+                          : "未知状态"
+                }}
+              </span>
             </template>
           </el-table-column>
           <el-table-column prop="amount" label="开票金额" />
@@ -338,7 +360,7 @@
     <el-drawer v-model="showEditDrawer" title="修改收款" size="600px" direction="rtl" :with-header="true">
       <el-form ref="editFormRef" :model="editForm" :rules="addRules" label-width="120px">
         <el-form-item label="所属客户" prop="customerName">
-          <el-input v-model="editForm.customerName" @click="showCustomer" />
+          <el-input v-model="editForm.customerName" disabled/>
         </el-form-item>
         <el-form-item label="关联合同" prop="contractId">
           <el-select v-model="editForm.contractId" placeholder="请选择合同" style="width: 100%" disabled>
@@ -405,7 +427,6 @@
 import { ref, reactive, onMounted, onActivated } from "vue";
 import ReceivablesViewAPI from "@/api/Finance/receivables.api";
 import PaymentViewAPI, { PaymentSearch } from "@/api/Finance/payment.api";
-import CustomerAPI from "@/api/CustomerProcess/Customer/customer.api";
 import CrmContractAPI from "@/api/CrmContract/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -582,23 +603,6 @@ function handleCurrentChange(val: number) {
 
 // 客户列表数据（实际应从API获取，这里举例）
 const customerList: any = ref([]);
-
-function showCustomer() {
-  showCustomerDrawer.value = true;
-  const params = {
-    PageIndex: 1,
-    PageSize: 111,
-  };
-
-  CustomerAPI.GetCustomerPage(params)
-    .then((res) => {
-      console.log("客户列表数据", res.data);
-      customerList.value = res.data;
-    })
-    .finally(() => {
-      loading.value = false;
-    });
-}
 
 // 当前选中的客户
 const selectedCustomer = ref<any>(null);
