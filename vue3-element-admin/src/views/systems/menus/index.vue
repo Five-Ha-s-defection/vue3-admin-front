@@ -14,9 +14,12 @@
       <el-table-column prop="menuName" label="菜单名称" />
       <el-table-column prop="path" label="路径" />
       <el-table-column prop="component" label="组件路径" />
-      <el-table-column prop="icon" label="图标" />
-      <el-table-column prop="sort" label="排序" />
-      <el-table-column prop="hidden" label="是否隐藏">
+      <el-table-column prop="icon" label="图标" width="80">
+        <template #default="{ row }">
+          <component :is="formatIconName(row.icon)" class="text-xl" />
+        </template>
+      </el-table-column>
+      <el-table-column prop="hidden" label="是否隐藏" width="100">
         <template #default="{ row }">
           <el-tag :type="row.isVisible ? 'info' : 'success'">
             {{ row.isVisible ? "否" : "是" }}
@@ -53,10 +56,21 @@
           <el-input v-model="form.component" placeholder="如 system/menu/index" />
         </el-form-item>
         <el-form-item label="图标" prop="icon">
-          <el-select v-model="form.icon" placeholder="请选择图标">
-            <el-option v-for="icon in iconOptions" :key="icon" :label="icon" :value="icon" />
+          <el-select
+            v-model="form.icon"
+            placeholder="请选择图标"
+            popper-class="icon-select-dropdown"
+            style="width: 100%"
+          >
+            <el-option v-for="icon in iconOptions" :key="icon" :label="icon" :value="icon">
+              <div class="icon-option">
+                <component :is="iconMap[icon]" class="icon-img" />
+                <div class="icon-label">{{ icon }}</div>
+              </div>
+            </el-option>
           </el-select>
         </el-form-item>
+
         <el-form-item label="权限编码" prop="permissionCode">
           <el-input v-model="form.permissionCode" placeholder="如 system:menu:add" />
         </el-form-item>
@@ -80,6 +94,7 @@ import { ref, reactive, onMounted } from "vue";
 import { ElMessage, FormInstance } from "element-plus";
 import MenuAPI, { MenuInfo } from "@/api/system/menu.api";
 import type { ElTable } from "element-plus";
+import * as Icons from "@element-plus/icons-vue";
 
 // el-table 引用
 const menuTableRef = ref<InstanceType<typeof ElTable>>();
@@ -111,6 +126,26 @@ const rules = {
 };
 const formRef = ref<FormInstance>();
 
+// 将小写图标名如 "user" 转换为组件名 "User"
+const formatIconName = (icon: string) => {
+  if (!icon) return "";
+  return icon.charAt(0).toUpperCase() + icon.slice(1);
+};
+
+// 图标映射
+const iconMap: Record<string, any> = {
+  user: Icons.User,
+  menu: Icons.Menu,
+  setting: Icons.Setting,
+  lock: Icons.Lock,
+  edit: Icons.Edit,
+  plus: Icons.Plus,
+  delete: Icons.Delete,
+  homeFilled: Icons.HomeFilled,
+  list: Icons.List,
+  pieChart: Icons.PieChart,
+};
+
 // 图标选项
 const iconOptions = [
   "user",
@@ -120,9 +155,9 @@ const iconOptions = [
   "edit",
   "plus",
   "delete",
-  "home",
+  "homeFilled",
   "list",
-  "chart",
+  "pieChart",
 ];
 
 //展开所有行
@@ -245,5 +280,42 @@ onMounted(() => {
 <style scoped>
 .mb-4 {
   margin-bottom: 16px;
+}
+.icon-select-dropdown .el-select-dropdown__wrap {
+  padding: 12px 8px;
+}
+.icon-select-dropdown .el-select-dropdown__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 12px;
+  justify-content: start;
+}
+
+.icon-option {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.icon-option:hover {
+  background: #f5f7fa;
+}
+
+.icon-img {
+  font-size: 20px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.icon-label {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
 }
 </style>
