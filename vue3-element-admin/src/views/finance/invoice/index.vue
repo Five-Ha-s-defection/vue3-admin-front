@@ -447,7 +447,7 @@ v-model="searchForm.InvoiceNumberCode" placeholder="发票编号(不含符号)"
             </div>
           </div>
         </div>
-        <div style="padding: 24px 32px 0 32px; color: #fff; background: #181818; min-height: 100vh">
+        <div style="padding: 24px 32px 0 32px; color: #fff;">
           <el-row :gutter="40">
             <!-- 左侧 基础信息 -->
             <el-col :span="12">
@@ -543,6 +543,36 @@ v-model="searchForm.InvoiceNumberCode" placeholder="发票编号(不含符号)"
             </el-col>
           </el-row>
         </div>
+
+        <!-- 审核信息 -->
+        <div
+          style="
+            font-weight: bold;
+            font-size: 15px;
+            border-left: 3px solid #faad14;
+            padding-left: 8px;
+            margin-bottom: 18px;
+          "
+        >
+          审核信息
+        </div>
+        <el-divider content-position="left"></el-divider>
+        <div v-if="detailData.approveComments && detailData.approveComments.length">
+          <div
+            v-for="(comment, idx) in detailData.approveComments"
+            :key="idx"
+            style="margin-bottom: 8px; display: flex; align-items: center"
+          >
+            <el-icon style="margin-right: 4px"><el-icon-user /></el-icon>
+            <span style="color: #1890ff">{{ getUserNameById(detailData.approverIds?.[idx]) }}</span>
+            <span style="margin-left: 8px; color: #999">
+              {{ detailData.approveTimes?.[idx]?.replace("T", " ").substring(0, 16) || "-" }}
+            </span>
+            <span style="margin-left: 8px">{{ comment || "-" }}</span>
+          </div>
+        </div>
+        <div v-else style="color: #aaa; text-align: center">没有更多了</div>
+
         <!-- 操作日志 -->
         <div>
           <div
@@ -1195,6 +1225,13 @@ function handleEditSubmit() {
       GetInvoice();
     });
   });
+}
+
+
+// 通过用户ID获取用户姓名(审核信息)
+function getUserNameById(id: any) {
+  const user = userList.value.find((u: any) => u.id === id);
+  return user ? user.realName : id || "-";
 }
 
 const handleAvatarSuccess = (val: any) => {
