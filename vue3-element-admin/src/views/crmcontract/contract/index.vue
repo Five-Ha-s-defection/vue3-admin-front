@@ -339,15 +339,25 @@
           </template>
         </el-table-column>
         <el-table-column prop="contractProceeds" label="合同金额" align="center" />
-        <el-table-column prop="received" label="已收款" align="center" />
+        <el-table-column prop="paymentreceived" label="已收款" align="center" />
         <el-table-column prop="remaining" label="剩余应收" align="center">
           <template #default="{ row }">
             <span :style="{ color: row.remaining > 0 ? '#f5222d' : '#333' }">
-              {{ row.remaining }}
+              {{ (row.accountsreceivable - row.paymentreceived).toFixed(2) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="progress" label="收款进度" align="center" />
+        <el-table-column prop="progress" label="收款进度" align="center">
+          <template #default="{ row }">
+            <span>
+              {{
+                typeof row.accountsreceivable === "number" && row.accountsreceivable > 0
+                  ? ((row.paymentreceived / row.accountsreceivable) * 100).toFixed(2) + "%"
+                  : "0.00%"
+              }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="signDate" label="签订日期" align="center" width="130">
           <template #default="{ row }">
             {{ row.signDate.substring(0, 10) }} {{ row.signDate.substring(11, 19) }}
@@ -549,6 +559,7 @@ const getTableData = async () => {
     } else if (res && res.data) {
       // 处理标准API返回格式
       tableData.value = res.data || [];
+      console.log(tableData.value);
       pageinfo.pageCount = res.pageCount || 0;
       pageinfo.totalCount = res.totalCount || 0;
     } else {
