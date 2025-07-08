@@ -86,8 +86,7 @@ import { ref, reactive, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Upload } from "@element-plus/icons-vue";
-import ProductApi from "@/api/CxsApi/CxsProductApi"; // 路径根据实际情况调整
-// import CategoryApi from "@/api/CxsApi/CxsCategoryApi"; // 请根据实际路径引入
+import ProductApi from "@/api/CxsApi/CxsProductApi";
 
 const route = useRoute();
 const router = useRouter();
@@ -113,40 +112,38 @@ const rules = {
   productSupplier: [{ required: true, message: "请输入供应商", trigger: "blur" }],
 };
 
-const categoryList = ref<{ id: string; categoryName: string }[]>([]);
-
 // 获取分类列表（请替换为实际API）
+const categoryList: any = ref<{ id: string; categoryName: string }[]>([]);
 const getCategoryList = async () => {
-  // const res = await CategoryApi.getCategoryList();
-  // categoryList.value = res.data || [];
-  // 示例数据
-  categoryList.value = [
-    { id: "00000000-0000-0000-0000-000000000001", categoryName: "分类A" },
-    { id: "00000000-0000-0000-0000-000000000002", categoryName: "分类B" },
-  ];
+  await ProductApi.getCategorySelect().then((res) => {
+    console.log("产品类型来源", res);
+    categoryList.value = res;
+  });
 };
 
+// 图片上传成功处理
 function handleAvatarSuccess(response: any) {
   console.log("上传返回：", response);
 
   if (typeof response === "string") {
     form.productImageUrl = response;
-    ElMessage.success("图片修改成功");
+    ElMessage.success("图片上传成功");
     return;
   }
   if (response && (response.data || response.url || response.result)) {
     form.productImageUrl = response.data || response.url || response.result;
-    ElMessage.success("图片修改成功");
+    ElMessage.success("图片上传成功");
     return;
   }
   if (response && response.code === 0 && response.data) {
     form.productImageUrl = response.data;
-    ElMessage.success("图片修改成功");
+    ElMessage.success("图片上传成功");
     return;
   }
-  ElMessage.error("图片修改失败");
+  ElMessage.error("图片上传失败");
 }
 
+// 图片上传前验证
 function beforeAvatarUpload(file: File) {
   const isJPGorPNG = file.type === "image/jpeg" || file.type === "image/png";
   const isLt2M = file.size / 1024 / 1024 < 2;
@@ -155,33 +152,38 @@ function beforeAvatarUpload(file: File) {
   return isJPGorPNG && isLt2M;
 }
 
+// 提交表单
 const submitForm = async () => {
   try {
     await formRef.value.validate();
-    const res: any = await ProductApi.updateProduct(form);
-    if (res && (res.success || res.code === 0)) {
-      ElMessage.success(res.message || "修改成功");
-      router.push("/cxsmanagment/product");
-    } else {
-      ElMessage.error(res?.message || "修改失败");
-    }
+    // 变成普通对象
+    const plainForm = JSON.parse(JSON.stringify(form));
+    const res: any = await ProductApi.updateProduct(plainForm);
+
+    ElMessage.success(res.message || "修改成功");
+    router.push("/cxsmanagment/product");
   } catch (error: any) {
-    ElMessage.error(error?.message || "修改失败");
     console.error("修改产品异常：", error);
   }
 };
 
-const getDetail = async () => {
-  const idRaw = route.query.id;
-  const id = Array.isArray(idRaw) ? idRaw[0] : idRaw;
-  if (!id) return;
-  const res = await ProductApi.getProductDetail(id);
-  if (res && res.data) {
-    Object.assign(form, res.data); // 自动反填
+// 获取产品详情并反填（方案一：通过URL参数传递数据）
+const getDetail = () => {
+  const dataRaw: any = route.query.data;
+  console.log("收到的dataRaw：", dataRaw);
+  if (!dataRaw) return;
+  try {
+    const productData = JSON.parse(decodeURIComponent(dataRaw));
+    console.log("解析后的productData：", productData);
+    Object.assign(form, productData);
+  } catch (e) {
+    console.error("解析失败", e);
   }
 };
 
+// 页面加载时执行
 onMounted(() => {
+  getCategoryList();
   getDetail();
 });
 </script>

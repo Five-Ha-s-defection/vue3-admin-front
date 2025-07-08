@@ -29,11 +29,22 @@ const ProductApi = {
     });
   },
 
-  //修改产品
+  // //修改产品
+  // updateProduct(data: any) {
+  //   return request({
+  //     url: `${PRODUCT_BASE_URL}/${data.id}/product`,
+  //     method: "put",
+  //   });
+  // },
+
   updateProduct(data: any) {
     return request({
       url: `${PRODUCT_BASE_URL}/${data.id}/product`,
       method: "put",
+      data: JSON.parse(JSON.stringify(data)), // 变成普通对象
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
   },
   /**
@@ -74,6 +85,14 @@ const ProductApi = {
   getProductDetail(id: string) {
     return request({
       url: `${PRODUCT_BASE_URL}/${id}/product-id`,
+      method: "get",
+    });
+  },
+
+  // 获取产品类型下拉框
+  getCategorySelect() {
+    return request({
+      url: `${PRODUCT_BASE_URL}/category-dto-list`,
       method: "get",
     });
   },

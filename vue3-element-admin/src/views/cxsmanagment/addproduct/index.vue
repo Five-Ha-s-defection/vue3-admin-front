@@ -107,17 +107,13 @@ const rules = {
   productSupplier: [{ required: true, message: "请输入供应商", trigger: "blur" }],
 };
 
-const categoryList = ref<{ id: string; categoryName: string }[]>([]);
-
 // 获取分类列表（请替换为实际API）
+const categoryList: any = ref<{ id: string; categoryName: string }[]>([]);
 const getCategoryList = async () => {
-  // const res = await CategoryApi.getCategoryList();
-  // categoryList.value = res.data || [];
-  // 示例数据
-  categoryList.value = [
-    { id: "00000000-0000-0000-0000-000000000001", categoryName: "分类A" },
-    { id: "00000000-0000-0000-0000-000000000002", categoryName: "分类B" },
-  ];
+  await ProductApi.getCategorySelect().then((res) => {
+    console.log("产品类型来源", res);
+    categoryList.value = res;
+  });
 };
 
 function handleAvatarSuccess(response: any) {
@@ -152,17 +148,10 @@ function beforeAvatarUpload(file: File) {
 const submitForm = async () => {
   try {
     await formRef.value.validate();
-    const res: any = await ProductApi.addProduct(form);
-    if (res && (res.success || res.code === 0)) {
-      ElMessage.success(res.message || "添加成功");
-      router.push("/cxsmanagment/product");
-    } else {
-      ElMessage.error(res?.message || "添加失败");
-    }
-  } catch (error: any) {
-    ElMessage.error(error?.message || "添加失败");
-    console.error("添加产品异常：", error);
-  }
+    await ProductApi.addProduct(form);
+    ElMessage.success("添加成功");
+    router.push("/cxsmanagment/product");
+  } catch (error: any) {}
 };
 
 onMounted(() => {

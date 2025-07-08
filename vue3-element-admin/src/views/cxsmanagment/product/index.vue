@@ -25,7 +25,43 @@
           v-model="searchValue"
           clearable
         />
-        <el-button>高级搜索</el-button>
+        <el-button @click="showAdvancedSearch = true">高级搜索</el-button>
+        <el-dialog v-model="showAdvancedSearch" title="高级搜索" width="60%">
+          <el-form-item label="门幅">
+            <el-input v-model="productPage.productBrand" />
+          </el-form-item>
+          <el-form-item label="供应商">
+            <el-input v-model="productPage.productSupplier" />
+          </el-form-item>
+          <el-form-item label="产品编号">
+            <el-input v-model="productPage.productCode" />
+          </el-form-item>
+          <el-form-item label="产品描述">
+            <el-input v-model="productPage.productDescription" />
+          </el-form-item>
+          <el-form-item label="建议售价">
+            <el-input v-model.number="productPage.suggestedPrice" type="number" />
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input v-model="productPage.productRemark" />
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="productPage.productStatus" placeholder="请选择状态">
+              <el-option :value="true" label="上架" />
+              <el-option :value="false" label="下架" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="成交价">
+            <el-input v-model.number="productPage.dealPrice" type="number" />
+          </el-form-item>
+
+          <!-- 其它表单项... -->
+
+          <template #footer>
+            <el-button type="primary" @click="GetProductList()">搜索</el-button>
+            <el-button @click="showAdvancedSearch = false">取消</el-button>
+          </template>
+        </el-dialog>
         <el-dropdown>
           <el-button>
             导入导出
@@ -65,7 +101,7 @@
               <span class="el-dropdown-link">···</span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item @click="goToUpdateProduct(row.id)">修改</el-dropdown-item>
+                  <el-dropdown-item @click="goToUpdateProduct(row)">修改</el-dropdown-item>
                   <el-dropdown-item @click="productDelete(row)">删除</el-dropdown-item>
                   <el-dropdown-item @click="toggleStatus(row)">
                     {{ row.productStatus === false ? "上架" : "下架" }}
@@ -107,6 +143,16 @@ const productPage = reactive({
   pageIndex: 1,
   pageSize: 10,
   categoryId: undefined,
+
+  productImageUrl: "",
+  productBrand: "",
+  productSupplier: "",
+  productCode: "",
+  productDescription: "",
+  suggestedPrice: undefined,
+  productRemark: "",
+  productStatus: undefined,
+  dealPrice: undefined,
 });
 
 interface ProductData {
@@ -132,6 +178,7 @@ const GetProductList = async () => {
     tableData.value = res.data || [];
     productPage.totalCount = res.totalCount ?? 0; // 关键：赋值
     productPage.pageCount = res.pageCount ?? 0;
+    showAdvancedSearch.value = false;
   } else {
     tableData.value = [];
     productPage.totalCount = 0;
@@ -236,10 +283,20 @@ function showAllProducts() {
   GetProductList();
 }
 
-const goToUpdateProduct = (id: any) => {
-  router.push(`/cxsmanagment/updateproduct?id=${id}`);
-  console.log(id);
+// 在 src/views/cxsmanagment/product/index.vue 中修改
+const goToUpdateProduct = (row: any) => {
+  // 将整行数据编码后传递
+  const productData = encodeURIComponent(JSON.stringify(row));
+  router.push(`/cxsmanagment/updateproduct?data=${productData}`);
+  console.log("传递的产品数据:", row);
 };
+
+const showAdvancedSearch = ref(false);
+
+function handleSearch() {
+  // 这里写你的搜索逻辑，比如调用API或本地过滤
+  showAdvancedSearch.value = false;
+}
 </script>
 <style scoped>
 .product-page {
