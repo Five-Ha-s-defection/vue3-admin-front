@@ -12,12 +12,15 @@ export const AddContactCommunication = (data: any) => {
 };
 
 // 显示联系沟通
-export const GetContactCommunication = (id: string) => {
+export const GetContactCommunication = (id: string, targetType: number) => {
   return request({
-    url: `${COMMUNICATION_BASE_URL}/contact-communications?clueId=${id}`,
+    url: `${COMMUNICATION_BASE_URL}/${id}/contact-communications`,
     method: "get",
+    params: {
+      targetType,
+    },
   });
-}
+};
 
 //删除联系沟通
 export const DeleteContactCommunication = (id: string) => {

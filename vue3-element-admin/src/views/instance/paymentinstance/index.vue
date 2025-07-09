@@ -837,4 +837,10 @@ async function handleApproveSubmit() {
   min-width: 90px;
   display: inline-block;
 }
+.ellipsis-cell {
+  white-space: nowrap;      /* 禁止换行 */
+  overflow: hidden;         /* 隐藏溢出内容 */
+  text-overflow: ellipsis;  /* 显示省略号（可选） */
+  max-width: 100%;          /* 确保不超出单元格 */
+}
 </style>

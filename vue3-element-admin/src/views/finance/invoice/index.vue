@@ -59,7 +59,11 @@
       <el-table ref="tableRef" v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据"
         @selection-change="handleSelectionChange" @row-click="handleRowClick">
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="invoiceNumberCode" label="发票编号" />
+        <el-table-column prop="invoiceNumberCode" label="发票编号" >
+          <template #default="scope">
+            <span class="ellipsis-cell">{{ scope.row.invoiceNumberCode }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="invoiceStatus" label="状态">
           <template #default="scope">
             <span :style="{
@@ -91,14 +95,18 @@
         <el-table-column prop="amount" label="开票金额" />
         <el-table-column prop="invoiceDate" label="开票时间">
           <template #default="scope">
-            {{ scope.row.invoiceDate ? scope.row.invoiceDate.substring(0, 10) : "" }}
+            <span class="ellipsis-cell">
+              {{ scope.row.invoiceDate ? scope.row.invoiceDate.substring(0, 10) : "" }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column prop="invoiceType" label="开票类型">
           <template #default="scope">
-            <span v-if="scope.row.invoiceType === 0">增值税普通发票</span>
-            <span v-else-if="scope.row.invoiceType === 1">增值税专用发票</span>
-            <span v-else>收据</span>
+            <span class="ellipsis-cell">
+              <span v-if="scope.row.invoiceType === 0">增值税普通发票</span>
+              <span v-else-if="scope.row.invoiceType === 1">增值税专用发票</span>
+              <span v-else>收据</span>
+            </span>      
           </template>
         </el-table-column>
         <el-table-column prop="customerName" label="所属客户" />
@@ -987,7 +995,7 @@ function handleBatchDelete() {
 }
 
 function handleExport() {
-  location.href = "https://localhost:44341/api/app/receivables/export-receivables-async-excel";
+  location.href = "https://localhost:44341/api/app/invoice/export-async-excel";
 }
 
 const showDetailDrawer = ref(false);
