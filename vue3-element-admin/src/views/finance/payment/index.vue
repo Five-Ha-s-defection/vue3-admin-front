@@ -78,7 +78,13 @@
         @row-click="handleRowClick"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="paymentCode" label="收款编号" />
+        <el-table-column prop="paymentCode" label="收款编号" >
+          <template #default="scope">
+            <span class="ellipsis-cell">
+              {{ scope.row.paymentCode }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column label="状态">
           <template #default="scope">
             <span
@@ -111,10 +117,18 @@
         </el-table-column>
         <el-table-column prop="receivablePay" label="应收款" />
         <el-table-column prop="amount" label="实际收款金额" />
-        <el-table-column prop="paymentMethodName" label="收款方式" />
+        <el-table-column prop="paymentMethodName" label="收款方式" >
+          <template #default="scope">
+            <span class="ellipsis-cell">
+              {{scope.row.paymentMethodName}}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="paymentDate" label="收款时间">
           <template #default="scope">
-            {{ scope.row.paymentDate.substring(0, 10) }}
+            <span class="ellipsis-cell">
+                {{ scope.row.paymentDate.substring(0, 10) }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column prop="customerName" label="所属客户" />
@@ -1122,7 +1136,7 @@ function handleBatchDelete() {
 }
 
 function handleExport() {
-  location.href = "https://localhost:44341/api/app/receivables/export-receivables-async-excel";
+  location.href = "https://localhost:44341/api/app/payment/export-async-excel";
 }
 
 const showDetailDrawer = ref(false);
