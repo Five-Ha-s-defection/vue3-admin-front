@@ -121,10 +121,12 @@
             </template>
           </el-input>
           <el-button
+            style="width: 80px"
             icon="el-icon-filter"
             class="mr8 clue-large-btn"
             @click="advancedDialogVisible = true"
           >
+            <el-icon><Filter /></el-icon>
             高级搜索
           </el-button>
           <el-dropdown>
