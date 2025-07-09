@@ -74,8 +74,11 @@
               </el-button>
             </template>
           </el-input>
-          <el-button icon="el-icon-filter" class="mr8 clue-large-btn"
-            @click="advancedDialogVisible = true">高级搜索</el-button>
+         <el-button style="width: 80px;" icon="el-icon-filter" class="mr8 clue-large-btn"
+            @click="advancedDialogVisible = true">
+            <el-icon><Filter /></el-icon>
+            高级搜索
+          </el-button>
           <el-dropdown>
             <el-button class="clue-large-btn">操作<el-icon>
                 <ArrowDown />
