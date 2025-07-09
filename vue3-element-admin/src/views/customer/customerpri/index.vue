@@ -82,8 +82,12 @@
               </el-icon></el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>批量导出</el-dropdown-item>
-                <el-dropdown-item>批量删除</el-dropdown-item>
+                <el-dropdown-item>放弃客户</el-dropdown-item>
+                <el-dropdown-item>客户转移</el-dropdown-item>
+                <el-dropdown-item>删除客户</el-dropdown-item>
+                <el-dropdown-item>导出数据</el-dropdown-item>
+                <el-dropdown-item>Excel导入</el-dropdown-item>
+                <el-dropdown-item>下载模版</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -296,6 +300,7 @@
                     <span class="contact-user">{{ user.userInfo.realName }} 联系了</span>
                     <el-button link icon="Edit" size="small" />
                     <el-button link icon="Delete" size="small" />
+                    <el-button link icon="ChatDotSquare" size="small" />
                   </div>
                   <div class="contact-content">{{ item.content }}</div>
                 </div>
@@ -732,22 +737,22 @@ const handleCreated = (editor: any) => {
 
 //=================显示联系记录====================
 const contactList = ref<any[]>([]);
+const targetType = ref<number>(2); // 线索 1，客户 2，商机 3
 
 // 获取联系记录列表
 const fetchContactList = async () => {
-  console.log('fetchContactList被调用，currentClueId.value=', currentClueId.value);
-  if (!currentClueId.value) {
+  if (!currentCustomerId.value) {
     contactList.value = [];
     return;
   }
   try {
-    const res = await GetContactCommunication(currentClueId.value);
+    const res = await GetContactCommunication(currentCustomerId.value, targetType.value);
     console.log('GetContactCommunication返回的res:', res);
     if (Array.isArray(res)) {
       contactList.value = res.map((item: any) => ({
         id: item.id,
         typeName: item.communicationTypeName || '',
-        time: item.nextContactTime ? moment(item.nextContactTime).format('YYYY-MM-DD HH:mm') : '',
+        time: item.creationTime ? moment(item.creationTime).format('YYYY-MM-DD HH:mm') : '',
         userName: item.userName || '',
         content: item.content || ''
       }));
@@ -762,15 +767,16 @@ const fetchContactList = async () => {
 };
 
 
+
 //=================添加联系记录====================
 const addcommunicationdialogVisible = ref(false);
 const uploadDialogVisible = ref(false);
 
 const AddCommunication = () => {
-  // 赋值当前线索id
-  communicationruleForm.clueId = currentCustomer.value?.id || ''
+  // 赋值当前客户id
+  communicationruleForm.customerId = currentCustomer.value?.id || ''
   // 重置所有表单字段
-  communicationruleForm.customerId = ''
+  communicationruleForm.clueId = ''
   communicationruleForm.businessOpportunityId = ''
   communicationruleForm.content = ''
   communicationruleForm.attachmentUrl = ''
@@ -843,7 +849,7 @@ const communicationsubmitForm = async (formEl: FormInstance | undefined) => {
             addcommunicationdialogVisible.value = false;
             communicationresetForm(formEl);
             // 刷新联系记录列表
-            // ShowContactCommunicationList({ clueId: currentClue.value.id })
+            fetchContactList()
           }
           else {
             ElMessage.success('添加沟通记录成功');
@@ -952,7 +958,7 @@ const handleUploadExceed = () => {
 
 //=================弹出抽屉========================
 const table = ref(false)
-const currentCustomer = ref<any>(null) // 当前选中的线索数据
+const currentCustomer = ref<any>(null) // 当前选中的客户数据
 const activeTab = ref('detail') // tabs切换
 const activeTabcus = ref('detail') // tabs切换
 
@@ -960,8 +966,9 @@ const activeTabcus = ref('detail') // tabs切换
 const handleRowClick = (row: any) => {
   console.log('handleRowClick被调用，row.id=', row.id);
   currentCustomer.value = row;
-  currentClueId.value = row.id;
+  currentCustomerId.value = row.id;
   table.value = true;
+  activeTabcus.value = 'contact'; // 确保默认显示"客户详情"标签页
   fetchContactList();
 }
 
@@ -1398,7 +1405,7 @@ const handleOrderClick = (value: number) => {
     queryParams.OrderBy = value;
     queryParams.OrderDesc = true;
   }
-  fetchClueList();
+  fetchCustomerList();
 };
 
 // 处理查询参数，过滤掉不必要的参数
@@ -1469,7 +1476,7 @@ watch([
 });
 
 // 钩子函数======================================================
-const currentClueId = ref<string>(''); // 当前线索id，实际赋值方式根据你的业务调整
+const currentCustomerId = ref<string>(''); // 当前客户id，实际赋值方式根据你的业务调整
 
 onMounted(() => {
   fetchCustomerList();
@@ -1491,13 +1498,6 @@ console.log('当前登录用户信息', user.userInfo);
 </script>
 
 <style scoped>
-.el-icon {
-  font-size: 24px;
-  /* 或根据需要调整大小 */
-  color: #409eff;
-  /* 可以设置颜色 */
-}
-
 .app-container {
   padding: 20px;
 }
