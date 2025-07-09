@@ -155,10 +155,9 @@
 
         <el-form-item label="备注">
           <div style="border: 1px solid #ccc">
-            <Toolbar style="border-bottom: 1px solid #ccc" :editor="editorRef" :default-config="toolbarConfig"
-              :mode="mode" />
+            <Toolbar style="border-bottom: 1px solid #ccc" :editor="editorRef" :default-config="toolbarConfig" />
             <Editor v-model="ruleForm.customerRemark" style="height: 500px; overflow-y: hidden;"
-              :default-config="editorConfig" :mode="mode" @on-created="handleCreated" />
+              :default-config="editorConfig" @on-created="handleCreated" />
           </div>
         </el-form-item>
         <el-form-item>
@@ -220,42 +219,69 @@
 
         <!-- 线索详情标题和分割线 -->
         <div class="clue-detail-title-row">
-          <span class="clue-detail-title">线索详情</span>
-          <!-- 详情tab右下角的"修改"按钮 -->
-          <div class="detail-row-btn">
-            <el-button type="primary" size="small">修改</el-button>
-          </div>
+          <!-- <span class="clue-detail-title">线索详情</span> -->
+          <el-tabs v-model="activeTabcus" class="clue-detail-tabs" style="position:relative;">
+            <!-- 客户详情tab -->
+            <el-tab-pane label="客户详情" name="contact">
+              <div class="contact-records">
+                <!-- 按钮 -->
+                <el-button type="primary" size="small"
+                  style="text-align: right; margin-top: 20px;width: 80px;">修改</el-button>
+                <!-- 线索详情tab，分两列展示 -->
+                <div class="detail-table-flex">
+                  <!-- 左侧信息列 -->
+                  <div class="detail-table-col">
+                    <div class="detail-row"><span>客户编号</span>{{ currentCustomer?.customerCode }}</div>
+                    <div class="detail-row"><span>客户名称</span>{{ currentCustomer?.customerName }}</div>
+                    <div class="detail-row"><span>体检金额</span>{{ currentCustomer?.checkAmount || '--' }}</div>
+                    <div class="detail-row"><span>到期时间</span>{{ currentCustomer?.customerExpireTime }}</div>
+                    <div class="detail-row"><span>客户级别</span>{{ currentCustomer?.customerLevelName }}</div>
+                    <div class="detail-row"><span>邮箱</span>{{ displayValue(currentCustomer?.customerEmail) }}</div>
+                    <div class="detail-row"><span>客户来源</span>{{ displayValue(currentCustomer?.clueSourceName) }}</div>
+                    <div class="detail-row"><span>客户地址</span>{{ displayValue(currentCustomer?.customerAddress) }}</div>
+                    <div class="detail-row"><span>备注</span>{{ currentCustomer?.customerRemark }}</div>
+                  </div>
+                  <!-- 右侧信息列 -->
+                  <div class="detail-table-col">
+                    <div class="detail-row"><span>车架号</span>{{ displayValue(currentCustomer?.carFrameNumberName) }}
+                    </div>
+                    <div class="detail-row">
+                      <span>电话</span>
+                      <span>
+                        {{ displayValue(currentCustomer?.customerPhone) }}
+                        <el-icon v-if="currentCustomer?.customerPhone" class="phone-icon">
+                          <Phone />
+                        </el-icon>
+                      </span>
+                    </div>
+                    <div class="detail-row"><span>客户类别</span>{{ displayValue(currentCustomer?.customerTypeName) }}</div>
+                    <div class="detail-row"><span>客户地区</span>{{ displayValue(currentCustomer?.customerRegionName) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </el-tab-pane>
+            <!-- 联系人详情tab -->
+            <el-tab-pane label="联系人" name="attachment">
+              <div style="padding:32px 0;text-align:center;color:#bbb;">暂无联系人</div>
+            </el-tab-pane>
+            <!-- 联系人详情tab -->
+            <el-tab-pane label="商机" name="attachment">
+              <div style="padding:32px 0;text-align:center;color:#bbb;">暂无商机</div>
+            </el-tab-pane>
+            <!-- 联系人详情tab -->
+            <el-tab-pane label="合同" name="attachment">
+              <div style="padding:32px 0;text-align:center;color:#bbb;">暂无合同</div>
+            </el-tab-pane>
+            <!-- 联系人详情tab -->
+            <el-tab-pane label="财务" name="attachment">
+              <div style="padding:32px 0;text-align:center;color:#bbb;">暂无财务</div>
+            </el-tab-pane>
+          </el-tabs>
         </div>
         <el-divider class="divider-mt" />
         <!-- 详情tab区 -->
         <el-tabs v-model="activeTab" class="clue-detail-tabs" style="position:relative;">
-          <!-- 线索详情tab，分两列展示 -->
-          <div class="detail-table-flex">
-            <!-- 左侧信息列 -->
-            <div class="detail-table-col">
-              <div class="detail-row"><span>线索编号</span>{{ currentCustomer?.clueCode || '--' }}</div>
-              <div class="detail-row">
-                <span>电话</span>
-                <span>
-                  {{ displayValue(currentCustomer?.cluePhone) }}
-                  <el-icon v-if="currentCustomer?.cluePhone" class="phone-icon">
-                    <Phone />
-                  </el-icon>
-                </span>
-              </div>
-              <div class="detail-row"><span>邮箱</span>{{ displayValue(currentCustomer?.clueEmail) }}</div>
-              <div class="detail-row"><span>QQ</span>{{ displayValue(currentCustomer?.clueQQ) }}</div>
-              <div class="detail-row"><span>行业</span>{{ displayValue(currentCustomer?.industryName) }}</div>
-            </div>
-            <!-- 右侧信息列 -->
-            <div class="detail-table-col">
-              <div class="detail-row"><span>姓名</span>{{ displayValue(currentCustomer?.clueName) }}</div>
-              <div class="detail-row"><span>线索来源</span>{{ displayValue(currentCustomer?.clueSourceName) }}</div>
-              <div class="detail-row"><span>微信号</span>{{ displayValue(currentCustomer?.clueWechat) }}</div>
-              <div class="detail-row"><span>公司名称</span>{{ displayValue(currentCustomer?.companyName) }}</div>
-              <div class="detail-row"><span>地址</span>{{ displayValue(currentCustomer?.address) }}</div>
-            </div>
-          </div>
           <!-- 联系记录tab -->
           <el-tab-pane label="联系记录" name="contact">
             <div class="contact-records">
@@ -486,7 +512,9 @@
     <el-dialog v-model="advancedDialogVisible" width="1000px" :close-on-click-modal="false">
       <template #header>
         <div class="advanced-dialog-header">
-          <el-icon><Filter /></el-icon>
+          <el-icon>
+            <Filter />
+          </el-icon>
           <span class="advanced-dialog-title">高级搜索</span>
           <div class="advanced-dialog-actions">
             <el-button type="primary" class="advanced-dialog-btn" @click="handleAdvancedSearch">搜索</el-button>
@@ -650,7 +678,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
-import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload,Filter} from '@element-plus/icons-vue';
+import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload, Filter } from '@element-plus/icons-vue';
 import { GetUserSelect, GetCarFrameNumberSelect, GetCustomerLevelSelect, GetCustomerRegionSelect, GetCustomerSourceSelect, GetCustomerTypeSelect, ShowCustomerList, AddCustomer } from '@/api/CustomerProcess/Customer/customer.api';
 import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
 import moment from 'moment';
@@ -926,6 +954,7 @@ const handleUploadExceed = () => {
 const table = ref(false)
 const currentCustomer = ref<any>(null) // 当前选中的线索数据
 const activeTab = ref('detail') // tabs切换
+const activeTabcus = ref('detail') // tabs切换
 
 // 处理表格行点击事件
 const handleRowClick = (row: any) => {
@@ -1463,8 +1492,10 @@ console.log('当前登录用户信息', user.userInfo);
 
 <style scoped>
 .el-icon {
-  font-size: 24px; /* 或根据需要调整大小 */
-  color: #409eff; /* 可以设置颜色 */
+  font-size: 24px;
+  /* 或根据需要调整大小 */
+  color: #409eff;
+  /* 可以设置颜色 */
 }
 
 .app-container {
@@ -1892,10 +1923,6 @@ console.log('当前登录用户信息', user.userInfo);
   margin-right: 10px;
 }
 
-.detail-row-btn {
-  text-align: right;
-  margin-top: 20px;
-}
 
 .contact-records {
   display: flex;
