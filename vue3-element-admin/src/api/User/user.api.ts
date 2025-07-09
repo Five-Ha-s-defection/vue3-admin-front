@@ -1,6 +1,19 @@
 import request from "@/utils/request";
 const base = "/api/app/user-server";
 const UserAPI = {
+  /**
+   * 获取验证码
+   */
+  getCaptcha(id: string) {
+    return request({
+      url: `/api/app/captcha-server/${id}/captcha`,
+      method: "get",
+    });
+  },
+
+  /**
+   * 获取用户分页列表
+   */
   GetUserPage() {
     return request({
       url: "/api/app/user-server/user-info-list",

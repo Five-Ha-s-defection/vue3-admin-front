@@ -136,8 +136,12 @@
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>批量导出</el-dropdown-item>
-                <el-dropdown-item>批量删除</el-dropdown-item>
+                <el-dropdown-item>放弃线索</el-dropdown-item>
+                <el-dropdown-item>转移线索</el-dropdown-item>
+                <el-dropdown-item>删除线索</el-dropdown-item>
+                <el-dropdown-item>导出数据</el-dropdown-item>
+                <el-dropdown-item>Excel导入</el-dropdown-item>
+                <el-dropdown-item>下载模版</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -921,6 +925,7 @@ const user = useUserStore();
 
 //=================显示联系记录====================
 const contactList = ref<any[]>([]);
+const targetType = ref<number>(1); // 这里 1 表示"线索"，根据后端接口定义
 
 // 获取联系记录列表
 const fetchContactList = async () => {
@@ -930,13 +935,13 @@ const fetchContactList = async () => {
     return;
   }
   try {
-    const res = await GetContactCommunication(currentClueId.value);
+    const res = await GetContactCommunication(currentClueId.value, targetType.value);
     console.log("GetContactCommunication返回的res:", res);
     if (Array.isArray(res)) {
       contactList.value = res.map((item: any) => ({
         id: item.id,
         typeName: item.communicationTypeName || "",
-        time: item.nextContactTime ? moment(item.nextContactTime).format("YYYY-MM-DD HH:mm") : "",
+        time: item.creationTime ? moment(item.creationTime).format("YYYY-MM-DD HH:mm") : "",
         userName: item.userName || "",
         content: item.content || "",
       }));
