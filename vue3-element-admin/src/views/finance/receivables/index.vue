@@ -71,7 +71,11 @@
         @row-click="handleRowClick"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="receivableCode" label="应收款编号" />
+        <el-table-column prop="receivableCode" label="应收款编号" >
+          <template #default="scope">
+            <span class="ellipsis-cell">{{ scope.row.receivableCode }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="receivablePay" label="应收款" />
         <el-table-column prop="amount" label="已收款" />
         <el-table-column label="剩余应收">
@@ -81,7 +85,9 @@
         </el-table-column>
         <el-table-column prop="receivableDate" label="应收款时间">
           <template #default="scope">
-            {{ scope.row.receivableDate.substring(0, 10) }}
+            <span class="ellipsis-cell">
+              {{ scope.row.receivableDate.substring(0, 10) }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column prop="customerName" label="所属客户" />
@@ -786,7 +792,7 @@ function handleBatchDelete() {
 }
 
 function handleExport() {
-  location.href = "https://localhost:44341/api/app/receivables/export-receivables-async-excel";
+  location.href = "https://localhost:44341/api/app/receivables/export-async-excel";
 }
 
 const showDetailDrawer = ref(false);

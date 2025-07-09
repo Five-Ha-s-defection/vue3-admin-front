@@ -71,10 +71,10 @@ defineProps({
   }
 }
 .logo-full {
-  padding: 8px 0 8px 12px;
+  padding: 12px 23px 12px 12px;
   .logo-img {
-    width: 120px;
-    height: 36px;
+    width: 110px;
+    height: 23px;
   }
   .logo-text {
     display: inline-block;

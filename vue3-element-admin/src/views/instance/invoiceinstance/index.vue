@@ -30,7 +30,11 @@
       <el-table ref="tableRef" v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据"
         @selection-change="handleSelectionChange" @row-click="handleRowClick">
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="invoiceNumberCode" label="发票编号" />
+        <el-table-column prop="invoiceNumberCode" label="发票编号" >
+          <template #default="scope">
+            <span class="ellipsis-cell">{{ scope.row.invoiceNumberCode }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="invoiceStatus" label="状态">
           <template #default="scope">
             <span :style="{
@@ -62,20 +66,30 @@
         <el-table-column prop="amount" label="开票金额" />
         <el-table-column prop="invoiceDate" label="开票时间">
           <template #default="scope">
-            {{ scope.row.invoiceDate ? scope.row.invoiceDate.substring(0, 10) : "" }}
+            <span class="ellipsis-cell">
+              {{ scope.row.invoiceDate ? scope.row.invoiceDate.substring(0, 10) : "" }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column prop="invoiceType" label="开票类型">
           <template #default="scope">
-            <span v-if="scope.row.invoiceType === 0">增值税普通发票</span>
-            <span v-else-if="scope.row.invoiceType === 1">增值税专用发票</span>
-            <span v-else>收据</span>
+            <span class="ellipsis-cell">
+              <span v-if="scope.row.invoiceType === 0">增值税普通发票</span>
+              <span v-else-if="scope.row.invoiceType === 1">增值税专用发票</span>
+              <span v-else>收据</span>
+            </span>      
           </template>
         </el-table-column>
         <el-table-column prop="customerName" label="所属客户" />
         <el-table-column prop="contractName" label="关联合同" />
         <el-table-column prop="realName" label="负责人" />
-        <el-table-column prop="auditorNames" label="审核人" />
+        <el-table-column prop="auditorNames" label="审核人">
+          <template #default="scope">
+            <span class="ellipsis-cell">
+              {{ scope.row.auditorNames || "-" }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="creatorRealName" label="创建人" />
       </el-table>
 
@@ -851,5 +865,15 @@ async function handleApproveSubmit() {
   min-width: 120px;
   display: inline-block;
   font-size: 18px;
+}
+.ellipsis-cell {
+  white-space: nowrap;
+  /* 禁止换行 */
+  overflow: hidden;
+  /* 隐藏溢出内容 */
+  text-overflow: ellipsis;
+  /* 显示省略号（可选） */
+  max-width: 100%;
+  /* 确保不超出单元格 */
 }
 </style>
