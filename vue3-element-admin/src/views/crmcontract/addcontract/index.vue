@@ -545,7 +545,7 @@ async function fetchProductList() {
     //调用接口获取产品列表
     const res: any = await ProductApi.getProductList(productSearch.value);
     // 将产品列表赋值给productList
-    productList.value = res || [];
+    productList.value = res.data || [];
 
     // dom的更新循环,产品列表数据加载完成后，反填已选择的产品(获取已选择的产品ids后,利用nextTick的特性来反填产品列表)
     nextTick(() => {
