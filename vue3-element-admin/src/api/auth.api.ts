@@ -5,15 +5,20 @@ const AUTH_BASE_URL = "/api/app";
 const AuthAPI = {
   /** 登录接口*/
   login(data: LoginFormData) {
-    const formData = new FormData();
+    /*  const formData = new FormData();
     formData.append("UserName", data.UserName);
     formData.append("Password", data.Password);
     formData.append("captchaKey", data.captchaKey);
-    formData.append("captchaCode", data.captchaCode);
+    formData.append("captchaCode", data.captchaCode); */
     return request<any, LoginResult>({
       url: `${AUTH_BASE_URL}/login-services/login`,
       method: "post",
-      data: formData,
+      data: {
+        userName: data.UserName, // 注意大小写要和后端DTO字段对应
+        password: data.Password,
+        captchaKey: data.captchaKey,
+        captchaCode: data.captchaCode,
+      },
       headers: {
         "Content-Type": "application/json",
       },
@@ -68,7 +73,7 @@ export interface LoginFormData {
 /** 登录响应 */
 export interface LoginResult {
   /** 访问令牌 */
-  token: string;
+  accessToken: string;
   /** 刷新令牌 */
   refreshToken: string;
   /** 令牌类型 */

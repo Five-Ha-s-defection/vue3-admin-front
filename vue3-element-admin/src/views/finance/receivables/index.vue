@@ -16,13 +16,6 @@
             <el-radio-button label="myCreate">我创建的</el-radio-button>
             <el-radio-button label="all">全部</el-radio-button>
           </el-radio-group>
-
-          <!-- <span style="margin-left: 32px; color: #888">收款进度</span>
-          <el-radio-group v-model="progressType" size="small" style="margin-left: 12px">
-            <el-radio-button label="all">全部</el-radio-button>
-            <el-radio-button label="unfinished">未完成</el-radio-button>
-            <el-radio-button label="finished">收款完成</el-radio-button>
-          </el-radio-group> -->
         </div>
         <div style="display: flex; align-items: center; margin-bottom: 8px">
           <el-button type="primary" style="margin-left: 32px; margin-right: 400px" @click="Addlist">
@@ -68,7 +61,7 @@
         </div>
       </div>
       <el-table
-        ref="tableRef"
+        ref="tableRef" class="ellipsis-cell"
         v-loading="loading"
         :data="tableData"
         border
@@ -115,7 +108,7 @@
       <el-dialog v-model="showAddDialog" title="添加应收款" width="600px" @close="resetAddForm">
         <el-form ref="addFormRef" :model="addupdateForm" :rules="addRules" label-width="120px">
           <el-form-item label="所属客户" prop="customerName">
-            <el-button type="primary" @click="showCustomer()">选择客户</el-button>
+            <el-button type="primary" @click="showCustomer('add')">选择客户</el-button>
             <span style="margin-left: 10px; color: #999">
               {{ addupdateForm.customerName || "未选择客户" }}
             </span>
@@ -126,7 +119,12 @@
               placeholder="请选择合同"
               style="width: 100%"
             >
-              <el-option v-for="item in contractList" :label="item.contractName" :value="item.id" />
+              <el-option
+                v-for="item in contractList"
+                :key="item.id"
+                :label="item.contractName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="负责人" prop="userId">
@@ -135,7 +133,12 @@
               placeholder="请输入负责人"
               style="width: 100%"
             >
-              <el-option v-for="item in userList" :label="item.realName" :value="item.id" />
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="应收款编号" prop="receivableCode">
@@ -151,9 +154,6 @@
               placeholder="选择时间"
               style="width: 100%"
             />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="addExplain">+ 增加应收款明细</el-button>
           </el-form-item>
           <el-form-item label="备注" prop="remark">
             <el-input
@@ -184,26 +184,27 @@
         </div>
         <el-table :data="customerList" style="width: 100%" highlight-current-row>
           <el-table-column
-            type="selection"
             width="50"
-            :selectable="() => true"
-            :reserve-selection="false"
-            :show-overflow-tooltip="false"
             :fixed="true"
-            :label="''"
+            label=""
           >
-            <template #default="{ row }">
+          <template #default="{ row }">
               <el-radio
                 :model-value="selectedCustomer && selectedCustomer.id"
                 :label="row.id"
                 @change="() => handleCustomerRadio(row)"
-              />
+              >&nbsp;
+              </el-radio>
             </template>
           </el-table-column>
-          <el-table-column prop="id" label="客户编号" />
+          <el-table-column prop="customerCode" label="客户编号" />
           <el-table-column prop="customerName" label="客户名称" />
           <el-table-column prop="customerPhone" label="联系电话" />
-          <el-table-column prop="creationTime" label="创建时间" />
+          <el-table-column prop="creationTime" label="创建时间" >
+            <template #default="scope">
+            {{ scope.row.creationTime.substring(0, 19).replace("T", " ") }}
+          </template>
+          </el-table-column>
         </el-table>
       </el-drawer>
 
@@ -218,7 +219,7 @@
         <el-form :model="searchForm" label-width="100px" label-position="right">
           <el-form-item label="负责人" prop="userId">
             <el-select v-model="searchForm.UserId" placeholder="请输入负责人" style="width: 100%">
-              <el-option v-for="item in userList" :label="item.realName" :value="item.id" />
+              <el-option v-for="item in userList" :label="item.realName" :value="item.id" :key="item.id"/>
             </el-select>
           </el-form-item>
           <el-form-item label="创建人">
@@ -227,7 +228,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="所属客户" prop="customerName">
-            <el-button type="primary" @click="showCustomer()">选择客户</el-button>
+            <el-button type="primary" @click="showCustomer('search')">选择客户</el-button>
             <span style="margin-left: 10px; color: #999">
               {{ searchForm.CustomerName || "未选择客户" }}
             </span>
@@ -350,42 +351,42 @@
             </el-row>
           </div>
           <!-- 操作日志 -->
-        <div>
-          <div
-            style="
-              font-weight: bold;
-              font-size: 15px;
-              border-left: 3px solid #faad14;
-              padding-left: 8px;
-              margin-bottom: 18px;
-            "
-          >
-            操作日志
+          <div>
+            <div
+              style="
+                font-weight: bold;
+                font-size: 15px;
+                border-left: 3px solid #faad14;
+                padding-left: 8px;
+                margin-bottom: 18px;
+              "
+            >
+              操作日志
+            </div>
           </div>
-        </div>
-        <el-divider content-position="left"></el-divider>
-        <div v-if="recordlist && recordlist.length">
-          <div
-            v-for="item in recordlist"
-            :key="item.id"
-            style="margin-bottom: 8px; display: flex; align-items: center"
-          >
-            <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
-            <span style="color: #1890ff">
-              <!-- 操作人ID（如有名字可替换为名字） -->
-              {{ item.creatorName || "-" }}
-            </span>
-            <span style="margin-left: 8px; color: #999">
-              <!-- 操作时间 -->
-              {{ item.creationTime ? item.creationTime.replace("T", " ").substring(0, 16) : "-" }}
-            </span>
-            <span style="margin-left: 8px">
-              <!-- 操作内容 -->
-              {{ item.action || "-" }}
-            </span>
+          <el-divider content-position="left"></el-divider>
+          <div v-if="recordlist && recordlist.length">
+            <div
+              v-for="item in recordlist"
+              :key="item.id"
+              style="margin-bottom: 8px; display: flex; align-items: center"
+            >
+              <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
+              <span style="color: #1890ff">
+                <!-- 操作人ID（如有名字可替换为名字） -->
+                {{ item.creatorName || "-" }}
+              </span>
+              <span style="margin-left: 8px; color: #999">
+                <!-- 操作时间 -->
+                {{ item.creationTime ? item.creationTime.replace("T", " ").substring(0, 16) : "-" }}
+              </span>
+              <span style="margin-left: 8px">
+                <!-- 操作内容 -->
+                {{ item.action || "-" }}
+              </span>
+            </div>
           </div>
-        </div>
-        <div v-else style="color: #aaa; text-align: center">没有更多了</div>
+          <div v-else style="color: #aaa; text-align: center">没有更多了</div>
         </div>
       </el-drawer>
 
@@ -514,6 +515,7 @@ const searchForm = reactive({
   UserId: "",
   CustomerId: "",
   ContractId: "",
+  ContractName: "",
   ReceivablePay: "",
   CustomerName: "",
   ReceivableDate: "",
@@ -601,14 +603,13 @@ function handleCurrentChange(val: number) {
 const showAdvancedSearch = ref(false);
 const search = () => {
   showAdvancedSearch.value = true;
-  searchForm.CustomerName = "";
   searchForm.UserId = "";
   searchForm.CreatorId = "";
   searchForm.UserId = "";
   searchForm.CustomerId = "";
+  searchForm.CustomerName = "";
   searchForm.ContractId = "";
   searchForm.ReceivablePay = "";
-  searchForm.CustomerName = "";
   searchForm.ReceivableDate = "";
 };
 
@@ -629,8 +630,10 @@ function handleDateRangeChange(val: any) {
 
 // 客户列表数据（实际应从API获取，这里举例）
 const customerList: any = ref([]);
-
-function showCustomer() {
+// 客户选择
+const customerMode = ref<"add" | "search">("add");
+function showCustomer(mode: "add" | "search") {
+  customerMode.value = mode;
   showCustomerDrawer.value = true;
   const params = {
     PageIndex: 1,
@@ -641,8 +644,6 @@ function showCustomer() {
     .then((res) => {
       console.log("客户列表数据", res.data);
       customerList.value = res.data;
-      pagination.totalCount = res.totalCount;
-      pagination.pageCount = res.pageCount;
     })
     .finally(() => {
       loading.value = false;
@@ -661,8 +662,13 @@ function handleCustomerSubmit() {
     ElMessage.warning("请选择客户");
     return;
   }
-  addupdateForm.customerId = selectedCustomer.value.id;
-  addupdateForm.customerName = selectedCustomer.value.customerName;
+  if (customerMode.value === "add") {
+    addupdateForm.customerId = selectedCustomer.value.id;
+    addupdateForm.customerName = selectedCustomer.value.customerName;
+  } else if (customerMode.value === "search") {
+    searchForm.CustomerId = selectedCustomer.value.id;
+    searchForm.CustomerName = selectedCustomer.value.customerName;
+  }
   showCustomerDrawer.value = false;
 }
 
@@ -698,9 +704,6 @@ const UserData = async () => {
     });
 };
 
-function addExplain() {
-  ElMessage.info("增加应收款明细功能待实现");
-}
 // 重置添加表单
 function resetAddForm() {
   addupdateForm.contractId = "";
@@ -799,11 +802,11 @@ function handleRowClick(row: any) {
 // 获取操作日志列表数据
 const recordlist: any = ref([]);
 //显示查询分页
-const RecordData = async (id:any) => {
+const RecordData = async (id: any) => {
   const params = {
     bizType: "receivables",
-  }
-  console.log("操作日志列表数据id",id);
+  };
+  console.log("操作日志列表数据id", id);
   try {
     const list = await RecordAPI.GetRecord(params, id);
     console.log("操作日志列表数据:", list);
@@ -811,8 +814,7 @@ const RecordData = async (id:any) => {
   } catch (err: any) {
     console.error("获取操作日志列表失败:", err.message);
   }
-   
-}
+};
 
 // 删除应收款
 function handleDelete(row: any) {
@@ -881,5 +883,11 @@ function handleEditSubmit() {
   color: #888;
   min-width: 90px;
   display: inline-block;
+}
+.ellipsis-cell {
+  white-space: nowrap;      /* 禁止换行 */
+  overflow: hidden;         /* 隐藏溢出内容 */
+  text-overflow: ellipsis;  /* 显示省略号（可选） */
+  max-width: 100%;          /* 确保不超出单元格 */
 }
 </style>

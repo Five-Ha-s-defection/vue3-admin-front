@@ -68,7 +68,7 @@
           <template #default="scope">
             <span>
               {{ scope.row.contactName }}
-              <span v-if="scope.row.isPrimary==true" style="color: #faad14; margin-left: 4px">
+              <span v-if="scope.row.isPrimary == true" style="color: #faad14; margin-left: 4px">
                 (首要)
               </span>
             </span>
@@ -106,7 +106,7 @@
                   <el-dropdown-item @click="handleEditContact(scope.row)">编辑</el-dropdown-item>
                   <el-dropdown-item @click="handleDelete(scope.row)">删除</el-dropdown-item>
                   <el-button
-                    v-if="scope.row.isPrimary==false"
+                    v-if="scope.row.isPrimary == false"
                     type="text"
                     size="small"
                     @click="setPrimaryContact(scope.row)"
@@ -568,7 +568,7 @@ const Addlist = () => {
   isEdit.value = false;
   showAddDialog.value = true;
   // 清空表单
-  Object.keys(addContactForm).forEach(key => addContactForm[key] = "");
+  Object.keys(addContactForm).forEach((key) => (addContactForm[key] = ""));
   addContactForm.salutation = true; // 默认值
 };
 
@@ -646,8 +646,8 @@ function handleAddContactSubmit() {
     if (valid) {
       if (isEdit.value) {
         // 修改
-        CustomerContactAPI.UpdateCustomerContact(row.id,addContactForm)
-        .then(() => {
+        CustomerContactAPI.UpdateCustomerContact(row.id, addContactForm)
+          .then(() => {
             ElMessage.success("修改成功");
             showAddDialog.value = false;
             resetAddForm(); // 重置表单
@@ -739,10 +739,10 @@ const setPrimaryContact = async (row: any) => {
     isPrimary: true, // 设置为首要联系人
   };
   // 1. 调用后端接口设置为首要联系人
-  CustomerContactAPI.UpdateIsPrimaryContact(row.id,params);
+  CustomerContactAPI.UpdateIsPrimaryContact(row.id, params);
   // 3. 可选：提示
   ElMessage.success("设置成功");
-    // 2. 刷新列表
+  // 2. 刷新列表
   GetCustomerContract();
 };
 </script>

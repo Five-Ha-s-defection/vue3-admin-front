@@ -87,30 +87,9 @@
           @current-change="handleCurrentChange" />
       </div>
 
-      <!-- 客户选择抽屉 -->
-      <el-drawer v-model="showCustomerDrawer" title="客户列表" direction="rtl" size="80%" :with-header="true">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px">
-          <el-button type="primary" @click="handleCustomerSubmit">提交</el-button>
-          <el-button @click="showCustomerDrawer = false">取消</el-button>
-        </div>
-        <el-table :data="customerList" style="width: 100%" highlight-current-row>
-          <el-table-column type="selection" width="50" :selectable="() => true" :reserve-selection="false"
-            :show-overflow-tooltip="false" :fixed="true" :label="''">
-            <template #default="{ row }">
-              <el-radio :model-value="selectedCustomer && selectedCustomer.id" :label="row.id"
-                @change="() => handleCustomerRadio(row)" />
-            </template>
-          </el-table-column>
-          <el-table-column prop="id" label="客户编号" />
-          <el-table-column prop="customerName" label="客户名称" />
-          <el-table-column prop="customerPhone" label="联系电话" />
-          <el-table-column prop="creationTime" label="创建时间" />
-        </el-table>
-      </el-drawer>
-
       <!-- 详情抽屉 -->
       <el-drawer v-model="showDetailDrawer" title="发票详情" size="60%" direction="rtl" :with-header="true">
-        <div style="padding: 24px 32px 0 32px">
+        <div style="padding: 24px 32px 0 1px">
           <!-- 顶部编号和按钮 -->
           <div style="display: flex; align-items: center; justify-content: space-between">
             <div style="font-weight: bold; font-size: 18px">
@@ -319,13 +298,10 @@
             <!-- 左侧 基础信息 -->
             <el-col :span="12">
               <el-form-item label="所属客户" prop="customerName">
-                <el-button type="primary" @click="showCustomer()">选择客户</el-button>
-                <span style="margin-left: 10px; color: #999">
-                  {{ editForm.customerName || "未选择客户" }}
-                </span>
+                <el-input v-model="editForm.customerName" disabled />
               </el-form-item>
-              <el-form-item label="关联合同" prop="contractId" required>
-                <el-select v-model="editForm.contractId" placeholder="请选择合同" style="width: 100%">
+             <el-form-item label="关联合同" prop="contractId">
+                <el-select v-model="editForm.contractId" placeholder="请选择合同" style="width: 100%" disabled>
                   <el-option v-for="item in contractList" :key="item.id" :label="item.contractName" :value="item.id" />
                 </el-select>
               </el-form-item>
@@ -434,7 +410,6 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onActivated } from "vue";
-import CustomerAPI, { CustomerData } from "@/api/CustomerProcess/Customer/customer.api";
 import CrmContractAPI from "@/api/CrmContract/crmcontract";
 import PaymentViewAPI from "@/api/Finance/payment.api";
 import UserAPI from "@/api/User/user.api";
@@ -549,7 +524,6 @@ const GetInvoice = () => {
     });
 };
 
-const showCustomerDrawer = ref(false); // 客户选择抽屉
 
 const addForm = reactive({
   customerId: "",
@@ -607,43 +581,6 @@ function handleSizeChange(val: number) {
 function handleCurrentChange(val: number) {
   pagination.PageIndex = val;
   GetInvoice();
-}
-
-// 客户列表数据（实际应从API获取，这里举例）
-const customerList = ref<CustomerData[]>([]);
-
-function showCustomer() {
-  showCustomerDrawer.value = true;
-  const params = {
-    PageIndex: 1,
-    PageSize: 111,
-  };
-
-  CustomerAPI.GetCustomerPage(params)
-    .then((res) => {
-      console.log("客户列表数据", res.data);
-      customerList.value = res.data;
-    })
-    .finally(() => {
-      loading.value = false;
-    });
-}
-
-// 当前选中的客户
-const selectedCustomer = ref<any>(null);
-// 选择客户单选逻辑
-function handleCustomerRadio(row: any) {
-  selectedCustomer.value = row;
-}
-// 提交客户选择
-function handleCustomerSubmit() {
-  if (!selectedCustomer.value) {
-    ElMessage.warning("请选择客户");
-    return;
-  }
-  addForm.customerId = selectedCustomer.value.id;
-  addForm.customerName = selectedCustomer.value.customerName;
-  showCustomerDrawer.value = false;
 }
 
 // 获取合同列表数据
