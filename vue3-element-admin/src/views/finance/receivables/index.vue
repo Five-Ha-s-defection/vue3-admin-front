@@ -77,7 +77,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="receivablePay" label="应收款" />
-        <el-table-column prop="amount" label="已收款" />
+        <el-table-column prop="amount" label="已收款" >
+          <template #default="scope">
+            <span v-if="scope.row.paymentStatus === 2">
+              {{ scope.row.amount }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column label="剩余应收">
           <template #default="scope">
             {{ (scope.row.receivablePay || 0) - (scope.row.amount || 0) }}
@@ -644,6 +650,7 @@ function showCustomer(mode: "add" | "search") {
   const params = {
     PageIndex: 1,
     PageSize: 111,
+
   };
 
   CustomerAPI.GetCustomerPage(params)
@@ -676,15 +683,21 @@ function handleCustomerSubmit() {
     searchForm.CustomerName = selectedCustomer.value.customerName;
   }
   showCustomerDrawer.value = false;
+
+   // 根据客户ID筛选合同
+  GetcontractData(selectedCustomer.value.id);
 }
+
 
 // 获取合同列表数据
 const contractList: any = ref([]);
 //显示查询分页
-const GetcontractData = async () => {
+const GetcontractData = async (customerId: string) => {
   const pageForm = reactive({
     PageIndex: 1,
     PageSize: 111,
+    CustomerId: customerId,
+    CheckType:0
   });
   CrmContractAPI.getInfo(pageForm)
     .then((res) => {
@@ -746,7 +759,6 @@ function handleAddSubmit() {
 // 页面加载时获取数据
 onMounted(() => {
   GetReceivables();
-  GetcontractData();
   UserData();
 });
 

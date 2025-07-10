@@ -623,9 +623,7 @@ const route = useRoute();
 
 // 页面加载时获取数据
 onMounted(() => {
-  GetPaymentData();
   GetInvoice();
-  GetcontractData();
   UserData();
   InvoiceData();
 });
@@ -850,15 +848,22 @@ function handleCustomerSubmit() {
     searchForm.CustomerName = selectedCustomer.value.customerName;
   }
   showCustomerDrawer.value = false;
+
+  // 根据客户ID筛选合同
+  GetcontractData(selectedCustomer.value.id);
+  // 根据客户ID筛选收款
+  GetPaymentData(selectedCustomer.value.id)
 }
 
 // 获取合同列表数据
 const contractList: any = ref([]);
 //显示查询分页
-const GetcontractData = async () => {
+const GetcontractData = async (customerId: string) => {
   const pageForm = reactive({
     PageIndex: 1,
     PageSize: 111,
+    CustomerId: customerId,
+    CheckType:0,
   });
   CrmContractAPI.getInfo(pageForm)
     .then((res) => {
@@ -886,10 +891,11 @@ const UserData = async () => {
 
 // 获取收款列表数据
 const paymentList: any = ref([]);
-const GetPaymentData = async () => {
+const GetPaymentData = async (customerId: string) => {
   const params = reactive({
     PageIndex: 1,
     PageSize: 111,
+    CustomerId:customerId
   });
 
   PaymentViewAPI.GetPaymentPage(params)
