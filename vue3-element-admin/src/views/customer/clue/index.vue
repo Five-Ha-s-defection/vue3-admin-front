@@ -85,9 +85,11 @@
               </el-button>
             </template>
           </el-input>
-         <el-button style="width: 80px;" icon="el-icon-filter" class="mr8 clue-large-btn"
+          <el-button style="width: 80px;" icon="el-icon-filter" class="mr8 clue-large-btn"
             @click="advancedDialogVisible = true">
-            <el-icon><Filter /></el-icon>
+            <el-icon>
+              <Filter />
+            </el-icon>
             高级搜索
           </el-button>
           <el-dropdown>
@@ -96,7 +98,7 @@
               </el-icon></el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>放弃线索</el-dropdown-item>
+                <el-dropdown-item @click="abandonClue(getSelectedClueIds())">放弃线索</el-dropdown-item>
                 <el-dropdown-item>转移线索</el-dropdown-item>
                 <el-dropdown-item>删除线索</el-dropdown-item>
                 <el-dropdown-item>导出数据</el-dropdown-item>
@@ -307,7 +309,7 @@
               <Upload />
             </el-icon>
             上传附件
-            </el-button>
+          </el-button>
           <!-- 已上传文件名回显 -->
           <div v-if="fileList.length" style="margin-top:8px;">
             <div v-for="file in fileList" :key="file.uid" style="font-size:13px;color:#666;">
@@ -347,7 +349,7 @@
         <el-form-item>
           <el-button type="primary" @click="communicationsubmitForm(communicationruleFormRef)">
             添加记录
-            </el-button>
+          </el-button>
           <el-button @click="communicationresetForm(communicationruleFormRef)">重置</el-button>
         </el-form-item>
       </el-form>
@@ -361,7 +363,7 @@
         :on-exceed="handleUploadExceed" :on-progress="handleUploadProgress" list-type="text">
         <template #trigger>
           <el-button type="primary">选择文件</el-button>
-      </template>
+        </template>
         <el-button type="success" style="margin-left: 12px;" @click="submitUpload">开始上传</el-button>
         <template #file="{ file }">
           <span>{{ file.name }}</span>
@@ -398,7 +400,9 @@
         <el-table-column label="电话" prop="cluePhone" min-width="120">
           <template #default="{ row }">
             <span>{{ row.cluePhone }}</span>
-            <el-icon style="margin-left:4px;"><i class="el-icon-phone" /></el-icon>
+            <el-icon v-if="row.cluePhone !== 'string'" style="margin-left:4px;" class="phone-icon">
+              <Phone />
+            </el-icon>
           </template>
         </el-table-column>
         <el-table-column label="线索来源" prop="clueSourceName" min-width="100" />
@@ -656,7 +660,7 @@
 import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload } from '@element-plus/icons-vue';
-import { ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue } from '@/api/CustomerProcess/Clue/clue.api';
+import { ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue,ClueAction } from '@/api/CustomerProcess/Clue/clue.api';
 import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
 import moment from 'moment';
 import dayjs from 'dayjs';
@@ -665,6 +669,45 @@ import type { FormInstance, FormRules, UploadInstance, UploadUserFile, UploadFil
 import StopIcon from '@/components/icons/StopIcon.vue'
 
 const user = useUserStore();
+
+//=================放弃线索========================
+const selectedRows = ref<any[]>([]); // 保存所有选中的行
+const handleSelectionChange = (rows:any) => {
+  selectedRows.value = rows;
+};
+
+const getSelectedClueIds = () => {
+  return selectedRows.value.map(row => row.id);
+};
+
+const abandonClue = async (clueIds: any) => {
+  if (!clueIds.length) {
+    ElMessage.warning('请先选择线索');
+    return;
+  }
+  // 标记本次操作中是否有不是自己负责的线索，初始为false
+  let hasInvalid = false;
+  // 遍历 clueIds 这个数组，赋值给变量 clue,然后在循环体内Id，对每个 clueId 进行操作。
+  for (const clueId of clueIds) {
+    // 查找当前线索对象
+    const clue = clueList.value.find(item => item.id === clueId);
+    if (!clue) continue;
+    // 判断该线索是否是自己负责的
+    if (clue.userId !== user.userInfo.id) {
+      hasInvalid = true; // 如果不是自己负责的，标记为true
+      continue; // 跳过该线索，不执行放弃操作
+    }
+    await ClueAction({ clueId, actionType: 'abandon' });
+  }
+  // 如果有不是自己负责的线索，统一提示
+  if (hasInvalid) {
+    ElMessage.warning('只能放弃自己负责的线索');
+  } else {
+    ElMessage.success('放弃成功');
+  }
+  // 刷新线索列表
+  fetchClueList();
+};
 
 //=================显示联系记录====================
 const contactList = ref<any[]>([]);
@@ -991,7 +1034,6 @@ const orderOptions = [
 
 const loading = ref(false);
 const clueList = ref<any[]>([]);
-const selectedIds = ref<any[]>([]);
 
 //定义查询显示参数
 const queryParams = reactive({
@@ -1023,6 +1065,7 @@ const queryParams = reactive({
   IndustryId: 0,   // 行业
   Address: '',      // 地址
   MatchMode: 0, // 0: 全部满足, 1: 部分满足
+  CluePoolStatus:1 
 });
 
 const advancedDialogVisible = ref(false);
@@ -1133,7 +1176,7 @@ const selectCustomReply = async (typeId: string | number) => {
     .then(res => {
       customReplyList.value = res || [];
       console.log('自定义回复列表', customReplyList.value);
-  });
+    });
 };
 
 //下拉框绑定沟通类型列表
@@ -1215,7 +1258,8 @@ const fetchClueList = async () => {
       CompanyName: queryParams.CompanyName,
       IndustryId: queryParams.IndustryId,
       Address: queryParams.Address,
-      MatchMode: queryParams.MatchMode
+      MatchMode: queryParams.MatchMode,
+      CluePoolStatus:queryParams.CluePoolStatus
     };
     const params = filterParams(rawParams);
 
@@ -1281,10 +1325,8 @@ const handleResetQuery = () => {
   queryParams.MatchMode = 0; // 重置为全部满足
   queryParams.PageIndex = 1;
   queryParams.PageSize = 10;
+  queryParams.CluePoolStatus=1;
   handleQuery();
-};
-const handleSelectionChange = (val: any[]) => {
-  selectedIds.value = val.map(item => item.id);
 };
 
 //分页
@@ -1417,9 +1459,9 @@ onMounted(() => {
   padding: 20px;
 }
 
-  .search-card {
-    margin-bottom: 20px;
-  }
+.search-card {
+  margin-bottom: 20px;
+}
 
 .clue-header {
   font-size: 16px;
@@ -1461,9 +1503,9 @@ onMounted(() => {
 
 .ml16 {
   margin-left: 16px;
-  }
+}
 
-  .table-card {
+.table-card {
   margin-top: 0;
 }
 
@@ -1554,7 +1596,7 @@ onMounted(() => {
   font-size: 14px;
   color: #303133;
   font-weight: 400;
-    text-align: right;
+  text-align: right;
   flex-shrink: 0;
   margin-left: 40px;
 }
@@ -1716,6 +1758,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
 }
+
 
 .phone-icon {
   color: #409eff;
