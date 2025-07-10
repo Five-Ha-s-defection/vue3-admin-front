@@ -160,24 +160,22 @@
         <!-- 顶部横向信息区：线索名称和操作按钮 -->
         <div class="drawer-top-row">
           <!-- 商机名称 -->
-          <div class="drawer-title-big">{{ currentCustomer?.businessOpportunityName || '-' }}</div>
+          <div class="drawer-title-big">{{ currentBusiness?.businessOpportunityName || '-' }}</div>
           <!-- 右侧操作按钮区 -->
           <div class="drawer-btns">
-            <el-button type="primary">转客户</el-button>
-            <el-button>放弃</el-button>
-            <el-button>转移</el-button>
+            <el-button type="primary">修改</el-button>
             <el-button type="danger">删除</el-button>
           </div>
         </div>
         <!-- 线索基础信息区，横向排列 -->
         <div class="drawer-info-row">
           <!-- 负责人 -->
-          <div class="info-item"><span>负责人</span>{{ currentCustomer?.userName || '--' }}</div>
+          <div class="info-item"><span>负责人</span>{{ currentBusiness?.userName || '--' }}</div>
           <!-- 最后跟进时间，若无效则显示自定义图标 -->
           <div class="info-item">
             <span>最后跟进</span>
-            <template v-if="isValidTime(currentCustomer?.lastFollowTime)">
-              {{ moment(currentCustomer.lastFollowTime).format('YYYY-MM-DD HH:mm') }}
+            <template v-if="isValidTime(currentBusiness?.lastFollowTime)">
+              {{ moment(currentBusiness.lastFollowTime).format('YYYY-MM-DD HH:mm') }}
             </template>
             <template v-else>
               <StopIcon style="font-size:32px;color:#bbb;" />
@@ -186,81 +184,77 @@
           <!-- 下次联系时间，若无效则显示自定义图标 -->
           <div class="info-item">
             <span>下次联系时间</span>
-            <template v-if="isValidTime(currentCustomer?.nextContactTime)">
-              {{ moment(currentCustomer.nextContactTime).format('YYYY-MM-DD HH:mm') }}
+            <template v-if="isValidTime(currentBusiness?.nextContactTime)">
+              {{ moment(currentBusiness.nextContactTime).format('YYYY-MM-DD HH:mm') }}
             </template>
             <template v-else>
               <StopIcon style="font-size:32px;color:#bbb;" />
             </template>
           </div>
           <!-- 创建时间 -->
-          <div class="info-item"><span>创建时间</span>{{ currentCustomer?.creationTime ?
-            moment(currentCustomer.creationTime).format('YYYY-MM-DD HH:mm') : '--' }}</div>
+          <div class="info-item"><span>创建时间</span>{{ currentBusiness?.creationTime ?
+            moment(currentBusiness.creationTime).format('YYYY-MM-DD HH:mm') : '--' }}</div>
           <!-- 创建人 -->
-          <div class="info-item"><span>创建人</span>{{ currentCustomer?.createName || '--' }}</div>
+          <div class="info-item"><span>创建人</span>{{ currentBusiness?.createName || '--' }}</div>
           <!-- 负责人 -->
           <div class="info-item"><span>录入方式</span>手动录入</div>
         </div>
+          <!-- ======================== 销售进度条 ======================== -->
+          <div class="sales-progress-container">
+            <div class="sales-progress-wrapper">
+              <div class="sales-process-flow">
+                <div 
+                  v-for="(step, index) in progressSteps" 
+                  :key="step.id"
+                  :class="['process-step', { 
+                    'active': index <= activeStepIndex, 
+                    'current': index === activeStepIndex 
+                  }]"
+                  @click="updateProgress(index)"
+                >
+                  {{ step.salesProgressName }}
+                  <div class="arrow-right" v-if="index < progressSteps.length - 1"></div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <!-- 线索详情标题和分割线 -->
+        <!-- 商机详情标题和分割线 -->
         <div class="clue-detail-title-row">
-          <!-- <span class="clue-detail-title">线索详情</span> -->
+          <!-- <span class="clue-detail-title">商机详情</span> -->
           <el-tabs v-model="activeTabcus" class="clue-detail-tabs" style="position:relative;">
-            <!-- 客户详情tab -->
-            <el-tab-pane label="客户详情" name="contact">
+            <!-- 商机详情tab -->
+            <el-tab-pane label="商机详情" name="business">
               <div class="contact-records">
-                <!-- 按钮 -->
-                <el-button type="primary" size="small"
-                  style="text-align: right; margin-top: 20px;width: 80px;">修改</el-button>
                 <!-- 线索详情tab，分两列展示 -->
                 <div class="detail-table-flex">
                   <!-- 左侧信息列 -->
                   <div class="detail-table-col">
-                    <div class="detail-row"><span>客户编号</span>{{ currentCustomer?.customerCode }}</div>
-                    <div class="detail-row"><span>客户名称</span>{{ currentCustomer?.customerName }}</div>
-                    <div class="detail-row"><span>体检金额</span>{{ currentCustomer?.checkAmount || '--' }}</div>
-                    <div class="detail-row"><span>到期时间</span>{{ currentCustomer?.customerExpireTime }}</div>
-                    <div class="detail-row"><span>客户级别</span>{{ currentCustomer?.customerLevelName }}</div>
-                    <div class="detail-row"><span>邮箱</span>{{ displayValue(currentCustomer?.customerEmail) }}</div>
-                    <div class="detail-row"><span>客户来源</span>{{ displayValue(currentCustomer?.clueSourceName) }}</div>
-                    <div class="detail-row"><span>客户地址</span>{{ displayValue(currentCustomer?.customerAddress) }}</div>
-                    <div class="detail-row"><span>备注</span>{{ currentCustomer?.customerRemark }}</div>
+                    <div class="detail-row"><span>商机编号</span>{{ currentBusiness?.businessOpportunityCode }}</div>
+                    <div class="detail-row"><span>优先级</span>{{ currentBusiness?.priorityName }}</div>
+                    <div class="detail-row"><span>预算金额</span>{{ currentBusiness?.budget || '--' }}</div>
+                    <div class="detail-row">
+                      <span>备注</span>
+                      {{ !currentBusiness?.remark || currentBusiness.remark === 'string' ? '--' : currentBusiness.remark }}
+                    </div>
                   </div>
                   <!-- 右侧信息列 -->
                   <div class="detail-table-col">
-                    <div class="detail-row"><span>车架号</span>{{ displayValue(currentCustomer?.carFrameNumberName) }}
-                    </div>
-                    <div class="detail-row">
-                      <span>电话</span>
-                      <span>
-                        {{ displayValue(currentCustomer?.customerPhone) }}
-                        <el-icon v-if="currentCustomer?.customerPhone" class="phone-icon">
-                          <Phone />
-                        </el-icon>
-                      </span>
-                    </div>
-                    <div class="detail-row"><span>客户类别</span>{{ displayValue(currentCustomer?.customerTypeName) }}</div>
-                    <div class="detail-row"><span>客户地区</span>{{ displayValue(currentCustomer?.customerRegionName) }}
+                    <div class="detail-row"><span>所属客户</span>{{ displayValue(currentBusiness?.customerName) }}</div>
+                    <div class="detail-row"><span>商机名称</span>{{ displayValue(currentBusiness?.businessOpportunityName) }}</div>
+                    <div class="detail-row"><span>预计成交日期</span>{{ currentBusiness?.expectedDate ? moment(currentBusiness.expectedDate).format('YYYY-MM-DD HH:mm:ss') : '--' }}
                     </div>
                   </div>
                 </div>
               </div>
             </el-tab-pane>
-            <!-- 联系人详情tab -->
-            <el-tab-pane label="联系人" name="attachment">
-              <div style="padding:32px 0;text-align:center;color:#bbb;">暂无联系人</div>
+            <!-- 产品详情tab -->
+            <el-tab-pane label="产品详情" name="product">
+              <div style="padding:32px 0;text-align:center;color:#bbb;">暂无产品详情</div>
             </el-tab-pane>
-            <!-- 联系人详情tab -->
-            <el-tab-pane label="商机" name="attachment">
-              <div style="padding:32px 0;text-align:center;color:#bbb;">暂无商机</div>
-            </el-tab-pane>
-            <!-- 联系人详情tab -->
-            <el-tab-pane label="合同" name="attachment">
+            <!-- 合同详情tab -->
+            <el-tab-pane label="合同" name="contact">
               <div style="padding:32px 0;text-align:center;color:#bbb;">暂无合同</div>
-            </el-tab-pane>
-            <!-- 联系人详情tab -->
-            <el-tab-pane label="财务" name="attachment">
-              <div style="padding:32px 0;text-align:center;color:#bbb;">暂无财务</div>
             </el-tab-pane>
           </el-tabs>
         </div>
@@ -268,7 +262,7 @@
         <!-- 详情tab区 -->
         <el-tabs v-model="activeTab" class="clue-detail-tabs" style="position:relative;">
           <!-- 联系记录tab -->
-          <el-tab-pane label="联系记录" name="contact">
+          <el-tab-pane label="联系记录" name="communication">
             <div class="contact-records">
               <!-- 添加联系记录按钮 -->
               <el-button type="primary" icon="Edit" @click="AddCommunication()">添加联系记录</el-button>
@@ -616,10 +610,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from "vue";
+import { ref, reactive, onMounted, watch, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload, Filter } from '@element-plus/icons-vue';
-import { AddBusinessOpportunity, GetCustomerSelect, GetBusinessPrioritySelect, GetBusinessSalesProgressSelect, GetProductSelect, ShowBusinessOpportunityList, DeleteBusinessOpportunity } from '@/api/CustomerProcess/BusinessOpportunity/businessopportunity.api';
+import { AddBusinessOpportunity, GetCustomerSelect, GetBusinessPrioritySelect, GetBusinessSalesProgressSelect, GetProductSelect, ShowBusinessOpportunityList, DeleteBusinessOpportunity, UpdateBusinessProgress } from '@/api/CustomerProcess/BusinessOpportunity/businessopportunity.api';
 import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
 import { GetUserSelect } from '@/api/CustomerProcess/Customer/customer.api'
 import moment from 'moment';
@@ -633,6 +627,57 @@ import { onBeforeUnmount, shallowRef } from 'vue'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 
 const user = useUserStore();
+
+//=================销售进度条=======================
+// 销售进度阶段列表
+
+// 动态进度步骤，从后端获取真实数据
+const progressSteps = ref<any[]>([])
+
+
+// 当前高亮索引，根据salesProgressId确定
+const activeStepIndex = computed(() => {
+  if (!currentBusiness.value || !currentBusiness.value.salesProgressId) return 0;
+
+  // 打印每个步骤的完整对象
+  console.log('progressSteps.value结构:', JSON.parse(JSON.stringify(progressSteps.value)));
+
+  const index = progressSteps.value.findIndex(stage => {
+    console.log('对比进度条步骤ID:', stage.id, stage.salesProgressId, '与当前ID:', currentBusiness.value.salesProgressId);
+    return String(stage.id || stage.salesProgressId) === String(currentBusiness.value.salesProgressId);
+  });
+
+  return index >= 0 ? index : 0;
+});
+
+
+// 手动点击步骤时更新
+async function updateProgress(index:number) {
+  // 如果没有当前商机数据，则不执行更新
+  if (!currentBusiness.value) return;
+  
+  // 获取对应步骤
+  const selectedStep = progressSteps.value[index];
+  if (!selectedStep) return;
+  
+    try {
+    // 调用API保存进度更改，使用真实的后端ID
+    await UpdateBusinessProgress(currentBusiness.value.id, selectedStep.id);
+      
+    // 更新当前商机的销售进度信息
+    currentBusiness.value.salesProgressId = selectedStep.id;
+    currentBusiness.value.salesProgressName = selectedStep.salesProgressName;
+      
+    ElMessage.success(`销售进度已更新为: ${selectedStep.salesProgressName}`);
+    console.log('进度已改为:', selectedStep.salesProgressName, '进度ID:', selectedStep.id);
+      
+      // 可选：刷新商机列表以获取最新数据
+      // fetchBusinessList();
+    } catch (error) {
+      console.error('更新销售进度失败:', error);
+      ElMessage.error('更新销售进度失败，请稍后再试');
+  }
+}
 
 //=================添加客户附文本==================
 // 编辑器实例，必须用 shallowRef
@@ -677,12 +722,12 @@ const targetType = ref<number>(2); // 线索 1，客户 2，商机 3
 
 // 获取联系记录列表
 const fetchContactList = async () => {
-  if (!currentCustomerId.value) {
+  if (!currentBusinessId.value) {
     contactList.value = [];
     return;
   }
   try {
-    const res = await GetContactCommunication(currentCustomerId.value, targetType.value);
+    const res = await GetContactCommunication(currentBusinessId.value, targetType.value);
     console.log('GetContactCommunication返回的res:', res);
     if (Array.isArray(res)) {
       contactList.value = res.map((item: any) => ({
@@ -710,7 +755,7 @@ const uploadDialogVisible = ref(false);
 
 const AddCommunication = () => {
   // 赋值当前客户id
-  communicationruleForm.customerId = currentCustomer.value?.id || ''
+  communicationruleForm.customerId = currentBusiness.value?.id || ''
   // 重置所有表单字段
   communicationruleForm.clueId = ''
   communicationruleForm.businessOpportunityId = ''
@@ -894,19 +939,29 @@ const handleUploadExceed = () => {
 
 //=================弹出抽屉========================
 const table = ref(false)
-const currentCustomer = ref<any>(null) // 当前选中的客户数据
+const currentBusiness = ref<any>(null) // 当前选中的商机数据
 const activeTab = ref('detail') // tabs切换
-const activeTabcus = ref('detail') // tabs切换
+const activeTabcus = ref('business') // tabs切换
 
 // 处理表格行点击事件
 const handleRowClick = (row: any) => {
-  console.log('handleRowClick被调用，row.id=', row.id);
-  currentCustomer.value = row;
-  currentCustomerId.value = row.id;
+  console.log('handleRowClick被调用，row.id=', row.id, '销售进度ID=', row.salesProgressId);
+
+  // 复制行数据
+  currentBusiness.value = { ...row };
+  currentBusinessId.value = row.id;
+
+  // 关键：不要做类型转换，直接用字符串
+  currentBusiness.value.salesProgressId = row.salesProgressId;
+
   table.value = true;
-  activeTabcus.value = 'contact'; // 确保默认显示"客户详情"标签页
+  activeTabcus.value = 'business'; // “商机详情”tab
+  activeTab.value = 'communication'; // “联系记录”tab
   fetchContactList();
-}
+
+  // 打印当前计算出的activeStepIndex
+  console.log('当前进度索引为:', activeStepIndex.value);
+};
 
 
 //================添加商机===========================
@@ -1161,6 +1216,20 @@ const selectSalesProgress = async () => {
     .then(res => {
       console.log('销售进度列表', res)
       salesProgressList.value = res
+      
+      // 将后端数据转换为进度条步骤，保持顺序
+      if (res && Array.isArray(res)) {
+        // 按照指定顺序重新排列销售进度
+        const orderedProgressNames = ['初步', '需求确认', '方案报价', '协商议价', '合同签约', '赢单', '输单'];
+        const orderedProgress = orderedProgressNames.map(name => {
+          const found = res.find((item: any) => item.salesProgressName === name);
+          return found || null;
+        }).filter(item => item !== null);
+        
+        progressSteps.value = orderedProgress;
+        // 打印完整结构
+        console.log('动态设置的进度步骤:', JSON.parse(JSON.stringify(progressSteps.value)));
+      }
     })
 }
 
@@ -1221,14 +1290,24 @@ const fetchBusinessList = async () => {
 
     console.log('最终请求参数:', params);
     const res = await ShowBusinessOpportunityList(params);
-    customerList.value = res.data;
-    queryParams.totalCount = res.totalCount || 0; // 更新总记录数
-    queryParams.pageCount = res.pageCount || 0; // 更新总页数
-  } catch (e) {
-    ElMessage.error('获取商机列表失败');
-    queryParams.totalCount = 0; // 重置总记录数
-    queryParams.pageCount = 0; // 重置总页数
-  } finally {
+    if (res && typeof res === 'object') {
+      customerList.value = res.data || [];
+      // 使用类型断言处理返回数据
+      const typedRes = res as any;
+      queryParams.totalCount = typedRes.totalCount || 0; // 更新总记录数
+      queryParams.pageCount = typedRes.pageCount || 0; // 更新总页数
+    } else {
+      customerList.value = [];
+      queryParams.totalCount = 0;
+      queryParams.pageCount = 0;
+    }
+  } 
+  // catch (e) {
+  //   ElMessage.error('获取商机列表失败');
+  //   queryParams.totalCount = 0; // 重置总记录数
+  //   queryParams.pageCount = 0; // 重置总页数
+  // } 
+  finally {
     loading.value = false;
   }
 };
@@ -1385,7 +1464,7 @@ watch([
 });
 
 // 钩子函数======================================================
-const currentCustomerId = ref<string>(''); // 当前客户id，实际赋值方式根据你的业务调整
+const currentBusinessId = ref<string>(''); // 当前客户id，实际赋值方式根据你的业务调整
 
 onMounted(() => {
   fetchBusinessList();
@@ -1406,6 +1485,112 @@ console.log('当前登录用户信息', user.userInfo);
 </script>
 
 <style scoped>
+.drawer-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.info-item {
+  min-width: 180px;
+  color: #333;
+}
+
+.sales-progress-container {
+  height: 50px; /* 固定高度，防止上下滚动 */
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.sales-progress-wrapper {
+  padding: 10px 0;
+  overflow-x: auto;
+  overflow-y: hidden; /* 防止垂直滚动 */
+  width: 100%;
+  -webkit-overflow-scrolling: touch; /* 提高移动端滚动体验 */
+  scrollbar-width: none; /* 隐藏Firefox滚动条 */
+}
+
+.sales-progress-wrapper::-webkit-scrollbar {
+  display: none; /* 隐藏WebKit滚动条 */
+}
+
+.sales-process-flow {
+  display: flex;
+  width: 100%;
+  min-width: 600px;
+  height: 32px;
+  margin: 0 auto;
+  position: relative;
+  padding: 0 8px; /* 添加左右内边距，防止箭头溢出 */
+}
+
+.process-step {
+  position: relative;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 15px;
+  text-align: center;
+  font-size: 13px;
+  background-color: #f0f0f0; /* 默认灰色背景 */
+  color: #666;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  font-weight: 500;
+  margin-right: 16px; /* 为箭头留出空间 */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.process-step:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.process-step:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  margin-right: 0;
+}
+
+.arrow-right {
+  position: absolute;
+  right: -16px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 16px solid transparent;
+  border-bottom: 16px solid transparent;
+  border-left: 16px solid #f0f0f0; /* 默认灰色箭头 */
+  z-index: 2;
+  pointer-events: none; /* 防止箭头触发鼠标事件 */
+}
+
+/* 删除固定样式，改为完全依赖动态类 */
+
+/* 动态样式 */
+.process-step.active {
+  background-color: #4CD964;
+  color: #fff;
+}
+
+.process-step.active .arrow-right {
+  border-left-color: #4CD964;
+}
+
+.process-step.current {
+  background-color: #4080FF;
+  color: #fff;
+}
+
+.process-step.current .arrow-right {
+  border-left-color: #4080FF;
+}
+
 .app-container {
   padding: 20px;
 }
