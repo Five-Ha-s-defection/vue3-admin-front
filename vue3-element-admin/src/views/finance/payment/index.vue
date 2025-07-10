@@ -78,13 +78,7 @@
         @row-click="handleRowClick"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="paymentCode" label="收款编号" >
-          <template #default="scope">
-            <span class="ellipsis-cell">
-              {{ scope.row.paymentCode }}
-            </span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="paymentCode" label="收款编号" />
         <el-table-column label="状态">
           <template #default="scope">
             <span
@@ -117,24 +111,16 @@
         </el-table-column>
         <el-table-column prop="receivablePay" label="应收款" />
         <el-table-column prop="amount" label="实际收款金额" />
-        <el-table-column prop="paymentMethodName" label="收款方式" >
-          <template #default="scope">
-            <span class="ellipsis-cell">
-              {{scope.row.paymentMethodName}}
-            </span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="paymentMethodName" label="收款方式" />
         <el-table-column prop="paymentDate" label="收款时间">
           <template #default="scope">
-            <span class="ellipsis-cell">
-                {{ scope.row.paymentDate.substring(0, 10) }}
-            </span>
+            {{ scope.row.paymentDate.substring(0, 10) }}
           </template>
         </el-table-column>
         <el-table-column prop="customerName" label="所属客户" />
         <el-table-column prop="contractName" label="关联合同" />
         <el-table-column prop="realName" label="负责人" />
-        <el-table-column prop="auditorNames" label="审核人" >
+        <el-table-column prop="auditorNames" label="审核人">
           <template #default="scope">
             <span class="ellipsis-cell">
               {{ scope.row.auditorNames || "-" }}
@@ -276,28 +262,24 @@
           <el-button @click="showCustomerDrawer = false">取消</el-button>
         </div>
         <el-table :data="customerList" style="width: 100%" highlight-current-row>
-          <el-table-column
-            width="50"
-            :fixed="true"
-            label=""
-          >
+          <el-table-column width="50" :fixed="true" label="">
             <template #default="{ row }">
               <el-radio
                 :model-value="selectedCustomer && selectedCustomer.id"
                 :label="row.id"
                 @change="() => handleCustomerRadio(row)"
               >
-              &nbsp;
+                &nbsp;
               </el-radio>
             </template>
           </el-table-column>
           <el-table-column prop="customerCode" label="客户编号" />
           <el-table-column prop="customerName" label="客户名称" />
           <el-table-column prop="customerPhone" label="联系电话" />
-          <el-table-column prop="creationTime" label="创建时间" >
+          <el-table-column prop="creationTime" label="创建时间">
             <template #default="scope">
-            {{ scope.row.creationTime.substring(0, 19).replace("T", " ") }}
-          </template>
+              {{ scope.row.creationTime.substring(0, 19).replace("T", " ") }}
+            </template>
           </el-table-column>
         </el-table>
       </el-drawer>
@@ -821,7 +803,7 @@ const searchForm = reactive({
   UserId: "",
   CreatorId: "",
   CustomerId: "",
-  CustomerName:"",
+  CustomerName: "",
   ContractId: "",
   PaymentCode: "",
   PaymentMethod: "",
@@ -865,11 +847,12 @@ const GetPayment = () => {
 
 const receivableList: any = ref([]); // 用于存储应收款列表数据
 // 获取应收款数据
-const GetReceivables = () => {
+const GetReceivables = (customerId: string) => {
   loading.value = true;
   const params = {
     PageIndex: 1,
     PageSize: 111,
+    CustomerId: customerId,
   };
 
   ReceivablesViewAPI.GetReceivablesPage(params)
@@ -950,6 +933,7 @@ const search = () => {
   searchForm.UserId = "";
   searchForm.CreatorId = "";
   searchForm.CustomerId = "";
+  searchForm.CustomerName = "";
   searchForm.ContractId = "";
   searchForm.PaymentCode = "";
   searchForm.PaymentMethod = "";
@@ -977,9 +961,8 @@ function handleDateRangeChange(val: any) {
 const customerList = ref([]);
 // 客户选择
 const customerMode = ref<"add" | "search">("add");
-
 function showCustomer(mode: "add" | "search") {
-   customerMode.value = mode;
+  customerMode.value = mode;
   showCustomerDrawer.value = true;
   const params = {
     PageIndex: 1,
@@ -1018,15 +1001,23 @@ function handleCustomerSubmit() {
     searchForm.CustomerName = selectedCustomer.value.customerName;
   }
   showCustomerDrawer.value = false;
+
+   // 根据客户ID筛选合同
+  GetcontractData(selectedCustomer.value.id);
+
+  // 根据客户ID筛选应收款
+  GetReceivables(selectedCustomer.value.id);
 }
 
 // 获取合同列表数据
 const contractList: any = ref([]);
 //显示查询分页
-const GetcontractData = async () => {
+const GetcontractData = async (customerId: string) => {
   const pageForm = reactive({
     PageIndex: 1,
     PageSize: 111,
+    CustomerId: customerId,
+    CheckType:0
   });
   CrmContractAPI.getInfo(pageForm)
     .then((res) => {
@@ -1091,8 +1082,6 @@ function handleAddSubmit() {
 onMounted(() => {
   GetPayment();
   GetPaymentMethodList();
-  GetReceivables();
-  GetcontractData();
   UserData();
 });
 
@@ -1136,7 +1125,7 @@ function handleBatchDelete() {
 }
 
 function handleExport() {
-  location.href = "https://localhost:44341/api/app/payment/export-async-excel";
+  location.href = "https://localhost:44341/api/app/receivables/export-receivables-async-excel";
 }
 
 const showDetailDrawer = ref(false);
@@ -1179,7 +1168,7 @@ const RecordData = async (id: any) => {
   }
 };
 
-// 删除应收款
+// 删除收款
 function handleDelete(row: any) {
   detailData.value = row;
   ElMessageBox.confirm("确定要删除该收款吗？", "提示", {
@@ -1188,7 +1177,6 @@ function handleDelete(row: any) {
     PaymentViewAPI.DeletePayment(row.id)
       .then(() => {
         ElMessage.success("删除成功");
-        GetReceivables(); // 重新加载数据
       })
       .catch((error) => {
         console.error("删除失败:", error);
@@ -1254,9 +1242,9 @@ function getUserNameById(id: any) {
   display: inline-block;
 }
 .ellipsis-cell {
-  white-space: nowrap;      /* 禁止换行 */
-  overflow: hidden;         /* 隐藏溢出内容 */
-  text-overflow: ellipsis;  /* 显示省略号（可选） */
-  max-width: 100%;          /* 确保不超出单元格 */
+  white-space: nowrap; /* 禁止换行 */
+  overflow: hidden; /* 隐藏溢出内容 */
+  text-overflow: ellipsis; /* 显示省略号（可选） */
+  max-width: 100%; /* 确保不超出单元格 */
 }
 </style>

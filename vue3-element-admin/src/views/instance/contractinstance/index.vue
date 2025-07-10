@@ -301,7 +301,7 @@
     </el-card>
 
     <!-- 合同表的抽屉 -->
-    <el-drawer v-model="showDetailDrawer" direction="rtl" size="50%" :with-header="true">
+    <el-drawer v-model="showDetailDrawer" direction="rtl" size="70%" :with-header="true">
       <div style="padding: 24px 32px 0 32px">
         <!-- 顶部编号和按钮 -->
         <div style="display: flex; align-items: center; justify-content: space-between">
@@ -314,6 +314,14 @@
           <div>
             <el-button type="primary" size="small" @click="openEditDrawer" @close="resetEditForm">
               修改
+            </el-button>
+            <el-button type="primary" size="small" style="border-radius: 8px; min-width: 70px"
+              @click="handleAuditDetail">
+              审核
+            </el-button>
+            <el-button type="primary" size="small" style="border-radius: 8px; min-width: 70px"
+              @click="handleRejectDetail">
+              驳回
             </el-button>
             <el-button type="danger" size="small" style="margin-left: 8px" @click="handleDelete(currentDetail)">
               删除
@@ -571,6 +579,29 @@
         </el-row>
       </el-form>
     </el-drawer>
+
+    <!-- 审核/驳回弹窗 -->
+    <el-dialog
+      v-model="showApproveDialog"
+      :title="approveType == true ? '审核通过' : '审核驳回'"
+      width="400px"
+      :close-on-click-modal="false"
+    >
+      <el-form>
+        <el-form-item label="原因（非必填）" label-width="100px">
+          <el-input
+            v-model="approveComment"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入原因（可不填）"
+            prefix-icon="el-icon-smile"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button type="primary" @click="handleApproveSubmit">提交</el-button>
+      </template>
+    </el-dialog>
   </div>
 
   <!-- 产品列表和多选 -->
@@ -604,6 +635,9 @@ import ProductApi from "@/api/CxsApi/CxsProductApi"; // 按你的实际路径引
 import { useRouter } from "vue-router";
 import type { UploadProps } from "element-plus";
 import "@wangeditor/editor/dist/css/style.css";
+import { useUserStore } from "@/store";
+
+const store = useUserStore();
 
 const router = useRouter();
 
@@ -1144,6 +1178,46 @@ const beforeAvatarUpload: UploadProps["beforeUpload"] = (rawFile) => {
   }
   return true;
 };
+//#endregion
+
+//#region 审核驳回
+// 审核/驳回弹窗
+const showApproveDialog = ref(false);
+// 审核/驳回原因
+const approveComment = ref("");
+// 审核/驳回类型
+const approveType = ref(true); // true表示审核通过，false表示审核驳回
+
+const currentUserId = store.userInfo.id; // 获取当前登录人ID
+console.log("当前登录人ID", currentUserId);
+
+const resetApproveForm = (type: true | false) => {
+  approveType.value = type;
+  approveComment.value = "";
+  showApproveDialog.value = true;
+};
+// 审核/驳回
+const handleAuditDetail = () => {
+  resetApproveForm(true);
+};
+
+const handleRejectDetail = () => {
+  resetApproveForm(false);
+};
+
+async function handleApproveSubmit() {
+  if (!currentDetail.value?.id) return;
+  const params = {
+    isPass: approveType.value,
+    comment: approveComment.value,
+  };
+  const approverId = currentUserId;
+  const id = currentDetail.value.id;
+  await CrmContractAPI.CrmContractInstance(id, approverId, params);
+  ElMessage.success(params.isPass ? "审核通过" : "审核驳回");
+  showApproveDialog.value = false;
+  getCustomerList();
+}
 //#endregion
 
 const goAddContract = () => {

@@ -22,13 +22,7 @@
         @row-click="handleRowClick"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="paymentCode" label="收款编号" >
-          <template #default="scope">
-            <span class="ellipsis-cell">
-              {{ scope.row.paymentCode }}
-            </span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="paymentCode" label="收款编号" />
         <el-table-column label="状态">
           <template #default="scope">
             <span
@@ -61,18 +55,10 @@
         </el-table-column>
         <el-table-column prop="receivablePay" label="应收款" />
         <el-table-column prop="amount" label="实际收款金额" />
-        <el-table-column prop="paymentMethodName" label="收款方式" >
-          <template #default="scope">
-            <span class="ellipsis-cell">
-              {{scope.row.paymentMethodName}}
-            </span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="paymentMethodName" label="收款方式" />
         <el-table-column prop="paymentDate" label="收款时间">
           <template #default="scope">
-            <span class="ellipsis-cell">
-                {{ scope.row.paymentDate.substring(0, 10) }}
-            </span>
+            {{ scope.row.paymentDate.substring(0, 10) }}
           </template>
         </el-table-column>
         <el-table-column prop="customerName" label="所属客户" />
@@ -558,8 +544,8 @@ const GetPayment = () => {
       // 前端再次过滤，确保只显示待审核和审核中的数据
       const filteredData = res.data.filter(
         (item: any) =>
-          (item.paymentStatus === 0 ||
-          item.paymentStatus === 1) && item.currentAuditorName=== currentUserName // 只显示当前登录人审核中的数据
+          (item.paymentStatus === 0 || item.paymentStatus === 1) &&
+          item.currentAuditorName === currentUserName // 只显示当前登录人审核中的数据
       );
 
       tableData.value = filteredData;
@@ -715,11 +701,11 @@ function fetchInvoiceList(PaymentId: string) {
 // 获取操作日志列表数据
 const recordlist: any = ref([]);
 //显示查询分页
-const RecordData = async (id:any) => {
+const RecordData = async (id: any) => {
   const params = {
     bizType: "payment",
-  }
-  console.log("操作日志列表数据id",id);
+  };
+  console.log("操作日志列表数据id", id);
   try {
     const list = await RecordAPI.GetRecord(params, id);
     console.log("操作日志列表数据:", list);
@@ -727,8 +713,7 @@ const RecordData = async (id:any) => {
   } catch (err: any) {
     console.error("获取操作日志列表失败:", err.message);
   }
-   
-}
+};
 
 // 删除应收款
 function handleDelete(row: any) {
@@ -842,11 +827,5 @@ async function handleApproveSubmit() {
   color: #888;
   min-width: 90px;
   display: inline-block;
-}
-.ellipsis-cell {
-  white-space: nowrap;      /* 禁止换行 */
-  overflow: hidden;         /* 隐藏溢出内容 */
-  text-overflow: ellipsis;  /* 显示省略号（可选） */
-  max-width: 100%;          /* 确保不超出单元格 */
 }
 </style>
