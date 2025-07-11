@@ -86,7 +86,7 @@
     </div>
 
     <!-- 第三方登录 -->
-    <div class="third-party-login">
+    <!-- <div class="third-party-login">
       <div class="divider-container">
         <div class="divider-line"></div>
         <span class="divider-text">{{ t("login.otherLoginMethods") }}</span>
@@ -106,7 +106,7 @@
           <div text-20px cursor-pointer class="i-svg:gitee" />
         </CommonWrapper>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 <script setup lang="ts">
@@ -117,7 +117,6 @@ import { useI18n } from "vue-i18n";
 import { type LoginFormData } from "@/api/auth.api";
 import router from "@/router";
 import { useUserStore } from "@/store";
-import CommonWrapper from "@/components/CommonWrapper/index.vue";
 import { Auth } from "@/utils/auth";
 import UserAPI from "@/api/User/user.api"; // 你的API方法
 
