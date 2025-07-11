@@ -140,14 +140,14 @@
       <el-table ref="productTableRef" v-loading="productLoading" :data="productList" :row-key="'id'" style="width: 100%"
         height="350" border @selection-change="handleProductSelectionChange" @row-click="handleProductRowClick">
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="categoryId" label="分类" />
+        <el-table-column prop="categoryName" label="分类" />
         <el-table-column prop="productImageUrl" label="图片" width="80">
           <template #default="{ row }">
             <el-image :src="row.productImageUrl" style="width: 40px; height: 40px" fit="cover" />
           </template>
         </el-table-column>
         <el-table-column prop="productBrand" label="产品名称" />
-        <el-table-column prop="id" label="产品编号" />
+        <el-table-column prop="productCode" label="产品编号" />
         <el-table-column prop="dealPrice" label="价格" />
       </el-table>
       <template #footer>
@@ -639,6 +639,7 @@ const beforeAvatarUpload: UploadProps["beforeUpload"] = (rawFile) => {
 // 监听 totalAmount，实时反填到应收款金额
 watch(totalAmount, (newVal) => {
   addContractForm.createUpdateReceibablesDto.receivablePay = Number(newVal);
+  addContractForm.contractProceeds=Number(newVal);
 });
 
 onMounted(() => {

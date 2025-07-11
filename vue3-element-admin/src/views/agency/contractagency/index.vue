@@ -10,26 +10,6 @@
           条
         </span>
       </div>
-      <div class="query-bar">
-        <div style="display: flex; align-items: center; margin-bottom: 8px">
-          <span style="color: #888">查看范围</span>
-          <el-radio-group v-model="scopeType" size="small" style="margin-left: 12px">
-            <el-radio-button label="myDuty">我负责的</el-radio-button>
-            <el-radio-button label="myCreate">我创建的</el-radio-button>
-            <el-radio-button label="all">全部</el-radio-button>
-          </el-radio-group>
-        </div>
-        <div style="display: flex; align-items: center; margin-bottom: 8px">
-          <span style="color: #888">审核状态</span>
-          <el-radio-group v-model="statusFilter" size="small" style="margin-left: 12px" @change="handleStatusChange">
-            <el-radio-button :label="''">全部</el-radio-button>
-            <el-radio-button :label="0">待审核</el-radio-button>
-            <el-radio-button :label="1">审核中</el-radio-button>
-            <el-radio-button :label="2">已审核</el-radio-button>
-            <el-radio-button :label="3">已驳回</el-radio-button>
-          </el-radio-group>
-        </div>
-      </div>
     </el-card>
 
     <!-- 高级搜索组件 -->
@@ -197,7 +177,7 @@
     <el-card style="margin-top: 10px">
       <el-table :data="tableData" border style="width: 100%" size="small" @row-click="handleRowClick">
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="paymentStatus" label="状态" align="center">
+        <el-table-column prop="paymentStatus" label="状态" width="80" align="center">
           <template #default="{ row }">
             <span class="ellipsis-cell" :style="{
               color:
@@ -253,7 +233,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="signDate" label="签订日期" align="center">
+        <el-table-column prop="signDate" label="签订日期" align="center" width="130">
           <template #default="{ row }">
             <span class="ellipsis-cell">
               {{ row.signDate.substring(0, 10) }} {{ row.signDate.substring(11, 19) }}
@@ -265,7 +245,7 @@
             <span class="ellipsis-cell">{{ row.contractName }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="expirationDate" label="截止日期" align="center">
+        <el-table-column prop="expirationDate" label="截止日期" align="center" width="130">
           <template #default="{ row }">
             <span class="ellipsis-cell">
               {{ row.expirationDate.substring(0, 10) }} {{ row.expirationDate.substring(11, 19) }}
@@ -282,20 +262,15 @@
             <span class="ellipsis-cell">{{ row.customerName }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="auditorNames" label="审核人">
-          <template #default="{ row }">
-            <span class="ellipsis-cell">{{ row.auditorNames }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="currentAuditorName" label="当前审核人">
+        <el-table-column prop="currentAuditorName" label="审核人">
           <template #default="{ row }">
             <span class="ellipsis-cell">{{ row.currentAuditorName }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="creationTime" label="创建时间" align="center">
+        <el-table-column prop="creationTime" label="创建时间" align="center" width="130">
           <template #default="{ row }">
             <span class="ellipsis-cell">
-              {{ row.creationTime.substring(0, 10) }}
+              {{ row.creationTime.substring(0, 10) }} {{ row.creationTime.substring(11, 16) }}
             </span>
           </template>
         </el-table-column>
@@ -324,7 +299,7 @@
             {{ currentDetail?.id || "-" }}
           </div>
           <div>
-            <el-button type="primary" size="small" @click="openEditDrawer" @close="resetEditForm">
+            <el-button type="primary" size="small" style="border-radius: 8px; min-width: 70px"  @click="openEditDrawer" @close="resetEditForm">
               修改
             </el-button>
             <el-button type="primary" size="small" style="border-radius: 8px; min-width: 70px"
@@ -335,7 +310,7 @@
               @click="handleRejectDetail">
               驳回
             </el-button>
-            <el-button type="danger" size="small" style="margin-left: 8px" @click="handleDelete(currentDetail)">
+            <el-button type="danger" size="small" style="border-radius: 8px; min-width: 70px" @click="handleDelete(currentDetail)">
               删除
             </el-button>
           </div>
@@ -676,7 +651,6 @@ const searchForm = reactive({
   SearchTimeType: 0, // 查询时间类型 0:创建时间 1:签订日期 2:生效日期 3:截至日期
   BeginTime: "", // 开始时间
   EndTime: "", // 结束时间
-  PaymentStatus: "",
   CheckType: 0, // 查询方式 0:不使用高级搜索 1:使用全部满足条件搜索 2:部分满足条件搜索
   UserIds: [], // 负责用户
   CreateUserIds: [], // 创建人
@@ -687,49 +661,20 @@ const searchForm = reactive({
   ExpirationDate: "", // 截止日期
   Dealer: "", // 经销商
   ContractProceeds: 0, // 合同金额
-  CreatorId: "",//创建人
-  UserId: "",//负责人
   PageIndex: 1,
   PageSize: 10,
 });
-
-// 查看范围和收款进度筛选
-const scopeType = ref("all");
-const progressType = ref("all");
-const currentUserId = store.userInfo.id; // 获取当前登录人ID
-const currentUserName = store.userInfo.realName; // 获取当前登录人姓名
-console.log("当前登录人", currentUserName);
-console.log("当前登录人ID", currentUserId);
-
-watch([scopeType, progressType], () => {
-  // 先清空筛选条件
-  searchForm.UserId = "";
-  searchForm.CreatorId = "";
-
-  if (scopeType.value === "myDuty") {
-    searchForm.UserId = currentUserId?.toString() || ""; // 负责人=当前用户
-  } else if (scopeType.value === "myCreate") {
-    searchForm.CreatorId = currentUserId?.toString() || ""; // 创建人=当前用户
-  }
-
-  getTableData();
-});
-const statusFilter = ref(""); // 审核状态筛选，默认全部
-function handleStatusChange() {
-  searchForm.PageIndex = 1;
-  if (statusFilter.value === "") {
-    searchForm.PaymentStatus = ''; // 全部
-  } else {
-    searchForm.PaymentStatus = statusFilter.value; // 设置为选中的状态
-  }
-  getTableData();
-}
 
 const tableData: any = ref<ContractItem[]>([]);
 const pageinfo = reactive({
   pageCount: 0,
   totalCount: 0,
 });
+
+const currentUserId = store.userInfo.id; // 获取当前登录人ID
+const currentUserName = store.userInfo.realName; // 获取当前登录人姓名
+console.log("当前登录人", currentUserName);
+console.log("当前登录人ID", currentUserId);
 
 const showAdvancedSearch = ref(false);
 
@@ -791,10 +736,12 @@ const getTableData = async () => {
       pageinfo.totalCount = res.length;
     } else if (res && res.data) {
       // 处理标准API返回格式
-      tableData.value = res.data || [];
-      console.log(tableData.value);
-      pageinfo.pageCount = res.pageCount || 0;
-      pageinfo.totalCount = res.totalCount || 0;
+      const filteredData = res.data.filter(
+        (item: any) => (item.paymentStatus === 0 || item.paymentStatus === 1) && item.currentAuditorName === currentUserName) // 只显示当前登录人审核中的数据
+      debugger;
+      tableData.value = filteredData;
+      pageinfo.totalCount = filteredData.length;
+      pageinfo.pageCount = Math.ceil(filteredData.length / searchForm.PageSize);
     } else {
       tableData.value = [];
       pageinfo.totalCount = 0;
@@ -1239,6 +1186,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.ellipsis-cell {
+  white-space: nowrap;
+  /* 禁止换行 */
+  overflow: hidden;
+  /* 隐藏溢出内容 */
+  text-overflow: ellipsis;
+  /* 显示省略号（可选） */
+  max-width: 100%;
+  /* 确保不超出单元格 */
+}
+
 .detail-row {
   margin-bottom: 12px;
   font-size: 15px;
@@ -1349,16 +1307,5 @@ onMounted(() => {
   color: #888;
   min-width: 90px;
   display: inline-block;
-}
-
-.ellipsis-cell {
-  white-space: nowrap;
-  /* 禁止换行 */
-  overflow: hidden;
-  /* 隐藏溢出内容 */
-  text-overflow: ellipsis;
-  /* 显示省略号（可选） */
-  max-width: 100%;
-  /* 确保不超出单元格 */
 }
 </style>

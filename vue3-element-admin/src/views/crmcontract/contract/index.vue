@@ -228,9 +228,9 @@
       <el-table :data="tableData" border style="width: 100%" size="small" @row-click="handleRowClick"
         @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="paymentStatus" label="状态" width="80" align="center">
+        <el-table-column prop="paymentStatus" label="状态" align="center">
           <template #default="{ row }">
-            <span :style="{
+            <span class="ellipsis-cell" :style="{
               color:
                 row.paymentStatus === 0
                   ? '#faad14'
@@ -256,18 +256,26 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="contractProceeds" label="合同金额" align="center" />
-        <el-table-column prop="paymentreceived" label="已收款" align="center" />
+        <el-table-column prop="contractProceeds" label="合同金额" align="center">
+          <template #default="{ row }">
+            <span class="ellipsis-cell">{{ row.contractProceeds }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="paymentreceived" label="已收款" align="center">
+          <template #default="{ row }">
+            <span class="ellipsis-cell">{{ row.paymentreceived }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="remaining" label="剩余应收" align="center">
           <template #default="{ row }">
-            <span :style="{ color: row.remaining > 0 ? '#f5222d' : '#333' }">
+            <span class="ellipsis-cell" :style="{ color: row.remaining > 0 ? '#f5222d' : '#333' }">
               {{ (row.accountsreceivable - row.paymentreceived).toFixed(2) }}
             </span>
           </template>
         </el-table-column>
         <el-table-column prop="progress" label="收款进度" align="center">
           <template #default="{ row }">
-            <span>
+            <span class="ellipsis-cell">
               {{
                 typeof row.accountsreceivable === "number" && row.accountsreceivable > 0
                   ? ((row.paymentreceived / row.accountsreceivable) * 100).toFixed(2) + "%"
@@ -276,27 +284,62 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="signDate" label="签订日期" align="center" width="130">
+        <el-table-column prop="signDate" label="签订日期" align="center">
           <template #default="{ row }">
-            {{ row.signDate.substring(0, 10) }} {{ row.signDate.substring(11, 19) }}
+            <span class="ellipsis-cell">
+              {{ row.signDate.substring(0, 10) }} {{ row.signDate.substring(11, 19) }}
+            </span>
           </template>
         </el-table-column>
-        <el-table-column prop="contractName" label="合同名称" align="center" />
-        <el-table-column prop="expirationDate" label="截止日期" align="center" width="130">
+        <el-table-column prop="contractName" label="合同名称" align="center">
           <template #default="{ row }">
-            {{ row.expirationDate.substring(0, 10) }} {{ row.expirationDate.substring(11, 19) }}
+            <span class="ellipsis-cell">{{ row.contractName }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="dealer" label="经销商" align="center" />
-        <el-table-column prop="customerName" label="所属客户" align="center" />
-        <el-table-column prop="auditorNames" label="审核人" />
-        <el-table-column prop="creationTime" label="创建时间" align="center" width="130">
+        <el-table-column prop="expirationDate" label="截止日期" align="center">
           <template #default="{ row }">
-            {{ row.creationTime.substring(0, 10) }} {{ row.creationTime.substring(11, 16) }}
+            <span class="ellipsis-cell">
+              {{ row.expirationDate.substring(0, 10) }} {{ row.expirationDate.substring(11, 19) }}
+            </span>
           </template>
         </el-table-column>
-        <el-table-column prop="userName" label="负责人" align="center" />
-        <el-table-column prop="createUserName" label="创建人" align="center" />
+        <el-table-column prop="dealer" label="经销商" align="center">
+          <template #default="{ row }">
+            <span class="ellipsis-cell">{{ row.dealer }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="customerName" label="所属客户" align="center">
+          <template #default="{ row }">
+            <span class="ellipsis-cell">{{ row.customerName }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="auditorNames" label="审核人">
+          <template #default="{ row }">
+            <span class="ellipsis-cell">{{ row.auditorNames }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="currentAuditorName" label="当前审核人">
+          <template #default="{ row }">
+            <span class="ellipsis-cell">{{ row.currentAuditorName }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="creationTime" label="创建时间" align="center">
+          <template #default="{ row }">
+            <span class="ellipsis-cell">
+              {{ row.creationTime.substring(0, 10) }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="userName" label="负责人" align="center">
+          <template #default="{ row }">
+            <span class="ellipsis-cell">{{ row.userName }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createUserName" label="创建人" align="center">
+          <template #default="{ row }">
+            <span class="ellipsis-cell">{{ row.createUserName }}</span>
+          </template>
+        </el-table-column>
       </el-table>
     </el-card>
 
@@ -407,7 +450,7 @@
                   style="margin-bottom: 8px; display: flex; align-items: center">
                   <el-icon style="margin-right: 4px"><el-icon-user /></el-icon>
                   <span style="color: #1890ff">
-                    {{ getUserNameById(currentDetail.approverIds?.[idx]) }}
+                    {{ getUserNameById(currentDetail.auditorId?.[idx]) }}
                   </span>
                   <span style="margin-left: 8px; color: #999">
                     {{
@@ -650,7 +693,7 @@ const searchForm = reactive({
   CommencementDate: "", // 生效日期
   ExpirationDate: "", // 截止日期
   Dealer: "", // 经销商
-  ContractProceeds: 0, // 合同金额
+  ContractProceeds: '', // 合同金额
   PageIndex: 1,
   PageSize: 10,
 });
@@ -677,7 +720,7 @@ function resetSearchForm() {
   searchForm.CommencementDate = "";
   searchForm.ExpirationDate = "";
   searchForm.Dealer = "";
-  searchForm.ContractProceeds = 0;
+  searchForm.ContractProceeds = '';
   searchForm.PageIndex = 1;
   searchForm.PageSize = 10;
 }
@@ -1162,6 +1205,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
+.ellipsis-cell {
+  white-space: nowrap;
+  /* 禁止换行 */
+  overflow: hidden;
+  /* 隐藏溢出内容 */
+  text-overflow: ellipsis;
+  /* 显示省略号（可选） */
+  max-width: 100%;
+  /* 确保不超出单元格 */
+}
 .detail-row {
   margin-bottom: 12px;
   font-size: 15px;
