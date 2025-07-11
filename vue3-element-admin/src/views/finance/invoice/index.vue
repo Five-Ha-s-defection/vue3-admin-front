@@ -2,7 +2,7 @@
   <div>
     <el-card>
       <!-- 顶部筛选区 -->
-      <div style="margin-bottom: 16px">
+      <el-card style="margin-top: 10px">
         <div style="display: flex; align-items: center; margin-bottom: 8px">
           <span style="font-weight: bold; font-size: 16px">发票列表</span>
           <span style="margin-left: 16px; color: #888">总记录数：</span>
@@ -24,8 +24,8 @@
             <el-radio-button label="finished">收款完成</el-radio-button>
           </el-radio-group> -->
         </div>
-        <div style="display: flex; align-items: center; margin-bottom: 8px">
-          <el-button type="primary" style="margin-left: 10px; margin-right: 350px" @click="Addlist">
+        <div style="display: flex; align-items: center;">
+          <el-button type="primary" style="margin-right: 350px" @click="Addlist">
             添加发票
           </el-button>
           <el-date-picker v-model="dateRange" type="daterange" range-separator="-" start-placeholder="开始时间"
@@ -55,81 +55,104 @@
             <el-col :span="20"></el-col>
           </el-row>
         </div>
-      </div>
-      <el-table ref="tableRef" v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据"
-        @selection-change="handleSelectionChange" @row-click="handleRowClick">
-        <el-table-column type="selection" width="50" />
-        <el-table-column prop="invoiceNumberCode" label="发票编号" >
-          <template #default="scope">
-            <span class="ellipsis-cell">{{ scope.row.invoiceNumberCode }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="invoiceStatus" label="状态">
-          <template #default="scope">
-            <span :style="{
-              color:
-                scope.row.invoiceStatus === 0
-                  ? '#faad14'
-                  : scope.row.invoiceStatus === 1
-                    ? '#1890ff'
-                    : scope.row.invoiceStatus === 2
-                      ? '#52c41a'
-                      : scope.row.invoiceStatus === 3
-                        ? '#f5222d'
-                        : '#999',
-            }">
-              {{
-                scope.row.invoiceStatus === 0
-                  ? "待审核"
-                  : scope.row.invoiceStatus === 1
-                    ? "审核中"
-                    : scope.row.invoiceStatus === 2
-                      ? "已通过"
-                      : scope.row.invoiceStatus === 3
-                        ? "已驳回"
-                        : "未知状态"
-              }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="amount" label="开票金额" />
-        <el-table-column prop="invoiceDate" label="开票时间">
-          <template #default="scope">
-            <span class="ellipsis-cell">
-              {{ scope.row.invoiceDate ? scope.row.invoiceDate.substring(0, 10) : "" }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="invoiceType" label="开票类型">
-          <template #default="scope">
-            <span class="ellipsis-cell">
-              <span v-if="scope.row.invoiceType === 0">增值税普通发票</span>
-              <span v-else-if="scope.row.invoiceType === 1">增值税专用发票</span>
-              <span v-else>收据</span>
-            </span>      
-          </template>
-        </el-table-column>
-        <el-table-column prop="customerName" label="所属客户" />
-        <el-table-column prop="contractName" label="关联合同" />
-        <el-table-column prop="realName" label="负责人" />
-        <el-table-column prop="auditorNames" label="审核人">
-          <template #default="scope">
-            <span class="ellipsis-cell">
-              {{ scope.row.auditorNames || "-" }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="creatorRealName" label="创建人" />
-      </el-table>
+      </el-card>
+      <el-card style="margin-top: 10px">
+        <el-table ref="tableRef" v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据"
+          @selection-change="handleSelectionChange" @row-click="handleRowClick">
+          <el-table-column type="selection" width="50" />
+          <el-table-column prop="invoiceNumberCode" label="发票编号">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.invoiceNumberCode || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="invoiceStatus" label="状态">
+            <template #default="scope">
+              <span class="ellipsis-cell" :style="{
+                color:
+                  scope.row.invoiceStatus === 0
+                    ? '#faad14'
+                    : scope.row.invoiceStatus === 1
+                      ? '#1890ff'
+                      : scope.row.invoiceStatus === 2
+                        ? '#52c41a'
+                        : scope.row.invoiceStatus === 3
+                          ? '#f5222d'
+                          : '#999',
+              }">
+                {{
+                  scope.row.invoiceStatus === 0
+                    ? "待审核"
+                    : scope.row.invoiceStatus === 1
+                      ? "审核中"
+                      : scope.row.invoiceStatus === 2
+                        ? "已通过"
+                        : scope.row.invoiceStatus === 3
+                          ? "已驳回"
+                          : "未知状态"
+                }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="amount" label="开票金额">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.amount || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="invoiceDate" label="开票时间">
+            <template #default="scope">
+              <span class="ellipsis-cell">
+                {{ scope.row.invoiceDate ? scope.row.invoiceDate.substring(0, 10) : "-" }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="invoiceType" label="开票类型">
+            <template #default="scope">
+              <span class="ellipsis-cell">
+                {{
+                  scope.row.invoiceType === 0
+                    ? "增值税普通发票"
+                    : scope.row.invoiceType === 1
+                      ? "增值税专用发票"
+                      : "收据"
+                }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="customerName" label="所属客户">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.customerName || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="contractName" label="关联合同">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.contractName || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="realName" label="负责人">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.realName || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="auditorNames" label="审核人">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.auditorNames || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="creatorRealName" label="创建人">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.creatorRealName || "-" }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
 
-      <!-- 分页区域 -->
-      <div style="margin-top: 16px; display: flex; justify-content: center">
-        <el-pagination v-model:current-page="pagination.PageIndex" v-model:page-size="pagination.PageSize"
-          :page-sizes="[5, 10, 15, 20]" :total="pagination.totalCount" :background="true"
-          layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
-          @current-change="handleCurrentChange" />
-      </div>
-
+        <!-- 分页区域 -->
+        <div style="margin-top: 16px; display: flex; justify-content: center">
+          <el-pagination v-model:current-page="pagination.PageIndex" v-model:page-size="pagination.PageSize"
+            :page-sizes="[5, 10, 15, 20]" :total="pagination.totalCount" :background="true"
+            layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+            @current-change="handleCurrentChange" />
+        </div>
+      </el-card>
       <!-- 添加发票弹窗 -->
       <el-dialog v-model="showAddDialog" title="添加发票" width="1000px" @close="resetAddForm">
         <el-form ref="addFormRef" :model="addForm" :rules="addRules" label-width="120px">
@@ -863,7 +886,7 @@ const GetcontractData = async (customerId: string) => {
     PageIndex: 1,
     PageSize: 111,
     CustomerId: customerId,
-    CheckType:0,
+    CheckType: 0,
   });
   CrmContractAPI.getInfo(pageForm)
     .then((res) => {
@@ -895,7 +918,8 @@ const GetPaymentData = async (customerId: string) => {
   const params = reactive({
     PageIndex: 1,
     PageSize: 111,
-    CustomerId:customerId
+    CustomerId: customerId,
+    PaymentStatus: 2
   });
 
   PaymentViewAPI.GetPaymentPage(params)

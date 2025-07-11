@@ -639,6 +639,7 @@ const beforeAvatarUpload: UploadProps["beforeUpload"] = (rawFile) => {
 // 监听 totalAmount，实时反填到应收款金额
 watch(totalAmount, (newVal) => {
   addContractForm.createUpdateReceibablesDto.receivablePay = Number(newVal);
+  addContractForm.contractProceeds=Number(newVal);
 });
 
 onMounted(() => {
