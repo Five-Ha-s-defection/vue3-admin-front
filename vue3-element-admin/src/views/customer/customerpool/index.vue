@@ -1197,7 +1197,6 @@ const orderOptions = [
 
 const loading = ref(false);
 const customerList = ref<any[]>([]);
-const selectedIds = ref<any[]>([]);
 
 //定义查询显示参数
 const queryParams = reactive({

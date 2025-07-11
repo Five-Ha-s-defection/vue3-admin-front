@@ -823,7 +823,7 @@ const showUser = async () => {
 //=================放弃原因==========================
 const abandonDialogVisible = ref(false);
 const abandonReason = ref('');
-const abandonClueIds = ref<any[]>([]);
+const abandonCustomerIds = ref<any[]>([]);
 const abandonReasonOptions = [
   { label: '放弃购买', value: '放弃购买' },
   { label: '预算少', value: '预算少' },
@@ -832,10 +832,10 @@ const abandonReasonOptions = [
 
 const openAbandonDialog = (customerIds: any[]) => {
   if (!customerIds.length) {
-    ElMessage.warning('请先选择线索');
+    ElMessage.warning('请先选择客户');
     return;
   }
-  abandonClueIds.value = customerIds;
+  abandonCustomerIds.value = customerIds;
   abandonReason.value = '';
   abandonDialogVisible.value = true;
 };
@@ -845,29 +845,38 @@ const handleAbandonSubmit = async () => {
     ElMessage.warning('请选择放弃原因');
     return;
   }
-  // 这里可以将原因传给后端
-  for (const customerId of abandonClueIds.value) {
+  let hasValid = false;
+  for (const customerId of abandonCustomerIds.value) {
     const customer = customerList.value.find(item => item.id === customerId);
     if (!customer) continue;
-    if (customer.userId !== user.userInfo.id) continue;
+    if (customer.userId !== user.userInfo.id) 
+    {
+      ElMessage.warning(`客户【${customer.customerName || customer.id}】不是你负责，不能放弃`);
+      continue;
+    }
+    console.log("状态",customer.customerPoolStatus)
+    if (customer.customerPoolStatus !== 1) {
+      ElMessage.warning(`客户【${customer.customerName || customer.id}】不是已分配状态，不能放弃`);
+      continue;
+    }
+    hasValid = true;
     await CustomerAction({ customerId, actionType: 'abandon', abandonReason: abandonReason.value });
   }
-  ElMessage.success('放弃成功');
-  abandonDialogVisible.value = false;
-  fetchCustomerList();
+  if (hasValid) {
+    ElMessage.success('放弃成功');
+    abandonDialogVisible.value = false;
+    fetchCustomerList();
+  }
 };
 
 //=================放弃客户========================
-const selectedRows = ref<any[]>([]);
-const selectedIds = ref<any[]>([]);
-
-const handleSelectionChange = (rows: any[]) => {
+const selectedRows = ref<any[]>([]); // 保存所有选中的行
+const handleSelectionChange = (rows: any) => {
   selectedRows.value = rows;
-  selectedIds.value = rows.map(item => item.id);
 };
 
 const getSelectedClueIds = () => {
-  return selectedIds.value;
+  return selectedRows.value.map(row => row.id);
 };
 
 
@@ -1275,7 +1284,7 @@ const queryParams = reactive({
   customerRegionId: 0,  //客户地区
   customerAddress: '',  //客户地址
   MatchMode: 0, // 0: 全部满足, 1: 部分满足
-  CustomerPoolStatus: 1
+  customerPoolStatus: 1
 });
 
 const advancedDialogVisible = ref(false);
@@ -1472,7 +1481,7 @@ const fetchCustomerList = async () => {
       customerRegionId: queryParams.customerRegionId || null,  //客户地区
       customerAddress: queryParams.customerAddress,  //客户地址
       MatchMode: queryParams.MatchMode,
-      CustomerPoolStatus:queryParams.CustomerPoolStatus
+      CustomerPoolStatus:queryParams.customerPoolStatus
     };
     const params = filterParams(rawParams);
 
@@ -1484,6 +1493,7 @@ const fetchCustomerList = async () => {
     console.log('最终请求参数:', params);
     const res = await ShowCustomerList(params);
     customerList.value = res.data;
+    console.log('客户列表接口响应数据:', res.data);
     queryParams.totalCount = res.totalCount || 0; // 更新总记录数
     queryParams.pageCount = res.pageCount || 0; // 更新总页数
   } catch (e) {
@@ -1541,6 +1551,8 @@ const handleResetQuery = () => {
   queryParams.CustomerPoolStatus = 1;
   handleQuery();
 };
+
+
 
 //分页
 const handleSizeChange = (val: number) => {
