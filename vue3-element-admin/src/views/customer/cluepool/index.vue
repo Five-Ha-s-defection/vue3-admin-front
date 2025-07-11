@@ -100,19 +100,14 @@
       </el-row>
     </el-card>
 
-    分配弹出框
+    <!-- 分配弹出框 -->
     <el-dialog v-model="userSelectDialogVisible" title="用户列表" width="900px">
-      <el-table :data="showuserList" style="width: 100%" @row-click="uhandleRowClick" :row-key="row => row.id"
-        :current-row-key="selectUserId" highlight-current-row>
+      <el-table :data="showuserList" style="width: 100%" :row-key="row => row.id" :current-row-key="selectUserId"
+        highlight-current-row @row-click="uhandleRowClick">
         <el-table-column label="选择" width="60">
           <template #default="{ row }">
-            <input
-              type="radio"
-              :value="String(row.userId)"
-              v-model="selectUserId"
-              :name="'assignUser'"
-              @click.stop="uhandleRowClick(row)"
-            />
+            <input v-model="selectUserId" type="radio" :value="String(row.userId)" :name="'assignUser'"
+              @click.stop="uhandleRowClick(row)" />
           </template>
         </el-table-column>
 
@@ -284,7 +279,7 @@
               <el-button type="primary" icon="Edit" @click="AddCommunication()">添加联系记录</el-button>
               <!-- 联系记录列表 -->
               <div class="contact-list">
-                <div class="contact-item" v-for="item in contactList" :key="item.id">
+                <div v-for="item in contactList" :key="item.id" class="contact-item">
                   <div class="contact-meta">
                     <span class="contact-type">{{ item.typeName }}</span>
                     <span class="contact-time">{{ item.time }}</span>
@@ -462,7 +457,7 @@
             </template>
           </template>
         </el-table-column>
-        <el-table-column label="负责人" prop="userName" min-width="100" />
+        <el-table-column label="负责人" prop="realName" min-width="100" />
         <el-table-column label="创建人" prop="createName" min-width="100" />
         <el-table-column label="操作" width="120" align="center">
           <!-- <template #default="{ row }">
@@ -711,7 +706,7 @@ const receiveClue = async (clueIds: any) => {
 const selectUserId = ref(''); // 推荐用字符串
 const userSelectDialogVisible = ref(false); // 控制弹窗显示
 
-const uhandleRowClick = (row:any) => {
+const uhandleRowClick = (row: any) => {
   selectUserId.value = String(row.userId);
 };
 
@@ -734,6 +729,7 @@ const assignClue = async (clueIds: any, targetUserId: any) => {
   }
   ElMessage.success('分配成功');
   // 刷新列表
+  fetchClueList()
   showUser()
 };
 
@@ -1018,6 +1014,11 @@ const handleRowClick = (row: any) => {
 
 //================添加线索===========================
 const addcluedialogVisible = ref(false);
+
+const handleAddClue = () => {
+  addcluedialogVisible.value = true;
+};
+
 interface RuleForm {
   userId: number | string
   clueName: string
@@ -1031,6 +1032,8 @@ interface RuleForm {
   address: string
   remark: string
   status: number
+  cluePoolStatus: number
+  abandonReason: string
 }
 
 const ruleFormRef = ref<FormInstance>()
@@ -1047,6 +1050,8 @@ const ruleForm = reactive<RuleForm>({
   address: '',
   remark: '',
   status: 0,
+  cluePoolStatus: 0,
+  abandonReason: '',
 })
 
 const rules = reactive<FormRules<RuleForm>>({
@@ -1409,10 +1414,7 @@ const handleCurrentChange = (val: number) => {
   fetchClueList();
 }
 
-// 添加线索方法
-const handleAddClue = () => {
-  addcluedialogVisible.value = true;
-};
+
 // const handleEdit = (row: any) => {
 //   ElMessage.info('编辑功能开发中...');
 // };
@@ -1423,6 +1425,7 @@ const handleAddClue = () => {
 //   ElMessage.info('删除功能开发中...');
 // };
 
+//========================================================================
 // 处理排序点击事件
 // 0: 按最后跟进时间排序, 1: 按下次联系时间排序, 2: 按创建时间排序
 // 如果当前排序字段与点击的字段相同，则切换升降序；否则设置为降序

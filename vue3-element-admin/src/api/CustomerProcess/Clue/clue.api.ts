@@ -74,6 +74,7 @@ export const ClueAction = (data: {
   clueId: string;
   actionType: 'assign' | 'receive' | 'abandon';
   targetUserId?: string;
+  abandonReason?: string;  // 新增的放弃原因字段
 }) => {
   return request({
     url: `${CLUE_BASE_URL}/handle-clue-action`,
