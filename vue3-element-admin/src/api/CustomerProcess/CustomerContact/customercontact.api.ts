@@ -14,7 +14,7 @@ const CustomerContactAPI = {
 
   // 显示客户联系人
   ShowCustomerContactList(data: any) {
-    return request({
+    return request<any,CustomerContactPageResult>({
       url: `${CustomerContact_BASE_URL}/show-customer-contact`,
       method: "get",
       params: data,
@@ -67,7 +67,7 @@ const CustomerContactAPI = {
       method: "get",
     });
   },
-
+  // 修改联系人是否为主要联系人
   UpdateIsPrimaryContact(id: string, data: any) {
     return request({
       url: `${CustomerContact_BASE_URL}/${id}/is-primary-customer-contact`,
@@ -78,3 +78,15 @@ const CustomerContactAPI = {
 };
 
 export default CustomerContactAPI;
+
+
+export interface CustomerContactPageResult {
+  totalCount: number;
+  pageCount: number;
+  data: [];
+}
+export interface CustomerContactPageQuery {
+  PageIndex: number;
+  PageSize: number;
+  [key: string]: any; // 其他查询条件
+}

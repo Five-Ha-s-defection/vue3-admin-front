@@ -4,7 +4,7 @@
       <!-- 顶部筛选区 -->
       <div style="margin-bottom: 16px">
         <div style="display: flex; align-items: center; margin-bottom: 8px">
-          <span style="font-weight: bold; font-size: 16px">发票列表</span>
+          <span style="font-weight: bold; font-size: 16px">联系人列表</span>
           <span style="margin-left: 16px; color: #888">总记录数：</span>
           <span style="color: #409eff; margin-left: 2px">{{ pagination.totalCount }}</span>
           <span style="color: #888; margin-left: 2px">条</span>
@@ -26,7 +26,7 @@
         </div>
         <div style="display: flex; align-items: center; margin-bottom: 8px">
           <el-button type="primary" style="margin-left: 10px; margin-right: 350px" @click="Addlist">
-            添加发票
+            添加联系人
           </el-button>
           <el-date-picker
             v-model="dateRange"
@@ -61,8 +61,6 @@
         border
         style="width: 100%"
         empty-text="暂无数据"
-        @selection-change="handleSelectionChange"
-        @row-click="handleRowClick"
       >
         <el-table-column prop="contactName" label="联系人姓名">
           <template #default="scope">
@@ -89,14 +87,14 @@
         </el-table-column>
         <el-table-column prop="email" label="邮箱" />
         <el-table-column prop="wechat" label="微信号" />
-        <el-table-column prop="customerName" label="所属客户">
+        <el-table-column prop="customerName" label="所属客户"/>
+        <el-table-column prop="userName" label="负责人" />
+        <el-table-column prop="creatorName" label="创建人" />
+        <el-table-column prop="creationTime" label="创建时间" >
           <template #default="scope">
-            <span style="color: #409eff; cursor: pointer">{{ scope.row.customerName }}</span>
+            {{ scope.row.creationTime.substring(0, 19).replace('T', ' ') }}
           </template>
         </el-table-column>
-        <el-table-column prop="realName" label="负责人" />
-        <el-table-column prop="reatorName" label="创建人" />
-        <el-table-column prop="reationTime" label="创建时间" />
         <el-table-column label="操作" width="120">
           <template #default="scope">
             <el-dropdown>
@@ -147,7 +145,7 @@
           label-width="100px"
         >
           <el-form-item label="所属客户" prop="customerName">
-            <el-button type="primary" @click="showCustomer()">选择客户</el-button>
+            <el-button type="primary" @click="showCustomer('add')">选择客户</el-button>
             <span style="margin-left: 10px; color: #999">
               {{ addContactForm.customerName || "未选择客户" }}
             </span>
@@ -212,39 +210,28 @@
       </el-dialog>
 
       <!-- 客户选择抽屉 -->
-      <el-drawer
-        v-model="showCustomerDrawer"
-        title="客户列表"
-        direction="rtl"
-        size="80%"
-        :with-header="true"
-      >
+      <el-drawer v-model="showCustomerDrawer" title="客户列表" direction="rtl" size="80%" :with-header="true">
         <div style="display: flex; justify-content: flex-end; margin-bottom: 10px">
           <el-button type="primary" @click="handleCustomerSubmit">提交</el-button>
           <el-button @click="showCustomerDrawer = false">取消</el-button>
         </div>
         <el-table :data="customerList" style="width: 100%" highlight-current-row>
-          <el-table-column
-            type="selection"
-            width="50"
-            :selectable="() => true"
-            :reserve-selection="false"
-            :show-overflow-tooltip="false"
-            :fixed="true"
-            :label="''"
-          >
+          <el-table-column width="50" :fixed="true" label="">
             <template #default="{ row }">
-              <el-radio
-                :model-value="selectedCustomer && selectedCustomer.id"
-                :label="row.id"
-                @change="() => handleCustomerRadio(row)"
-              />
+              <el-radio :model-value="selectedCustomer && selectedCustomer.id" :label="row.id"
+                @change="() => handleCustomerRadio(row)">
+                &nbsp;
+              </el-radio>
             </template>
           </el-table-column>
-          <el-table-column prop="id" label="客户编号" />
+          <el-table-column prop="customerCode" label="客户编号" />
           <el-table-column prop="customerName" label="客户名称" />
           <el-table-column prop="customerPhone" label="联系电话" />
-          <el-table-column prop="creationTime" label="创建时间" />
+          <el-table-column prop="creationTime" label="创建时间">
+            <template #default="scope">
+              {{ scope.row.creationTime.substring(0, 19).replace("T", " ") }}
+            </template>
+          </el-table-column>
         </el-table>
       </el-drawer>
 
@@ -280,7 +267,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="所属客户">
-            <el-button type="primary" @click="showCustomerDrawer = true">选择客户</el-button>
+            <el-button type="primary" @click="showCustomer('search')">选择客户</el-button>
             <span style="margin-left: 10px; color: #999">
               {{ searchForm.CustomerName || "未选择客户" }}
             </span>
@@ -341,11 +328,10 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onActivated } from "vue";
-import CustomerAPI, { CustomerData } from "@/api/CustomerProcess/Customer/customer.api";
+import CustomerAPI from "@/api/CustomerProcess/Customer/customer.api";
 //import RecordAPI from "@/api/Record/record.api";
-import CustomerContactAPI from "@/api/CustomerProcess/CustomerContact/customercontact.api";
+import CustomerContactAPI,{CustomerContactPageQuery} from "@/api/CustomerProcess/CustomerContact/customercontact.api";
 import UserAPI from "@/api/User/user.api";
-import InvoiceViewAPI, { InvoicePageQuery } from "@/api/Finance/invoice.api";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 import { useUserStore } from "@/store";
@@ -416,14 +402,16 @@ watch([scopeType, progressType, () => searchForm.Keyword], () => {
   GetCustomerContract();
 });
 
-// 获取发票数据
+// 获取联系人数据
 const GetCustomerContract = async () => {
   loading.value = true;
-  const params: InvoicePageQuery = {
+  const params:CustomerContactPageQuery = {
     PageIndex: pagination.PageIndex,
     PageSize: pagination.PageSize,
     StartTime: searchForm.StartTime,
     EndTime: searchForm.EndTime,
+    UserId:searchForm.UserId,
+    CreatorId:searchForm.CreatorId,
     CustomerId: searchForm.CustomerId,
     ContactName: searchForm.ContactName,
     ContactRelationId: searchForm.ContactRelationId,
@@ -539,10 +527,13 @@ function handleDateRangeChange(val: any) {
   GetCustomerContract();
 }
 
-// 客户列表数据（实际应从API获取，这里举例）
-const customerList = ref<CustomerData[]>([]);
 const showCustomerDrawer = ref(false); // 客户选择抽屉
-function showCustomer() {
+// 客户列表数据（实际应从API获取，这里举例）
+const customerList = ref([]);
+// 客户选择
+const customerMode = ref<"add" | "search">("add");
+function showCustomer(mode: "add" | "search") {
+  customerMode.value = mode;
   showCustomerDrawer.value = true;
   const params = {
     PageIndex: 1,
@@ -561,6 +552,35 @@ function showCustomer() {
     });
 }
 
+// 当前选中的客户
+const selectedCustomer = ref<any>(null);
+// 选择客户单选逻辑
+function handleCustomerRadio(row: any) {
+  selectedCustomer.value = row;
+}
+// 提交客户选择
+function handleCustomerSubmit() {
+  if (!selectedCustomer.value) {
+    ElMessage.warning("请选择客户");
+    return;
+  }
+  if (customerMode.value === "add") {
+    addContactForm.customerId = selectedCustomer.value.id;
+    addContactForm.customerName = selectedCustomer.value.customerName;
+  } else if (customerMode.value === "search") {
+    searchForm.CustomerId = selectedCustomer.value.id;
+    searchForm.CustomerName = selectedCustomer.value.customerName;
+  }
+  showCustomerDrawer.value = false;
+
+  // 根据客户ID筛选合同
+  // GetcontractData(selectedCustomer.value.id);
+
+  // // 根据客户ID筛选应收款
+  // GetReceivables(selectedCustomer.value.id);
+}
+
+
 // 添加联系人弹窗控制
 const showAddContactDialog = ref(false);
 
@@ -568,7 +588,19 @@ const Addlist = () => {
   isEdit.value = false;
   showAddDialog.value = true;
   // 清空表单
-  Object.keys(addContactForm).forEach((key) => (addContactForm[key] = ""));
+  addContactForm.id="";
+  addContactForm.customerId="";
+  addContactForm.customerName="";
+  addContactForm.contactName="";
+  addContactForm.contactRelationId="";
+  addContactForm.roleId="";
+  addContactForm.salutation=false;
+  addContactForm.position="";
+  addContactForm.mobile="";
+  addContactForm.qq="";
+  addContactForm.email="";
+  addContactForm.wechat="";
+  addContactForm.remark="";
   addContactForm.salutation = true; // 默认值
 };
 
@@ -599,23 +631,6 @@ const addContactRules = {
   wechat: [{ required: true, message: "请输入微信号", trigger: "blur" }],
 };
 
-// 当前选中的客户
-const selectedCustomer = ref<any>(null);
-// 选择客户单选逻辑
-function handleCustomerRadio(row: any) {
-  selectedCustomer.value = row;
-}
-// 提交客户选择
-function handleCustomerSubmit() {
-  if (!selectedCustomer.value) {
-    ElMessage.warning("请选择客户");
-    return;
-  }
-  addContactForm.customerId = selectedCustomer.value.id;
-  addContactForm.customerName = selectedCustomer.value.customerName;
-  showCustomerDrawer.value = false;
-}
-
 // 重置添加表单
 function resetAddForm() {
   addContactForm.customerId = "";
@@ -632,12 +647,13 @@ function resetAddForm() {
   addContactForm.remark = "";
   GetCustomerContract(); // 刷新列表
 }
-
+const editContactId =ref('');
 const handleEditContact = (row: any) => {
   isEdit.value = true;
   showAddDialog.value = true;
   // 反填表单
   Object.assign(addContactForm, row);
+  editContactId.value = row.id; // 记录当前编辑的id
 };
 
 // 提交添加联系人
@@ -646,7 +662,7 @@ function handleAddContactSubmit() {
     if (valid) {
       if (isEdit.value) {
         // 修改
-        CustomerContactAPI.UpdateCustomerContact(row.id, addContactForm)
+        CustomerContactAPI.UpdateCustomerContact(editContactId.value, addContactForm)
           .then(() => {
             ElMessage.success("修改成功");
             showAddDialog.value = false;
@@ -687,33 +703,8 @@ onActivated(() => {
   }
 });
 
-const showDetailDrawer = ref(false);
 const detailData = ref<any>(null);
 
-// 显示详情抽屉
-function handleRowClick(row: any) {
-  detailData.value = row;
-  console.log("点击行数据", row);
-  showDetailDrawer.value = true;
-  //RecordData(row.id); // 获取操作日志列表数据
-}
-
-// // 获取操作日志列表数据
-// const recordlist: any = ref([]);
-// //显示查询分页
-// const RecordData = async (id: any) => {
-//   const params = {
-//     bizType: "invoice",
-//   };
-//   console.log("操作日志列表数据id", id);
-//   try {
-//     const list = await RecordAPI.GetRecord(params, id);
-//     console.log("操作日志列表数据:", list);
-//     recordlist.value = list || [];
-//   } catch (err: any) {
-//     console.error("获取操作日志列表失败:", err.message);
-//   }
-// };
 
 // 删除
 function handleDelete(row: any) {
@@ -721,7 +712,7 @@ function handleDelete(row: any) {
   ElMessageBox.confirm("确定要删除该联系人吗？", "提示", {
     type: "warning",
   }).then(() => {
-    InvoiceViewAPI.DeleteInvoice(row.id)
+    CustomerContactAPI.DeleteCustomerContact(row.id)
       .then(() => {
         ElMessage.success("删除成功");
         GetCustomerContract(); // 重新加载数据
