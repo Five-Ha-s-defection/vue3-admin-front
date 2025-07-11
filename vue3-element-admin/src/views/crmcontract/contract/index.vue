@@ -450,7 +450,7 @@
                   style="margin-bottom: 8px; display: flex; align-items: center">
                   <el-icon style="margin-right: 4px"><el-icon-user /></el-icon>
                   <span style="color: #1890ff">
-                    {{ getUserNameById(currentDetail.approverIds?.[idx]) }}
+                    {{ getUserNameById(currentDetail.auditorId?.[idx]) }}
                   </span>
                   <span style="margin-left: 8px; color: #999">
                     {{
