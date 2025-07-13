@@ -10,8 +10,16 @@ export const AddContactCommunication = (data: any) => {
     data,
   });
 };
+//联系记录显示列表
+export const ListContactCommunication = (data: any) => {
+  return request({
+    url: `${COMMUNICATION_BASE_URL}/contact-communication-list`,
+    method: "get",
+    params: data,
+  });
+};
 
-// 显示联系沟通
+// 显示联系沟通带条件
 export const GetContactCommunication = (id: string, targetType: number) => {
   return request({
     url: `${COMMUNICATION_BASE_URL}/${id}/contact-communications`,
@@ -36,7 +44,7 @@ export const GetContactCommunicationDetail = (id: string) => {
     url: `${COMMUNICATION_BASE_URL}/${id}/contact-communication-by-id`,
     method: "get",
   });
-}
+};
 
 // 修改联系沟通
 export const UpdateContactCommunication = (id: string, data: any) => {
@@ -45,7 +53,7 @@ export const UpdateContactCommunication = (id: string, data: any) => {
     method: "put",
     data,
   });
-} 
+};
 
 // 获取沟通类型列表
 export const GetCommunicationType = () => {
@@ -53,12 +61,20 @@ export const GetCommunicationType = () => {
     url: `${COMMUNICATION_BASE_URL}/communication-type-select-list`,
     method: "get",
   });
-} 
+};
 
 // 获取自定义回复列表
-export const GetCustomReplyByType = (id:string | number) => {
+export const GetCustomReplyByType = (id: string | number) => {
   return request({
     url: `${COMMUNICATION_BASE_URL}/custom-reply-by-type/${id}`,
     method: "get",
   });
-} 
+};
+
+export const ExportAllCommunicationToAsync = () => {
+  return request({
+    url: `${COMMUNICATION_BASE_URL}/export-all-to`,
+    method: "get",
+    responseType: "blob",
+  });
+};
