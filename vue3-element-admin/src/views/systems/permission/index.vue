@@ -64,10 +64,13 @@
           <el-input v-model="form.permissionName" />
         </el-form-item>
         <el-form-item label="权限编码" prop="permissionCode">
-          <el-input v-model="form.permissionCode" />
+          <el-input v-model="form.permissionCode" placeholder="如 system:menu:add" />
         </el-form-item>
         <el-form-item label="分组名称" prop="groupName">
-          <el-input v-model="form.groupName" />
+          <el-input
+            v-model="form.groupName"
+            placeholder="通过分组名称来进行分组，如果想要在同一个管理下则需要填写相同的分组名称，否则需要填写不同的分组名称"
+          />
         </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="3" />

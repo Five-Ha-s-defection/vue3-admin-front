@@ -120,11 +120,11 @@ watch(
 /**
  * 获取我的通知公告
  */
-function featchMyNotice() {
+/*function featchMyNotice() {
   NoticeAPI.getMyNoticePage({ pageNum: 1, pageSize: 5, isRead: 0 }).then((data) => {
     noticeList.value = data.list;
   });
-}
+} */
 
 // 阅读通知公告
 function handleReadNotice(id: string) {
@@ -151,10 +151,10 @@ function handleMarkAllAsRead() {
   });
 }
 
-onMounted(() => {
+/* onMounted(() => {
   featchMyNotice();
 });
-
+ */
 onBeforeUnmount(() => {
   unsubscribe("/user/queue/message");
 });

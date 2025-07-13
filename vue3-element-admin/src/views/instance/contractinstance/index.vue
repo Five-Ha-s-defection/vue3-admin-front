@@ -11,53 +11,23 @@
         </span>
       </div>
       <div class="query-bar">
-        <div class="row mt-2">
-          <span>选择时间</span>
-          &nbsp;&nbsp;&nbsp;
-          <el-date-picker v-model="searchForm.BeginTime" type="date" size="small" placeholder="开始时间"
-            style="width: 200px" @change="getTableData" />
-          --
-          <el-date-picker v-model="searchForm.EndTime" type="date" size="small" placeholder="结束时间" style="width: 200px"
-            @change="getTableData" />
-          <el-radio-group v-model="searchForm.SearchTimeType" class="ml-4" size="small" @change="getTableData">
-            <el-radio label="创建时间" :value="0">创建时间</el-radio>
-            <el-radio label="签订日期" :value="1">签订日期</el-radio>
-            <el-radio label="生效日期" :value="2">生效日期</el-radio>
-            <el-radio label="截止日期" :value="3">截止日期</el-radio>
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="color: #888">查看范围</span>
+          <el-radio-group v-model="scopeType" size="small" style="margin-left: 12px">
+            <el-radio-button label="myDuty">我负责的</el-radio-button>
+            <el-radio-button label="myCreate">我创建的</el-radio-button>
+            <el-radio-button label="all">全部</el-radio-button>
           </el-radio-group>
         </div>
-        <div class="row mt-2 flex-between">
-          <el-button type="primary" icon="Plus" size="small" @click="goAddContract">
-            添加合同
-          </el-button>
-          <div class="right-group">
-            <el-input v-model="searchForm.ContractName" placeholder="合同名称" class="ml-4" style="width: 220px" clearable
-              size="small">
-              <template #suffix>
-                <el-icon>
-                  <Search />
-                </el-icon>
-              </template>
-            </el-input>
-            <el-button class="ml-2" icon="Filter" plain size="small" @click="showAdvancedSearch = true">
-              高级搜索
-            </el-button>
-            <el-dropdown class="ml-2">
-              <el-button size="small">
-                操作
-                <el-icon>
-                  <ArrowDown />
-                </el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="deleteManyContracts">删除合同</el-dropdown-item>
-                  <el-dropdown-item>导出数据</el-dropdown-item>
-                  <el-dropdown-item>导入excel</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </div>
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="color: #888">审核状态</span>
+          <el-radio-group v-model="statusFilter" size="small" style="margin-left: 12px" @change="handleStatusChange">
+            <el-radio-button :label="''">全部</el-radio-button>
+            <el-radio-button :label="0">待审核</el-radio-button>
+            <el-radio-button :label="1">审核中</el-radio-button>
+            <el-radio-button :label="2">已审核</el-radio-button>
+            <el-radio-button :label="3">已驳回</el-radio-button>
+          </el-radio-group>
         </div>
       </div>
     </el-card>
@@ -225,8 +195,7 @@
 
     <!-- 表格板块 -->
     <el-card style="margin-top: 10px">
-      <el-table :data="tableData" border style="width: 100%" size="small" @row-click="handleRowClick"
-        @selection-change="handleSelectionChange">
+      <el-table :data="tableData" border style="width: 100%" size="small" @row-click="handleRowClick">
         <el-table-column type="selection" width="50" />
         <el-table-column prop="paymentStatus" label="状态" align="center">
           <template #default="{ row }">
@@ -344,7 +313,7 @@
     </el-card>
 
     <!-- 合同表的抽屉 -->
-    <el-drawer v-model="showDetailDrawer" direction="rtl" size="50%" :with-header="true">
+    <el-drawer v-model="showDetailDrawer" direction="rtl" size="70%" :with-header="true">
       <div style="padding: 24px 32px 0 32px">
         <!-- 顶部编号和按钮 -->
         <div style="display: flex; align-items: center; justify-content: space-between">
@@ -357,6 +326,14 @@
           <div>
             <el-button type="primary" size="small" @click="openEditDrawer" @close="resetEditForm">
               修改
+            </el-button>
+            <el-button type="primary" size="small" style="border-radius: 8px; min-width: 70px"
+              @click="handleAuditDetail">
+              审核
+            </el-button>
+            <el-button type="primary" size="small" style="border-radius: 8px; min-width: 70px"
+              @click="handleRejectDetail">
+              驳回
             </el-button>
             <el-button type="danger" size="small" style="margin-left: 8px" @click="handleDelete(currentDetail)">
               删除
@@ -450,7 +427,7 @@
                   style="margin-bottom: 8px; display: flex; align-items: center">
                   <el-icon style="margin-right: 4px"><el-icon-user /></el-icon>
                   <span style="color: #1890ff">
-                    {{ getUserNameById(currentDetail.auditorId?.[idx]) }}
+                    {{ getUserNameById(currentDetail.approverIds?.[idx]) }}
                   </span>
                   <span style="margin-left: 8px; color: #999">
                     {{
@@ -614,28 +591,43 @@
         </el-row>
       </el-form>
     </el-drawer>
-  </div>
 
-  <!-- 产品列表和多选 -->
-  <el-dialog v-model="showProductDialog" title="选择产品" width="800px" @close="handleProductDialogClose">
-    <el-table ref="productTableRef" v-loading="productLoading" :data="getproductList" :row-key="'id'"
-      style="width: 100%" height="350" border @selection-change="handleProductSelectionChange">
-      <el-table-column type="selection" width="50" />
-      <el-table-column prop="categoryId" label="分类" />
-      <el-table-column prop="productImageUrl" label="图片" width="80">
-        <template #default="{ row }">
-          <el-image :src="row.productImageUrl" style="width: 40px; height: 40px" fit="cover" />
-        </template>
-      </el-table-column>
-      <el-table-column prop="productBrand" label="产品名称" />
-      <el-table-column prop="id" label="产品编号" />
-      <el-table-column prop="dealPrice" label="价格" />
-    </el-table>
-    <template #footer>
-      <el-button @click="showProductDialog = false">取消</el-button>
-      <el-button type="primary" @click="handleProductDialogConfirm">确定</el-button>
-    </template>
-  </el-dialog>
+    <!-- 审核/驳回弹窗 -->
+    <el-dialog v-model="showApproveDialog" :title="approveType == true ? '审核通过' : '审核驳回'" width="400px"
+      :close-on-click-modal="false">
+      <el-form>
+        <el-form-item label="原因（非必填）" label-width="100px">
+          <el-input v-model="approveComment" type="textarea" :rows="4" placeholder="请输入原因（可不填）"
+            prefix-icon="el-icon-smile" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button type="primary" @click="handleApproveSubmit">提交</el-button>
+      </template>
+    </el-dialog>
+
+
+    <!-- 产品列表和多选 -->
+    <el-dialog v-model="showProductDialog" title="选择产品" width="800px" @close="handleProductDialogClose">
+      <el-table ref="productTableRef" v-loading="productLoading" :data="getproductList" :row-key="'id'"
+        style="width: 100%" height="350" border @selection-change="handleProductSelectionChange">
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="categoryId" label="分类" />
+        <el-table-column prop="productImageUrl" label="图片" width="80">
+          <template #default="{ row }">
+            <el-image :src="row.productImageUrl" style="width: 40px; height: 40px" fit="cover" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="productBrand" label="产品名称" />
+        <el-table-column prop="id" label="产品编号" />
+        <el-table-column prop="dealPrice" label="价格" />
+      </el-table>
+      <template #footer>
+        <el-button @click="showProductDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleProductDialogConfirm">确定</el-button>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -644,11 +636,11 @@ import UserAPI from "@/api/User/user.api";
 import CustomerAPI from "@/api/CustomerProcess/Customer/customer.api";
 import RecordAPI from "@/api/Record/record.api";
 import ProductApi from "@/api/CxsApi/CxsProductApi"; // 按你的实际路径引入
-import { useRouter } from "vue-router";
 import type { UploadProps } from "element-plus";
 import "@wangeditor/editor/dist/css/style.css";
+import { useUserStore } from "@/store";
 
-const router = useRouter();
+const store = useUserStore();
 
 //#region 显示数据查询分页
 // 定义合同数据类型
@@ -684,6 +676,7 @@ const searchForm = reactive({
   SearchTimeType: 0, // 查询时间类型 0:创建时间 1:签订日期 2:生效日期 3:截至日期
   BeginTime: "", // 开始时间
   EndTime: "", // 结束时间
+  PaymentStatus: "",
   CheckType: 0, // 查询方式 0:不使用高级搜索 1:使用全部满足条件搜索 2:部分满足条件搜索
   UserIds: [], // 负责用户
   CreateUserIds: [], // 创建人
@@ -693,10 +686,44 @@ const searchForm = reactive({
   CommencementDate: "", // 生效日期
   ExpirationDate: "", // 截止日期
   Dealer: "", // 经销商
-  ContractProceeds: '', // 合同金额
+  ContractProceeds: 0, // 合同金额
+  CreatorId: "",//创建人
+  UserId: "",//负责人
   PageIndex: 1,
   PageSize: 10,
 });
+
+// 查看范围和收款进度筛选
+const scopeType = ref("all");
+const progressType = ref("all");
+const currentUserId = store.userInfo.id; // 获取当前登录人ID
+const currentUserName = store.userInfo.realName; // 获取当前登录人姓名
+console.log("当前登录人", currentUserName);
+console.log("当前登录人ID", currentUserId);
+
+watch([scopeType, progressType], () => {
+  // 先清空筛选条件
+  searchForm.UserId = "";
+  searchForm.CreatorId = "";
+
+  if (scopeType.value === "myDuty") {
+    searchForm.UserId = currentUserId?.toString() || ""; // 负责人=当前用户
+  } else if (scopeType.value === "myCreate") {
+    searchForm.CreatorId = currentUserId?.toString() || ""; // 创建人=当前用户
+  }
+
+  getTableData();
+});
+const statusFilter = ref(""); // 审核状态筛选，默认全部
+function handleStatusChange() {
+  searchForm.PageIndex = 1;
+  if (statusFilter.value === "") {
+    searchForm.PaymentStatus = ''; // 全部
+  } else {
+    searchForm.PaymentStatus = statusFilter.value; // 设置为选中的状态
+  }
+  getTableData();
+}
 
 const tableData: any = ref<ContractItem[]>([]);
 const pageinfo = reactive({
@@ -720,7 +747,7 @@ function resetSearchForm() {
   searchForm.CommencementDate = "";
   searchForm.ExpirationDate = "";
   searchForm.Dealer = "";
-  searchForm.ContractProceeds = '';
+  searchForm.ContractProceeds = 0;
   searchForm.PageIndex = 1;
   searchForm.PageSize = 10;
 }
@@ -778,29 +805,6 @@ const getTableData = async () => {
   }
 };
 
-//#endregion
-
-//#region 删除多个合同
-const deleteids = ref<string[]>([]);
-
-const handleSelectionChange = (selection: ContractItem[]) => {
-  deleteids.value = selection.map((item) => item.id);
-};
-
-const deleteManyContracts = async () => {
-  if (deleteids.value.length === 0) {
-    ElMessage.warning("请选择要删除的合同");
-    return;
-  }
-  try {
-    await ElMessageBox.confirm("确认删除选中的合同吗？", "提示", { type: "warning" });
-    await CrmContractAPI.deleteManyContracts({ DeleteIds: deleteids.value });
-    ElMessage.success("删除成功");
-    getTableData();
-  } catch (e) {
-    console.log(e);
-  }
-};
 //#endregion
 
 //#region 用户下拉框
@@ -1189,12 +1193,42 @@ const beforeAvatarUpload: UploadProps["beforeUpload"] = (rawFile) => {
 };
 //#endregion
 
-const goAddContract = () => {
-  router.push({
-    path: "/crmcontract/addcontract",
-    query: { _t: Date.now() },
-  });
+//#region 审核驳回
+// 审核/驳回弹窗
+const showApproveDialog = ref(false);
+// 审核/驳回原因
+const approveComment = ref("");
+// 审核/驳回类型
+const approveType = ref(true); // true表示审核通过，false表示审核驳回
+
+const resetApproveForm = (type: true | false) => {
+  approveType.value = type;
+  approveComment.value = "";
+  showApproveDialog.value = true;
 };
+// 审核/驳回
+const handleAuditDetail = () => {
+  resetApproveForm(true);
+};
+
+const handleRejectDetail = () => {
+  resetApproveForm(false);
+};
+
+async function handleApproveSubmit() {
+  if (!currentDetail.value?.id) return;
+  const params = {
+    isPass: approveType.value,
+    comment: approveComment.value,
+  };
+  const approverId = currentUserId;
+  const id = currentDetail.value.id;
+  await CrmContractAPI.CrmContractInstance(id, approverId, params);
+  ElMessage.success(params.isPass ? "审核通过" : "审核驳回");
+  showApproveDialog.value = false;
+  getCustomerList();
+}
+//#endregion
 
 onMounted(() => {
   getTableData();
@@ -1205,17 +1239,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-
-.ellipsis-cell {
-  white-space: nowrap;
-  /* 禁止换行 */
-  overflow: hidden;
-  /* 隐藏溢出内容 */
-  text-overflow: ellipsis;
-  /* 显示省略号（可选） */
-  max-width: 100%;
-  /* 确保不超出单元格 */
-}
 .detail-row {
   margin-bottom: 12px;
   font-size: 15px;
@@ -1326,5 +1349,16 @@ onMounted(() => {
   color: #888;
   min-width: 90px;
   display: inline-block;
+}
+
+.ellipsis-cell {
+  white-space: nowrap;
+  /* 禁止换行 */
+  overflow: hidden;
+  /* 隐藏溢出内容 */
+  text-overflow: ellipsis;
+  /* 显示省略号（可选） */
+  max-width: 100%;
+  /* 确保不超出单元格 */
 }
 </style>

@@ -36,32 +36,32 @@
       </el-tooltip>
 
       <!-- 验证码 -->
-      <!-- <el-form-item prop="captchaCode">
-        <div flex>
-          <el-input
-            v-model.trim="loginFormData.captchaCode"
-            :placeholder="t('login.captchaCode')"
-            @keyup.enter="handleLoginSubmit"
-          >
-            <template #prefix>
-              <div class="i-svg:captcha" />
-            </template>
-          </el-input>
-          <div cursor-pointer h="[40px]" w="[120px]" flex-center ml-10px @click="getCaptcha">
-            <el-icon v-if="codeLoading" class="is-loading"><Loading /></el-icon>
+      <!-- <el-form-item prop="captchaCode">-->
 
+      <!-- 验证码 -->
+      <el-form-item prop="captchaCode">
+        <el-row :gutter="8" align="middle">
+          <el-col :span="14">
+            <el-input
+              v-model.trim="loginFormData.captchaCode"
+              :placeholder="t('login.captchaCode')"
+              maxlength="6"
+            >
+              <template #prefix>
+                <el-icon><Lock /></el-icon>
+              </template>
+            </el-input>
+          </el-col>
+          <el-col :span="10">
             <img
-              v-else
-              object-cover
-              border-rd-4px
-              p-1px
-              shadow="[0_0_0_1px_var(--el-border-color)_inset]"
-              :src="captchaBase64"
-              alt="code"
+              :src="captchaImg"
+              style="height: 38px; cursor: pointer; border-radius: 4px; border: 1px solid #eee"
+              :alt="t('login.captchaCode')"
+              @click="getCaptcha"
             />
-          </div>
-        </div>
-      </el-form-item> -->
+          </el-col>
+        </el-row>
+      </el-form-item>
 
       <div class="flex-x-between w-full">
         <el-checkbox v-model="loginFormData.rememberMe">{{ t("login.rememberMe") }}</el-checkbox>
@@ -86,7 +86,7 @@
     </div>
 
     <!-- 第三方登录 -->
-    <div class="third-party-login">
+    <!-- <div class="third-party-login">
       <div class="divider-container">
         <div class="divider-line"></div>
         <span class="divider-text">{{ t("login.otherLoginMethods") }}</span>
@@ -106,7 +106,7 @@
           <div text-20px cursor-pointer class="i-svg:gitee" />
         </CommonWrapper>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 <script setup lang="ts">
@@ -117,8 +117,8 @@ import { useI18n } from "vue-i18n";
 import { type LoginFormData } from "@/api/auth.api";
 import router from "@/router";
 import { useUserStore } from "@/store";
-import CommonWrapper from "@/components/CommonWrapper/index.vue";
 import { Auth } from "@/utils/auth";
+import UserAPI from "@/api/User/user.api"; // 你的API方法
 
 const { t } = useI18n();
 const userStore = useUserStore();
@@ -130,6 +130,10 @@ const loginFormRef = ref<FormInstance>();
 const loading = ref(false);
 // 是否大写锁定
 const isCapsLock = ref(false);
+
+const captchaImg = ref("");
+const captchaId = ref(""); // 用于后端校验
+
 // 验证码图片Base64字符串
 //const captchaBase64 = ref();
 // 记住我
@@ -175,6 +179,19 @@ const loginRules = computed(() => {
 });
 
 // 获取验证码
+async function getCaptcha() {
+  // 生成唯一id（可用uuid或时间戳）
+  captchaId.value = Date.now().toString();
+  // 调用API
+  const res: any = await UserAPI.getCaptcha(captchaId.value);
+  captchaImg.value = res.img; // 后端返回 { img: "data:image/png;base64,..." }
+  loginFormData.value.captchaKey = captchaId.value; // 提交时带上
+}
+
+// 页面加载时获取一次验证码
+onMounted(getCaptcha);
+
+// 获取验证码
 /* const codeLoading = ref(false);
 function getCaptcha() {
   codeLoading.value = true;
@@ -215,14 +232,13 @@ async function handleLoginSubmit() {
     // - 选中"记住我": token存储在localStorage中，浏览器关闭后仍然有效
     // - 未选中"记住我": token存储在sessionStorage中，浏览器关闭后失效
   } catch (error) {
-    // 6. 统一错误处理
-    //getCaptcha(); // 刷新验证码
+    await getCaptcha(); // 刷新验证码
+    // 不要再 ElMessage.error(error.message)
     console.error("登录失败:", error);
   } finally {
     loading.value = false;
   }
 }
-
 
 /**
  * 解析重定向目标

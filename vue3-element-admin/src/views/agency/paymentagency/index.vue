@@ -1,38 +1,29 @@
 <template>
   <div>
     <el-card>
-      <!-- 顶部筛选区 -->
-      <div style="margin-bottom: 16px">
-        <div style="display: flex; align-items: center; margin-bottom: 8px">
-          <span style="font-weight: bold; font-size: 16px">待审核收款列表</span>
-          <span style="margin-left: 16px; color: #888">总记录数：</span>
-          <span style="color: #409eff; margin-left: 2px">{{ pagination.totalCount }}</span>
-          <span style="color: #888; margin-left: 2px">条</span>
+      <el-card style="margin-top: 10px">
+        <!-- 顶部筛选区 -->
+        <div style="margin-bottom: 16px">
+          <div style="display: flex; align-items: center; margin-bottom: 8px">
+            <span style="font-weight: bold; font-size: 16px">待审核收款列表</span>
+            <span style="margin-left: 16px; color: #888">总记录数：</span>
+            <span style="color: #409eff; margin-left: 2px">{{ pagination.totalCount }}</span>
+            <span style="color: #888; margin-left: 2px">条</span>
+          </div>
         </div>
-      </div>
-
-      <el-table
-        ref="tableRef"
-        v-loading="loading"
-        :data="tableData"
-        border
-        style="width: 100%"
-        empty-text="暂无数据"
-        @selection-change="handleSelectionChange"
-        @row-click="handleRowClick"
-      >
-        <el-table-column type="selection" width="50" />
-        <el-table-column prop="paymentCode" label="收款编号" >
-          <template #default="scope">
-            <span class="ellipsis-cell">
-              {{ scope.row.paymentCode }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态">
-          <template #default="scope">
-            <span
-              :style="{
+      </el-card>
+      <el-card style="margin-top: 10px;height: 100vh;">
+        <el-table ref="tableRef" v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据"
+          @selection-change="handleSelectionChange" @row-click="handleRowClick">
+          <el-table-column type="selection" width="50" />
+          <el-table-column prop="paymentCode" label="收款编号">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.paymentCode || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态">
+            <template #default="scope">
+              <span class="ellipsis-cell" :style="{
                 color:
                   scope.row.paymentStatus === 0
                     ? '#faad14'
@@ -43,67 +34,79 @@
                         : scope.row.paymentStatus === 3
                           ? '#f5222d'
                           : '#999',
-              }"
-            >
-              {{
-                scope.row.paymentStatus === 0
-                  ? "待审核"
-                  : scope.row.paymentStatus === 1
-                    ? "审核中"
-                    : scope.row.paymentStatus === 2
-                      ? "已通过"
-                      : scope.row.paymentStatus === 3
-                        ? "已驳回"
-                        : "未知状态"
-              }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="receivablePay" label="应收款" />
-        <el-table-column prop="amount" label="实际收款金额" />
-        <el-table-column prop="paymentMethodName" label="收款方式" >
-          <template #default="scope">
-            <span class="ellipsis-cell">
-              {{scope.row.paymentMethodName}}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="paymentDate" label="收款时间">
-          <template #default="scope">
-            <span class="ellipsis-cell">
-                {{ scope.row.paymentDate.substring(0, 10) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="customerName" label="所属客户" />
-        <el-table-column prop="contractName" label="关联合同" />
-        <el-table-column prop="realName" label="负责人" />
-        <el-table-column prop="currentAuditorName" label="审核人" />
-        <el-table-column prop="creatorRealName" label="创建人" />
-      </el-table>
+              }">
+                {{
+                  scope.row.paymentStatus === 0
+                    ? "待审核"
+                    : scope.row.paymentStatus === 1
+                      ? "审核中"
+                      : scope.row.paymentStatus === 2
+                        ? "已通过"
+                        : scope.row.paymentStatus === 3
+                          ? "已驳回"
+                          : "未知状态"
+                }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="receivablePay" label="应收款">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.receivablePay || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="amount" label="实际收款金额">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.amount || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="paymentMethodName" label="收款方式">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.paymentMethodName || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="paymentDate" label="收款时间">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.paymentDate?.substring(0, 10) || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="customerName" label="所属客户">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.customerName || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="contractName" label="关联合同">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.contractName || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="realName" label="负责人">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.realName || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="currentAuditorName" label="审核人">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.currentAuditorName || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="creatorRealName" label="创建人">
+            <template #default="scope">
+              <span class="ellipsis-cell">{{ scope.row.creatorRealName || "-" }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
 
-      <!-- 分页区域 -->
-      <div style="margin-top: 16px; display: flex; justify-content: center">
-        <el-pagination
-          v-model:current-page="pagination.PageIndex"
-          v-model:page-size="pagination.PageSize"
-          :page-sizes="[5, 10, 15, 20]"
-          :total="pagination.totalCount"
-          :background="true"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
+        <!-- 分页区域 -->
+        <div style="margin-top: 16px; display: flex; justify-content: center">
+          <el-pagination v-model:current-page="pagination.PageIndex" v-model:page-size="pagination.PageSize"
+            :page-sizes="[5, 10, 15, 20]" :total="pagination.totalCount" :background="true"
+            layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+            @current-change="handleCurrentChange" />
+        </div>
+      </el-card>
     </el-card>
 
-    <el-drawer
-      v-model="showDetailDrawer"
-      title="收款详情"
-      size="60%"
-      direction="rtl"
-      :with-header="false"
-    >
+    <el-drawer v-model="showDetailDrawer" title="收款详情" size="60%" direction="rtl" :with-header="false">
       <div style="padding: 24px 32px 0 32px">
         <!-- 顶部编号和按钮 -->
         <div style="display: flex; align-items: center; justify-content: space-between">
@@ -114,36 +117,20 @@
             {{ detailData?.paymentCode || "-" }}
           </div>
           <div style="display: flex; gap: 12px">
-            <el-button
-              type="primary"
-              size="small"
-              style="border-radius: 8px; min-width: 70px"
-              @click="handleEditDetail"
-            >
+            <el-button type="primary" size="small" style="border-radius: 8px; min-width: 70px"
+              @click="handleEditDetail">
               修改
             </el-button>
-            <el-button
-              type="primary"
-              size="small"
-              style="border-radius: 8px; min-width: 70px"
-              @click="handleAuditDetail"
-            >
+            <el-button type="primary" size="small" style="border-radius: 8px; min-width: 70px"
+              @click="handleAuditDetail">
               审核
             </el-button>
-            <el-button
-              type="primary"
-              size="small"
-              style="border-radius: 8px; min-width: 70px"
-              @click="handleRejectDetail"
-            >
+            <el-button type="primary" size="small" style="border-radius: 8px; min-width: 70px"
+              @click="handleRejectDetail">
               驳回
             </el-button>
-            <el-button
-              type="danger"
-              size="small"
-              style="border-radius: 8px; min-width: 70px"
-              @click="handleDelete(detailData)"
-            >
+            <el-button type="danger" size="small" style="border-radius: 8px; min-width: 70px"
+              @click="handleDelete(detailData)">
               删除
             </el-button>
           </div>
@@ -151,15 +138,13 @@
 
         <!-- 基本信息分区 -->
         <div style="margin-top: 24px">
-          <div
-            style="
+          <div style="
               font-weight: bold;
               font-size: 15px;
               border-left: 3px solid #faad14;
               padding-left: 8px;
               margin-bottom: 18px;
-            "
-          >
+            ">
             基本信息
           </div>
           <el-row :gutter="32">
@@ -196,20 +181,18 @@
             <el-col :span="12">
               <div class="info-row">
                 <span class="info-label">状态：</span>
-                <span
-                  :style="{
-                    color:
-                      detailData.paymentStatus === 0
-                        ? '#faad14'
-                        : detailData.paymentStatus === 1
-                          ? '#1890ff'
-                          : detailData.paymentStatus === 2
-                            ? '#52c41a'
-                            : detailData.paymentStatus === 3
-                              ? '#f5222d'
-                              : '#999',
-                  }"
-                >
+                <span :style="{
+                  color:
+                    detailData.paymentStatus === 0
+                      ? '#faad14'
+                      : detailData.paymentStatus === 1
+                        ? '#1890ff'
+                        : detailData.paymentStatus === 2
+                          ? '#52c41a'
+                          : detailData.paymentStatus === 3
+                            ? '#f5222d'
+                            : '#999',
+                }">
                   {{
                     detailData.paymentStatus === 0
                       ? "待审核"
@@ -248,24 +231,19 @@
         </div>
 
         <!-- 审核信息 -->
-        <div
-          style="
+        <div style="
             font-weight: bold;
             font-size: 15px;
             border-left: 3px solid #faad14;
             padding-left: 8px;
             margin-bottom: 18px;
-          "
-        >
+          ">
           审核信息
         </div>
         <el-divider content-position="left"></el-divider>
         <div v-if="detailData.approveComments && detailData.approveComments.length">
-          <div
-            v-for="(comment, idx) in detailData.approveComments"
-            :key="idx"
-            style="margin-bottom: 8px; display: flex; align-items: center"
-          >
+          <div v-for="(comment, idx) in detailData.approveComments" :key="idx"
+            style="margin-bottom: 8px; display: flex; align-items: center">
             <el-icon style="margin-right: 4px"><el-icon-user /></el-icon>
             <span style="color: #1890ff">{{ getUserNameById(detailData.approverIds?.[idx]) }}</span>
             <span style="margin-left: 8px; color: #999">
@@ -278,15 +256,13 @@
 
         <!-- 发票信息 -->
         <div>
-          <div
-            style="
+          <div style="
               font-weight: bold;
               font-size: 15px;
               border-left: 3px solid #faad14;
               padding-left: 8px;
               margin-bottom: 18px;
-            "
-          >
+            ">
             发票信息
           </div>
         </div>
@@ -316,25 +292,19 @@
 
         <!-- 操作日志 -->
         <div>
-          <div
-            style="
+          <div style="
               font-weight: bold;
               font-size: 15px;
               border-left: 3px solid #faad14;
               padding-left: 8px;
               margin-bottom: 18px;
-            "
-          >
+            ">
             操作日志
           </div>
         </div>
         <el-divider content-position="left"></el-divider>
         <div v-if="recordlist && recordlist.length">
-          <div
-            v-for="item in recordlist"
-            :key="item.id"
-            style="margin-bottom: 8px; display: flex; align-items: center"
-          >
+          <div v-for="item in recordlist" :key="item.id" style="margin-bottom: 8px; display: flex; align-items: center">
             <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
             <span style="color: #1890ff">
               <!-- 操作人ID（如有名字可替换为名字） -->
@@ -355,55 +325,24 @@
     </el-drawer>
 
     <!-- 修改收款抽屉 -->
-    <el-drawer
-      v-model="showEditDrawer"
-      title="修改收款"
-      size="600px"
-      direction="rtl"
-      :with-header="true"
-    >
+    <el-drawer v-model="showEditDrawer" title="修改收款" size="600px" direction="rtl" :with-header="true">
       <el-form ref="editFormRef" :model="editForm" :rules="addRules" label-width="120px">
         <el-form-item label="所属客户" prop="customerName">
           <el-input v-model="editForm.customerName" disabled />
         </el-form-item>
         <el-form-item label="关联合同" prop="contractId">
-          <el-select
-            v-model="editForm.contractId"
-            placeholder="请选择合同"
-            style="width: 100%"
-            disabled
-          >
-            <el-option
-              v-for="item in contractList"
-              :key="item.id"
-              :label="item.contractName"
-              :value="item.id"
-            />
+          <el-select v-model="editForm.contractId" placeholder="请选择合同" style="width: 100%" disabled>
+            <el-option v-for="item in contractList" :key="item.id" :label="item.contractName" :value="item.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="关联应收款" prop="receivableId">
-          <el-select
-            v-model="editForm.receivableId"
-            placeholder="请选择应收款"
-            style="width: 100%"
-            disabled
-          >
-            <el-option
-              v-for="item in receivableList"
-              :key="item.id"
-              :label="item.receivablePay"
-              :value="item.id"
-            />
+          <el-select v-model="editForm.receivableId" placeholder="请选择应收款" style="width: 100%" disabled>
+            <el-option v-for="item in receivableList" :key="item.id" :label="item.receivablePay" :value="item.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="负责人" prop="userId">
           <el-select v-model="editForm.userId" placeholder="请选择负责人" style="width: 100%">
-            <el-option
-              v-for="item in userList"
-              :key="item.id"
-              :label="item.realName"
-              :value="item.id"
-            />
+            <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="收款编号" prop="paymentCode">
@@ -413,40 +352,17 @@
           <el-input v-model="editForm.amount" type="number" />
         </el-form-item>
         <el-form-item label="收款方式" prop="paymentMethod">
-          <el-select
-            v-model="editForm.paymentMethod"
-            placeholder="请选择收款方式"
-            style="width: 100%"
-          >
-            <el-option
-              v-for="item in paymentMethodList"
-              :label="item.paymentMethodName"
-              :value="item.id"
-            />
+          <el-select v-model="editForm.paymentMethod" placeholder="请选择收款方式" style="width: 100%">
+            <el-option v-for="item in paymentMethodList" :label="item.paymentMethodName" :value="item.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="收款时间" prop="paymentDate">
-          <el-date-picker
-            v-model="editForm.paymentDate"
-            type="datetime"
-            placeholder="选择时间"
-            style="width: 100%"
-            value-format="YYYY-MM-DDTHH:mm:ss"
-          />
+          <el-date-picker v-model="editForm.paymentDate" type="datetime" placeholder="选择时间" style="width: 100%"
+            value-format="YYYY-MM-DDTHH:mm:ss" />
         </el-form-item>
         <el-form-item label="审核人" prop="approverIds">
-          <el-select
-            v-model="editForm.approverIds"
-            multiple
-            placeholder="请选择审核人"
-            style="width: 100%"
-          >
-            <el-option
-              v-for="item in userList"
-              :key="item.id"
-              :label="item.realName"
-              :value="item.id"
-            />
+          <el-select v-model="editForm.approverIds" multiple placeholder="请选择审核人" style="width: 100%">
+            <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
@@ -460,21 +376,12 @@
     </el-drawer>
 
     <!-- 审核/驳回弹窗 -->
-    <el-dialog
-      v-model="showApproveDialog"
-      :title="approveType == true ? '审核通过' : '审核驳回'"
-      width="400px"
-      :close-on-click-modal="false"
-    >
+    <el-dialog v-model="showApproveDialog" :title="approveType == true ? '审核通过' : '审核驳回'" width="400px"
+      :close-on-click-modal="false">
       <el-form>
         <el-form-item label="原因（非必填）" label-width="100px">
-          <el-input
-            v-model="approveComment"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入原因（可不填）"
-            prefix-icon="el-icon-smile"
-          />
+          <el-input v-model="approveComment" type="textarea" :rows="4" placeholder="请输入原因（可不填）"
+            prefix-icon="el-icon-smile" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -558,8 +465,8 @@ const GetPayment = () => {
       // 前端再次过滤，确保只显示待审核和审核中的数据
       const filteredData = res.data.filter(
         (item: any) =>
-          (item.paymentStatus === 0 ||
-          item.paymentStatus === 1) && item.currentAuditorName=== currentUserName // 只显示当前登录人审核中的数据
+          (item.paymentStatus === 0 || item.paymentStatus === 1) &&
+          item.currentAuditorName === currentUserName // 只显示当前登录人审核中的数据
       );
 
       tableData.value = filteredData;
@@ -715,11 +622,11 @@ function fetchInvoiceList(PaymentId: string) {
 // 获取操作日志列表数据
 const recordlist: any = ref([]);
 //显示查询分页
-const RecordData = async (id:any) => {
+const RecordData = async (id: any) => {
   const params = {
     bizType: "payment",
-  }
-  console.log("操作日志列表数据id",id);
+  };
+  console.log("操作日志列表数据id", id);
   try {
     const list = await RecordAPI.GetRecord(params, id);
     console.log("操作日志列表数据:", list);
@@ -727,8 +634,7 @@ const RecordData = async (id:any) => {
   } catch (err: any) {
     console.error("获取操作日志列表失败:", err.message);
   }
-   
-}
+};
 
 // 删除应收款
 function handleDelete(row: any) {
@@ -843,10 +749,15 @@ async function handleApproveSubmit() {
   min-width: 90px;
   display: inline-block;
 }
+
 .ellipsis-cell {
-  white-space: nowrap;      /* 禁止换行 */
-  overflow: hidden;         /* 隐藏溢出内容 */
-  text-overflow: ellipsis;  /* 显示省略号（可选） */
-  max-width: 100%;          /* 确保不超出单元格 */
+  white-space: nowrap;
+  /* 禁止换行 */
+  overflow: hidden;
+  /* 隐藏溢出内容 */
+  text-overflow: ellipsis;
+  /* 显示省略号（可选） */
+  max-width: 100%;
+  /* 确保不超出单元格 */
 }
 </style>

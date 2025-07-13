@@ -1,8 +1,9 @@
 <template>
   <div class="app-container">
+    <!-- 查询线索池 -->
     <el-card class="search-card" shadow="never">
       <div class="clue-header">
-        <span>线索列表 | 总记录数：<b>{{ queryParams.totalCount }}</b> 条</span>
+        <span>线索池列表 | 总记录数：<b>{{ queryParams.totalCount }}</b> 条</span>
       </div>
       <!-- 查看范围 -->
       <el-row class="clue-row" align="middle">
@@ -13,18 +14,6 @@
             @click="handleScopeChange(item.value)">
             {{ item.label }}
           </el-link>
-        </el-col>
-      </el-row>
-      <!-- 线索状态 -->
-      <el-row class="clue-row clue-status-row" align="middle">
-        <el-col :span="24">
-          <div class="clue-status-flex">
-            <span class="clue-label">线索状态</span>
-            <el-checkbox-group v-model="queryParams.Status" @change="handleQuery">
-              <el-checkbox v-for="item in statusOptions" :key="item.value" :label="item.value">{{ item.label
-              }}</el-checkbox>
-            </el-checkbox-group>
-          </div>
         </el-col>
       </el-row>
       <!-- 选择时间 -->
@@ -98,8 +87,8 @@
               </el-icon></el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="openAbandonDialog(getSelectedClueIds())">放弃线索</el-dropdown-item>
-                <el-dropdown-item @click="openUserSelectDialog">转移线索</el-dropdown-item>
+                <el-dropdown-item @click="receiveClue(getSelectedClueIds())">领取</el-dropdown-item>
+                <el-dropdown-item @click="openUserSelectDialog">分配</el-dropdown-item>
                 <el-dropdown-item>删除线索</el-dropdown-item>
                 <el-dropdown-item>导出数据</el-dropdown-item>
                 <el-dropdown-item>Excel导入</el-dropdown-item>
@@ -111,7 +100,7 @@
       </el-row>
     </el-card>
 
-     <!-- 转移线索弹出框 -->
+    <!-- 分配弹出框 -->
     <el-dialog v-model="userSelectDialogVisible" title="用户列表" width="900px">
       <el-table :data="showuserList" style="width: 100%" :row-key="row => row.id" :current-row-key="selectUserId"
         highlight-current-row @row-click="uhandleRowClick">
@@ -131,24 +120,6 @@
       <template #footer>
         <el-button @click="userSelectDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleAssignSubmit">提交</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 放弃线索原因弹出框 -->
-    <el-dialog title="选择放弃原因" v-model="abandonDialogVisible" width="500px">
-      <el-form>
-        <el-form-item label="放弃原因">
-          <el-select v-model="abandonReason" placeholder="请选择放弃原因" style="width: 300px" filterable>
-            <el-option v-for="item in abandonReasonOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <div style="color: #409EFF; margin-left: 100px;">
-          备注：放弃后线索将进入公海
-        </div>
-      </el-form>
-      <template #footer>
-        <el-button @click="abandonDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAbandonSubmit">提交</el-button>
       </template>
     </el-dialog>
 
@@ -308,7 +279,7 @@
               <el-button type="primary" icon="Edit" @click="AddCommunication()">添加联系记录</el-button>
               <!-- 联系记录列表 -->
               <div class="contact-list">
-                <div class="contact-item" v-for="item in contactList" :key="item.id">
+                <div v-for="item in contactList" :key="item.id" class="contact-item">
                   <div class="contact-meta">
                     <span class="contact-type">{{ item.typeName }}</span>
                     <span class="contact-time">{{ item.time }}</span>
@@ -702,7 +673,7 @@
 import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload } from '@element-plus/icons-vue';
-import { ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue, ClueAction,ShowUserList } from '@/api/CustomerProcess/Clue/clue.api';
+import { ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue, ClueAction, ShowUserList } from '@/api/CustomerProcess/Clue/clue.api';
 import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
 import moment from 'moment';
 import dayjs from 'dayjs';
@@ -712,7 +683,26 @@ import StopIcon from '@/components/icons/StopIcon.vue'
 
 const user = useUserStore();
 
-//================转移线索===========================
+//=================分配、领取=====================
+//获取线索Id方便分配、领取
+const getSelectedClueIds = () => {
+  return selectedRows.value.map(row => row.id);
+};
+// 领取线索
+const receiveClue = async (clueIds: any) => {
+  if (!clueIds.length) {
+    ElMessage.warning('请先选择线索');
+    return;
+  }
+  for (const clueId of clueIds) {
+    await ClueAction({ clueId, actionType: 'receive' });
+  }
+  ElMessage.success('领取成功');
+  // 刷新列表
+  fetchClueList()
+};
+
+// 分配线索
 const selectUserId = ref(''); // 推荐用字符串
 const userSelectDialogVisible = ref(false); // 控制弹窗显示
 
@@ -724,7 +714,6 @@ const openUserSelectDialog = () => {
   showUser()
   userSelectDialogVisible.value = true
 }
-
 const assignClue = async (clueIds: any, targetUserId: any) => {
   if (!clueIds.length) {
     ElMessage.warning('请先选择线索');
@@ -785,53 +774,6 @@ const showUser = async () => {
   queryUser.pageCount = res.pageCount || 0; // 更新总页数
   console.log('showuserList:', showuserList.value);
 }
-
-//=================放弃原因==========================
-const abandonDialogVisible = ref(false);
-const abandonReason = ref('');
-const abandonClueIds = ref<any[]>([]);
-const abandonReasonOptions = [
-  { label: '放弃购买', value: '放弃购买' },
-  { label: '预算少', value: '预算少' },
-  { label: '信息有误', value: '信息有误' },
-];
-
-const openAbandonDialog = (clueIds: any[]) => {
-  if (!clueIds.length) {
-    ElMessage.warning('请先选择线索');
-    return;
-  }
-  abandonClueIds.value = clueIds;
-  abandonReason.value = '';
-  abandonDialogVisible.value = true;
-};
-
-const handleAbandonSubmit = async () => {
-  if (!abandonReason.value) {
-    ElMessage.warning('请选择放弃原因');
-    return;
-  }
-  // 这里可以将原因传给后端
-  for (const clueId of abandonClueIds.value) {
-    const clue = clueList.value.find(item => item.id === clueId);
-    if (!clue) continue;
-    if (clue.userId !== user.userInfo.id) continue;
-    await ClueAction({ clueId, actionType: 'abandon', abandonReason: abandonReason.value });
-  }
-  ElMessage.success('放弃成功');
-  abandonDialogVisible.value = false;
-  fetchClueList();
-};
-
-//=================放弃线索========================
-const selectedRows = ref<any[]>([]); // 保存所有选中的行
-const handleSelectionChange = (rows: any) => {
-  selectedRows.value = rows;
-};
-
-const getSelectedClueIds = () => {
-  return selectedRows.value.map(row => row.id);
-};
 
 
 //=================显示联系记录====================
@@ -1072,6 +1014,11 @@ const handleRowClick = (row: any) => {
 
 //================添加线索===========================
 const addcluedialogVisible = ref(false);
+
+const handleAddClue = () => {
+  addcluedialogVisible.value = true;
+};
+
 interface RuleForm {
   userId: number | string
   clueName: string
@@ -1193,17 +1140,11 @@ const queryParams = reactive({
   CompanyName: '',  // 公司名称
   IndustryId: 0,   // 行业
   Address: '',      // 地址
-  MatchMode: 0, // 0: 全部满足, 1: 部分满足
-  CluePoolStatus: 1
+  MatchMode: 0,  // 0: 全部满足, 1: 部分满足
+  CluePoolStatus: 0, //线索分配状态 
 });
 
 const advancedDialogVisible = ref(false);
-
-const statusOptions = [
-  { label: '未跟进', value: 0 },
-  { label: '跟进中', value: 1 },
-  { label: '已转换', value: 2 }
-];
 
 const dateRange = ref<string[]>([]);
 const dateShortcuts = [
@@ -1454,8 +1395,11 @@ const handleResetQuery = () => {
   queryParams.MatchMode = 0; // 重置为全部满足
   queryParams.PageIndex = 1;
   queryParams.PageSize = 10;
-  queryParams.CluePoolStatus = 1;
   handleQuery();
+};
+const selectedRows = ref<any[]>([]); // 保存所有选中的行
+const handleSelectionChange = (rows: any) => {
+  selectedRows.value = rows;
 };
 
 //分页
@@ -1470,10 +1414,7 @@ const handleCurrentChange = (val: number) => {
   fetchClueList();
 }
 
-// 添加线索方法
-const handleAddClue = () => {
-  addcluedialogVisible.value = true;
-};
+
 // const handleEdit = (row: any) => {
 //   ElMessage.info('编辑功能开发中...');
 // };
@@ -1484,6 +1425,7 @@ const handleAddClue = () => {
 //   ElMessage.info('删除功能开发中...');
 // };
 
+//========================================================================
 // 处理排序点击事件
 // 0: 按最后跟进时间排序, 1: 按下次联系时间排序, 2: 按创建时间排序
 // 如果当前排序字段与点击的字段相同，则切换升降序；否则设置为降序
@@ -1579,6 +1521,7 @@ onMounted(() => {
   // selectCustomReply(); // 获取自定义回复列表 - 移至watch中
   console.log('clueList:', clueList.value);
 });
+
 </script>
 
 <style scoped>
