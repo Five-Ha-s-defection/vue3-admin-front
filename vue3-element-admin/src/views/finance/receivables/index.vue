@@ -1,120 +1,115 @@
 <template>
   <div>
     <el-card>
-      <el-card style="margin-top: 10px">
-        <!-- 顶部筛选区 -->
-          <div style="display: flex; align-items: center; margin-bottom: 8px">
-            <span style="font-weight: bold; font-size: 16px">应收款列表</span>
-            <span style="margin-left: 16px; color: #888">总记录数：</span>
-            <span style="color: #409eff; margin-left: 2px">{{ pagination.totalCount }}</span>
-            <span style="color: #888; margin-left: 2px">条</span>
-          </div>
-          <div style="display: flex; align-items: center; margin-bottom: 8px">
-            <span style="color: #888">查看范围</span>
-            <el-radio-group v-model="scopeType" size="small" style="margin-left: 12px">
-              <el-radio-button label="myDuty">我负责的</el-radio-button>
-              <el-radio-button label="myCreate">我创建的</el-radio-button>
-              <el-radio-button label="all">全部</el-radio-button>
-            </el-radio-group>
-          </div>
-          <div style="display: flex; align-items: center;">
-            <el-button type="primary" style="margin-right: 400px;" @click="Addlist">
-              添加应收款
+      <!-- 顶部筛选区 -->
+      <div style="margin-bottom: 16px">
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="font-weight: bold; font-size: 16px">应收款列表</span>
+          <span style="margin-left: 16px; color: #888">总记录数：</span>
+          <span style="color: #409eff; margin-left: 2px">{{ pagination.totalCount }}</span>
+          <span style="color: #888; margin-left: 2px">条</span>
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <span style="color: #888">查看范围</span>
+          <el-radio-group v-model="scopeType" size="small" style="margin-left: 12px">
+            <el-radio-button label="myDuty">我负责的</el-radio-button>
+            <el-radio-button label="myCreate">我创建的</el-radio-button>
+            <el-radio-button label="all">全部</el-radio-button>
+          </el-radio-group>
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 8px">
+          <el-button type="primary" style="margin-left: 32px; margin-right: 400px" @click="Addlist">
+            添加应收款
+          </el-button>
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            range-separator="-"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            value-format="YYYY-MM-DD"
+            style="width: 30px; margin-right: 12px"
+            @change="handleDateRangeChange"
+          />
+          <el-input
+            v-model="searchForm.ReceivableCode"
+            placeholder="应收款编号(不含符号)"
+            style="width: 200px; margin-left: 16px"
+            clearable
+          />
+          <el-button type="primary" style="margin-left: 8px; margin-right: 10px" @click="search()">
+            高级搜索
+          </el-button>
+          <el-dropdown>
+            <el-button>
+              操作
+              <el-icon>
+                <ArrowDown />
+              </el-icon>
             </el-button>
-            <el-date-picker v-model="dateRange" type="daterange" range-separator="-" start-placeholder="开始时间"
-              end-placeholder="结束时间" value-format="YYYY-MM-DD" style="width: 30px; margin-right: 12px"
-              @change="handleDateRangeChange" />
-            <el-input v-model="searchForm.ReceivableCode" placeholder="应收款编号(不含符号)"
-              style="width: 200px; margin-left: 16px" clearable />
-            <el-button type="primary" style="margin-left: 8px; margin-right: 10px" @click="search()">
-              高级搜索
-            </el-button>
-            <el-dropdown>
-              <el-button>
-                操作
-                <el-icon>
-                  <ArrowDown />
-                </el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="handleBatchDelete">删除</el-dropdown-item>
-                  <el-dropdown-item @click="handleExport">导出数据</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-            <el-row>
-              <el-col :span="4"></el-col>
-              <el-col :span="20"></el-col>
-            </el-row>
-          </div>
-      </el-card>
-      <el-card style="margin-top: 10px">
-        <el-table ref="tableRef" v-loading="loading" class="ellipsis-cell" :data="tableData" border style="width: 100%"
-          empty-text="暂无数据" @selection-change="handleSelectionChange" @row-click="handleRowClick">
-          <el-table-column type="selection" width="50" />
-          <el-table-column prop="receivableCode" label="应收款编号">
-            <template #default="scope">
-              <span class="ellipsis-cell">{{ scope.row.receivableCode }}</span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="handleBatchDelete">删除</el-dropdown-item>
+                <el-dropdown-item @click="handleExport">导出数据</el-dropdown-item>
+              </el-dropdown-menu>
             </template>
-          </el-table-column>
-          <el-table-column prop="receivablePay" label="应收款">
-            <template #default="scope">
-              <span class="ellipsis-cell">{{ scope.row.receivablePay }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="amount" label="已收款">
-            <template #default="scope">
-              <span v-if="scope.row.paymentStatus === 2" class="ellipsis-cell">
-                {{ scope.row.amount }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column label="剩余应收">
-            <template #default="scope">
-              <span class="ellipsis-cell">
-                {{ (scope.row.receivablePay || 0) - (scope.row.amount || 0) }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="receivableDate" label="应收款时间">
-            <template #default="scope">
-              <span class="ellipsis-cell">
-                {{ scope.row.receivableDate?.substring(0, 10) || '-' }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="customerName" label="所属客户">
-            <template #default="scope">
-              <span class="ellipsis-cell">{{ scope.row.customerName }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="contractName" label="关联合同">
-            <template #default="scope">
-              <span class="ellipsis-cell">{{ scope.row.contractName }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="realName" label="负责人">
-            <template #default="scope">
-              <span class="ellipsis-cell">{{ scope.row.realName }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="creatorRealName" label="创建人">
-            <template #default="scope">
-              <span class="ellipsis-cell">{{ scope.row.creatorRealName }}</span>
-            </template>
-          </el-table-column>
-        </el-table>
-      
+          </el-dropdown>
+          <el-row>
+            <el-col :span="4"></el-col>
+            <el-col :span="20"></el-col>
+          </el-row>
+        </div>
+      </div>
+      <el-table
+        ref="tableRef" class="ellipsis-cell"
+        v-loading="loading"
+        :data="tableData"
+        border
+        style="width: 100%"
+        empty-text="暂无数据"
+        @selection-change="handleSelectionChange"
+        @row-click="handleRowClick"
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="receivableCode" label="应收款编号" >
+          <template #default="scope">
+            <span class="ellipsis-cell">{{ scope.row.receivableCode }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="receivablePay" label="应收款" />
+        <el-table-column prop="amount" label="已收款" />
+        <el-table-column label="剩余应收">
+          <template #default="scope">
+            {{ (scope.row.receivablePay || 0) - (scope.row.amount || 0) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="receivableDate" label="应收款时间">
+          <template #default="scope">
+            <span class="ellipsis-cell">
+              {{ scope.row.receivableDate.substring(0, 10) }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="customerName" label="所属客户" />
+        <el-table-column prop="contractName" label="关联合同" />
+        <el-table-column prop="realName" label="负责人" />
+        <el-table-column prop="creatorRealName" label="创建人" />
+      </el-table>
 
       <!-- 分页区域 -->
       <div style="margin-top: 16px; display: flex; justify-content: center">
-        <el-pagination v-model:current-page="pagination.PageIndex" v-model:page-size="pagination.PageSize"
-          :page-sizes="[3, 10, 15, 20]" :total="pagination.totalCount" :background="true"
-          layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
-          @current-change="handleCurrentChange" />
+        <el-pagination
+          v-model:current-page="pagination.PageIndex"
+          v-model:page-size="pagination.PageSize"
+          :page-sizes="[3, 10, 15, 20]"
+          :total="pagination.totalCount"
+          :background="true"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
       </div>
-      </el-card>
+
       <!-- 添加应收款弹窗 -->
       <el-dialog v-model="showAddDialog" title="添加应收款" width="600px" @close="resetAddForm">
         <el-form ref="addFormRef" :model="addupdateForm" :rules="addRules" label-width="120px">
@@ -125,13 +120,31 @@
             </span>
           </el-form-item>
           <el-form-item label="关联合同" prop="contractId">
-            <el-select v-model="addupdateForm.contractId" placeholder="请选择合同" style="width: 100%">
-              <el-option v-for="item in contractList" :key="item.id" :label="item.contractName" :value="item.id" />
+            <el-select
+              v-model="addupdateForm.contractId"
+              placeholder="请选择合同"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="item in contractList"
+                :key="item.id"
+                :label="item.contractName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="负责人" prop="userId">
-            <el-select v-model="addupdateForm.userId" placeholder="请输入负责人" style="width: 100%">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+            <el-select
+              v-model="addupdateForm.userId"
+              placeholder="请输入负责人"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="应收款编号" prop="receivableCode">
@@ -141,10 +154,20 @@
             <el-input v-model="addupdateForm.receivablePay" placeholder="请输入应收款金额" />
           </el-form-item>
           <el-form-item label="应收款时间" prop="receivableDate">
-            <el-date-picker v-model="addupdateForm.receivableDate" type="date" placeholder="选择时间" style="width: 100%" />
+            <el-date-picker
+              v-model="addupdateForm.receivableDate"
+              type="date"
+              placeholder="选择时间"
+              style="width: 100%"
+            />
           </el-form-item>
           <el-form-item label="备注" prop="remark">
-            <el-input v-model="addupdateForm.remark" type="textarea" :rows="4" placeholder="请输入备注" />
+            <el-input
+              v-model="addupdateForm.remark"
+              type="textarea"
+              :rows="4"
+              placeholder="请输入备注"
+            />
           </el-form-item>
         </el-form>
         <template #footer>
@@ -154,36 +177,55 @@
       </el-dialog>
 
       <!-- 客户选择抽屉 -->
-      <el-drawer v-model="showCustomerDrawer" title="客户列表" direction="rtl" size="80%" :with-header="true">
+      <el-drawer
+        v-model="showCustomerDrawer"
+        title="客户列表"
+        direction="rtl"
+        size="80%"
+        :with-header="true"
+      >
         <div style="display: flex; justify-content: flex-end; margin-bottom: 10px">
           <el-button type="primary" @click="handleCustomerSubmit">提交</el-button>
           <el-button @click="showCustomerDrawer = false">取消</el-button>
         </div>
         <el-table :data="customerList" style="width: 100%" highlight-current-row>
-          <el-table-column width="50" :fixed="true" label="">
-            <template #default="{ row }">
-              <el-radio :model-value="selectedCustomer && selectedCustomer.id" :label="row.id"
-                @change="() => handleCustomerRadio(row)">&nbsp;
+          <el-table-column
+            width="50"
+            :fixed="true"
+            label=""
+          >
+          <template #default="{ row }">
+              <el-radio
+                :model-value="selectedCustomer && selectedCustomer.id"
+                :label="row.id"
+                @change="() => handleCustomerRadio(row)"
+              >&nbsp;
               </el-radio>
             </template>
           </el-table-column>
           <el-table-column prop="customerCode" label="客户编号" />
           <el-table-column prop="customerName" label="客户名称" />
           <el-table-column prop="customerPhone" label="联系电话" />
-          <el-table-column prop="creationTime" label="创建时间">
+          <el-table-column prop="creationTime" label="创建时间" >
             <template #default="scope">
-              {{ scope.row.creationTime.substring(0, 19).replace("T", " ") }}
-            </template>
+            {{ scope.row.creationTime.substring(0, 19).replace("T", " ") }}
+          </template>
           </el-table-column>
         </el-table>
       </el-drawer>
 
       <!-- 高级搜索弹窗 -->
-      <el-dialog v-model="showAdvancedSearch" title="高级搜索" width="800px" :close-on-click-modal="false" append-to-body>
+      <el-dialog
+        v-model="showAdvancedSearch"
+        title="高级搜索"
+        width="800px"
+        :close-on-click-modal="false"
+        append-to-body
+      >
         <el-form :model="searchForm" label-width="100px" label-position="right">
           <el-form-item label="负责人" prop="userId">
             <el-select v-model="searchForm.UserId" placeholder="请输入负责人" style="width: 100%">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+              <el-option v-for="item in userList" :label="item.realName" :value="item.id" :key="item.id"/>
             </el-select>
           </el-form-item>
           <el-form-item label="创建人">
@@ -206,7 +248,12 @@
             <el-input v-model="searchForm.ReceivableCode" placeholder="请输入应收款编号" />
           </el-form-item>
           <el-form-item label="应收款时间" prop="receivableDate">
-            <el-date-picker v-model="searchForm.ReceivableDate" type="date" placeholder="应收款时间" style="width: 100%" />
+            <el-date-picker
+              v-model="searchForm.ReceivableDate"
+              type="date"
+              placeholder="应收款时间"
+              style="width: 100%"
+            />
           </el-form-item>
         </el-form>
         <template #footer>
@@ -216,7 +263,13 @@
       </el-dialog>
 
       <!-- 详情抽屉 -->
-      <el-drawer v-model="showDetailDrawer" title="应收款详情" size="60%" direction="rtl" :with-header="false">
+      <el-drawer
+        v-model="showDetailDrawer"
+        title="应收款详情"
+        size="60%"
+        direction="rtl"
+        :with-header="false"
+      >
         <div style="padding: 24px 32px 0 32px">
           <!-- 顶部编号和按钮 -->
           <div style="display: flex; align-items: center; justify-content: space-between">
@@ -228,7 +281,12 @@
             </div>
             <div>
               <el-button type="primary" size="small" @click="handleEditDetail">修改</el-button>
-              <el-button type="danger" size="small" style="margin-left: 8px" @click="handleDelete(detailData)">
+              <el-button
+                type="danger"
+                size="small"
+                style="margin-left: 8px"
+                @click="handleDelete(detailData)"
+              >
                 删除
               </el-button>
             </div>
@@ -236,13 +294,15 @@
 
           <!-- 基本信息分区 -->
           <div style="margin-top: 24px">
-            <div style="
+            <div
+              style="
                 font-weight: bold;
                 font-size: 15px;
                 border-left: 3px solid #faad14;
                 padding-left: 8px;
                 margin-bottom: 18px;
-              ">
+              "
+            >
               基本信息
             </div>
             <el-row :gutter="32">
@@ -298,20 +358,25 @@
           </div>
           <!-- 操作日志 -->
           <div>
-            <div style="
+            <div
+              style="
                 font-weight: bold;
                 font-size: 15px;
                 border-left: 3px solid #faad14;
                 padding-left: 8px;
                 margin-bottom: 18px;
-              ">
+              "
+            >
               操作日志
             </div>
           </div>
           <el-divider content-position="left"></el-divider>
           <div v-if="recordlist && recordlist.length">
-            <div v-for="item in recordlist" :key="item.id"
-              style="margin-bottom: 8px; display: flex; align-items: center">
+            <div
+              v-for="item in recordlist"
+              :key="item.id"
+              style="margin-bottom: 8px; display: flex; align-items: center"
+            >
               <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
               <span style="color: #1890ff">
                 <!-- 操作人ID（如有名字可替换为名字） -->
@@ -332,21 +397,42 @@
       </el-drawer>
 
       <!-- 修改收款抽屉 -->
-      <el-drawer v-model="showEditDrawer" title="修改收款" size="600px" direction="rtl" :with-header="true">
+      <el-drawer
+        v-model="showEditDrawer"
+        title="修改收款"
+        size="600px"
+        direction="rtl"
+        :with-header="true"
+      >
         <el-form ref="editFormRef" :model="editForm" label-width="110px" :rules="addRules">
           <el-form-item label="所属客户" prop="customerName" required>
             <el-select v-model="editForm.customerName" disabled placeholder="请选择">
-              <el-option v-for="item in customerList" :key="item.id" :label="item.customerName" :value="item.id" />
+              <el-option
+                v-for="item in customerList"
+                :key="item.id"
+                :label="item.customerName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="关联合同" prop="contractId" required>
             <el-select v-model="editForm.contractId" disabled placeholder="请选择">
-              <el-option v-for="item in contractList" :key="item.id" :label="item.contractName" :value="item.id" />
+              <el-option
+                v-for="item in contractList"
+                :key="item.id"
+                :label="item.contractName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="负责人" prop="userId" required>
             <el-select v-model="editForm.userId" placeholder="请选择">
-              <el-option v-for="item in userList" :key="item.id" :label="item.realName" :value="item.id" />
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.realName"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="应收款编号" prop="reactivebleCode">
@@ -356,8 +442,12 @@
             <el-input v-model="editForm.receivablePay" />
           </el-form-item>
           <el-form-item label="应收款时间" prop="receivableDate" required>
-            <el-date-picker v-model="editForm.receivableDate" type="datetime" value-format="YYYY-MM-DD HH:mm:ss"
-              style="width: 100%" />
+            <el-date-picker
+              v-model="editForm.receivableDate"
+              type="datetime"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              style="width: 100%"
+            />
           </el-form-item>
           <el-form-item label="备注" prop="remark">
             <el-input v-model="editForm.remark" type="textarea" :rows="3" />
@@ -554,7 +644,6 @@ function showCustomer(mode: "add" | "search") {
   const params = {
     PageIndex: 1,
     PageSize: 111,
-
   };
 
   CustomerAPI.GetCustomerPage(params)
@@ -587,21 +676,15 @@ function handleCustomerSubmit() {
     searchForm.CustomerName = selectedCustomer.value.customerName;
   }
   showCustomerDrawer.value = false;
-
-  // 根据客户ID筛选合同
-  GetcontractData(selectedCustomer.value.id);
 }
-
 
 // 获取合同列表数据
 const contractList: any = ref([]);
 //显示查询分页
-const GetcontractData = async (customerId: string) => {
+const GetcontractData = async () => {
   const pageForm = reactive({
     PageIndex: 1,
     PageSize: 111,
-    CustomerId: customerId,
-    CheckType: 0
   });
   CrmContractAPI.getInfo(pageForm)
     .then((res) => {
@@ -663,6 +746,7 @@ function handleAddSubmit() {
 // 页面加载时获取数据
 onMounted(() => {
   GetReceivables();
+  GetcontractData();
   UserData();
 });
 
@@ -806,15 +890,10 @@ function handleEditSubmit() {
   min-width: 90px;
   display: inline-block;
 }
-
 .ellipsis-cell {
-  white-space: nowrap;
-  /* 禁止换行 */
-  overflow: hidden;
-  /* 隐藏溢出内容 */
-  text-overflow: ellipsis;
-  /* 显示省略号（可选） */
-  max-width: 100%;
-  /* 确保不超出单元格 */
+  white-space: nowrap;      /* 禁止换行 */
+  overflow: hidden;         /* 隐藏溢出内容 */
+  text-overflow: ellipsis;  /* 显示省略号（可选） */
+  max-width: 100%;          /* 确保不超出单元格 */
 }
 </style>

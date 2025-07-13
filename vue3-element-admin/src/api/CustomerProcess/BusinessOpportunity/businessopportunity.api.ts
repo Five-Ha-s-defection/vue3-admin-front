@@ -61,14 +61,3 @@ export const DeleteBusinessOpportunity = (id: string) => {
     method: "delete",
   });
 };
-
-// 更新商机销售进度
-export const UpdateBusinessProgress = (id: string, salesProgressId: string | number) => {
-  return request({
-    url: `${BusinessOpportunity_BASE_URL}/${id}/update-progress`,
-    method: "put",
-    data: {
-      salesProgressId
-    }
-  });
-};

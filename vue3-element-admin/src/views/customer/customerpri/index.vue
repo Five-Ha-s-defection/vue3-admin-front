@@ -3,7 +3,7 @@
     <!-- 查询客户部分 -->
     <el-card class="search-card" shadow="never">
       <div class="clue-header">
-        <span>客户列表 | 总记录数：<b>{{ queryParams.totalCount }}</b> 条</span>
+        <span>线索列表 | 总记录数：<b>{{ queryParams.totalCount }}</b> 条</span>
       </div>
       <!-- 查看范围 -->
       <el-row class="clue-row" align="middle">
@@ -74,21 +74,16 @@
               </el-button>
             </template>
           </el-input>
-          <el-button style="width: 80px;" icon="el-icon-filter" class="mr8 clue-large-btn"
-            @click="advancedDialogVisible = true">
-            <el-icon>
-              <Filter />
-            </el-icon>
-            高级搜索
-          </el-button>
+          <el-button icon="el-icon-filter" class="mr8 clue-large-btn"
+            @click="advancedDialogVisible = true">高级搜索</el-button>
           <el-dropdown>
             <el-button class="clue-large-btn">操作<el-icon>
                 <ArrowDown />
               </el-icon></el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="openAbandonDialog(getSelectedClueIds())">放弃客户</el-dropdown-item>
-                <el-dropdown-item @click="openUserSelectDialog">客户转移</el-dropdown-item>
+                <el-dropdown-item>放弃客户</el-dropdown-item>
+                <el-dropdown-item>客户转移</el-dropdown-item>
                 <el-dropdown-item>删除客户</el-dropdown-item>
                 <el-dropdown-item>导出数据</el-dropdown-item>
                 <el-dropdown-item>Excel导入</el-dropdown-item>
@@ -99,47 +94,6 @@
         </el-col>
       </el-row>
     </el-card>
-
-    <!-- 转移线索弹出框 -->
-    <el-dialog v-model="userSelectDialogVisible" title="用户列表" width="900px">
-      <el-table :data="showuserList" style="width: 100%" :row-key="row => row.id" :current-row-key="selectUserId"
-        highlight-current-row @row-click="uhandleRowClick">
-        <el-table-column label="选择" width="60">
-          <template #default="{ row }">
-            <input v-model="selectUserId" type="radio" :value="String(row.userId)" :name="'assignUser'"
-              @click.stop="uhandleRowClick(row)" />
-          </template>
-        </el-table-column>
-
-        <el-table-column type="index" label="#" width="50" />
-        <el-table-column prop="realName" label="用户名" />
-        <el-table-column prop="email" label="电子邮箱" />
-        <el-table-column prop="phoneInfo" label="手机号" />
-        <el-table-column prop="roleName" label="用户角色" />
-      </el-table>
-      <template #footer>
-        <el-button @click="userSelectDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAssignSubmit">提交</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 放弃线索原因弹出框 -->
-    <el-dialog v-model="abandonDialogVisible" title="选择放弃原因" width="500px">
-      <el-form>
-        <el-form-item label="放弃原因">
-          <el-select v-model="abandonReason" placeholder="请选择放弃原因" style="width: 300px" filterable>
-            <el-option v-for="item in abandonReasonOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <div style="color: #409EFF; margin-left: 100px;">
-          备注：放弃后线索将进入公海
-        </div>
-      </el-form>
-      <template #footer>
-        <el-button @click="abandonDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAbandonSubmit">提交</el-button>
-      </template>
-    </el-dialog>
 
     <!-- 添加客户弹出框 -->
     <el-dialog v-model="addcustomerdialogVisible" title="添加客户" width="700">
@@ -482,9 +436,7 @@
         <el-table-column label="联系电话" prop="customerPhone" min-width="120">
           <template #default="{ row }">
             <span>{{ row.customerPhone }}</span>
-            <el-icon v-if="row.cluePhone !== 'string'" style="margin-left:4px;" class="phone-icon">
-              <Phone />
-            </el-icon>
+            <el-icon style="margin-left:4px;"><i class="el-icon-phone" /></el-icon>
           </template>
         </el-table-column>
         <el-table-column label="客户来源" prop="clueSourceName" min-width="100" />
@@ -524,7 +476,7 @@
             </template>
           </template>
         </el-table-column>
-        <el-table-column label="负责人" prop="realName" min-width="100" />
+        <el-table-column label="负责人" prop="userName" min-width="100" />
         <el-table-column label="创建人" prop="createName" min-width="100" />
       </el-table>
       <!-- 分页区域 -->
@@ -732,7 +684,7 @@
 import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload, Filter } from '@element-plus/icons-vue';
-import { GetUserSelect, GetCarFrameNumberSelect, GetCustomerLevelSelect, GetCustomerRegionSelect, GetCustomerSourceSelect, GetCustomerTypeSelect, ShowCustomerList, AddCustomer, CustomerAction, ShowUserList } from '@/api/CustomerProcess/Customer/customer.api';
+import { GetUserSelect, GetCarFrameNumberSelect, GetCustomerLevelSelect, GetCustomerRegionSelect, GetCustomerSourceSelect, GetCustomerTypeSelect, ShowCustomerList, AddCustomer } from '@/api/CustomerProcess/Customer/customer.api';
 import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
 import moment from 'moment';
 import dayjs from 'dayjs';
@@ -745,141 +697,6 @@ import { onBeforeUnmount, shallowRef } from 'vue'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 
 const user = useUserStore();
-
-//================转移客户===========================
-const selectUserId = ref(''); // 推荐用字符串
-const userSelectDialogVisible = ref(false); // 控制弹窗显示
-
-const uhandleRowClick = (row: any) => {
-  selectUserId.value = String(row.userId);
-};
-
-const openUserSelectDialog = () => {
-  showUser()
-  userSelectDialogVisible.value = true
-}
-
-const assignClue = async (customerIds: any, targetUserId: any) => {
-  if (!customerIds.length) {
-    ElMessage.warning('请先选择线索');
-    return;
-  }
-  // 判断目标用户是否为自己
-  if (targetUserId === user.userInfo.id) {
-    ElMessage.warning('目标用户无效，不能是自己');
-    return;
-  }
-  for (const customerId of customerIds) {
-    await CustomerAction({ customerId, actionType: 'assign', targetUserId });
-  }
-  ElMessage.success('分配成功');
-  // 刷新列表
-  fetchCustomerList()
-  showUser()
-};
-
-// 提交按钮
-const handleAssignSubmit = () => {
-  if (!selectUserId.value || selectUserId.value === 'undefined') {
-    ElMessage.warning('请选择分配对象');
-    return;
-  }
-  if (selectUserId.value === user.userInfo.id) {
-    ElMessage.warning('目标用户无效，不能是自己');
-    return;
-  }
-  assignClue(getSelectedClueIds(), selectUserId.value);
-  userSelectDialogVisible.value = false;
-};
-
-// 显示用户列表
-const showuserList = ref<any[]>([]);
-const queryUser = reactive({
-  Keyword: '', // string
-  PageIndex: 1, // int32
-  PageSize: 10, // int32
-  totalCount: 0, // 总记录数
-  pageCount: 0, // 总页数
-})
-const showUser = async () => {
-  const rawParams = {
-    Keyword: queryUser.Keyword,
-    PageIndex: queryUser.PageIndex,
-    PageSize: queryUser.PageSize,
-    totalCount: queryUser.totalCount, // 总记录数
-    pageCount: queryUser.pageCount, // 总页数
-  };
-  const params = filterParams(rawParams);
-
-  // 传递正确的分页参数
-  const res = await ShowUserList(params)
-  console.log("ShowUserList完整返回：", res.data)
-  showuserList.value = res.data
-  queryUser.totalCount = res.totalCount || 0; // 更新总记录数
-  queryUser.pageCount = res.pageCount || 0; // 更新总页数
-  console.log('showuserList:', showuserList.value);
-}
-
-//=================放弃原因==========================
-const abandonDialogVisible = ref(false);
-const abandonReason = ref('');
-const abandonCustomerIds = ref<any[]>([]);
-const abandonReasonOptions = [
-  { label: '放弃购买', value: '放弃购买' },
-  { label: '预算少', value: '预算少' },
-  { label: '信息有误', value: '信息有误' },
-];
-
-const openAbandonDialog = (customerIds: any[]) => {
-  if (!customerIds.length) {
-    ElMessage.warning('请先选择客户');
-    return;
-  }
-  abandonCustomerIds.value = customerIds;
-  abandonReason.value = '';
-  abandonDialogVisible.value = true;
-};
-
-const handleAbandonSubmit = async () => {
-  if (!abandonReason.value) {
-    ElMessage.warning('请选择放弃原因');
-    return;
-  }
-  let hasValid = false;
-  for (const customerId of abandonCustomerIds.value) {
-    const customer = customerList.value.find(item => item.id === customerId);
-    if (!customer) continue;
-    if (customer.userId !== user.userInfo.id) 
-    {
-      ElMessage.warning(`客户【${customer.customerName || customer.id}】不是你负责，不能放弃`);
-      continue;
-    }
-    console.log("状态",customer.customerPoolStatus)
-    if (customer.customerPoolStatus !== 1) {
-      ElMessage.warning(`客户【${customer.customerName || customer.id}】不是已分配状态，不能放弃`);
-      continue;
-    }
-    hasValid = true;
-    await CustomerAction({ customerId, actionType: 'abandon', abandonReason: abandonReason.value });
-  }
-  if (hasValid) {
-    ElMessage.success('放弃成功');
-    abandonDialogVisible.value = false;
-    fetchCustomerList();
-  }
-};
-
-//=================放弃客户========================
-const selectedRows = ref<any[]>([]); // 保存所有选中的行
-const handleSelectionChange = (rows: any) => {
-  selectedRows.value = rows;
-};
-
-const getSelectedClueIds = () => {
-  return selectedRows.value.map(row => row.id);
-};
-
-
 
 //=================添加客户附文本==================
 // 编辑器实例，必须用 shallowRef
@@ -1253,6 +1070,7 @@ const orderOptions = [
 
 const loading = ref(false);
 const customerList = ref<any[]>([]);
+const selectedIds = ref<any[]>([]);
 
 //定义查询显示参数
 const queryParams = reactive({
@@ -1284,7 +1102,6 @@ const queryParams = reactive({
   customerRegionId: 0,  //客户地区
   customerAddress: '',  //客户地址
   MatchMode: 0, // 0: 全部满足, 1: 部分满足
-  customerPoolStatus: 1
 });
 
 const advancedDialogVisible = ref(false);
@@ -1448,7 +1265,7 @@ const handleAdvancedSearch = () => {
   ElMessage.success('高级搜索已应用');
 };
 
-//显示客户列表信息
+//显示线索列表信息
 const fetchCustomerList = async () => {
   loading.value = true;
   try {
@@ -1480,8 +1297,7 @@ const fetchCustomerList = async () => {
       customerSourceId: queryParams.customerSourceId || null, // 客户来源
       customerRegionId: queryParams.customerRegionId || null,  //客户地区
       customerAddress: queryParams.customerAddress,  //客户地址
-      MatchMode: queryParams.MatchMode,
-      CustomerPoolStatus:queryParams.customerPoolStatus
+      MatchMode: queryParams.MatchMode
     };
     const params = filterParams(rawParams);
 
@@ -1493,7 +1309,6 @@ const fetchCustomerList = async () => {
     console.log('最终请求参数:', params);
     const res = await ShowCustomerList(params);
     customerList.value = res.data;
-    console.log('客户列表接口响应数据:', res.data);
     queryParams.totalCount = res.totalCount || 0; // 更新总记录数
     queryParams.pageCount = res.pageCount || 0; // 更新总页数
   } catch (e) {
@@ -1547,12 +1362,12 @@ const handleResetQuery = () => {
   queryParams.customerSourceId = 0; // 客户来源
   queryParams.customerRegionId = 0;  //客户地区
   queryParams.customerAddress = '';  //客户地址
-  queryParams.MatchMode = 0;
-  queryParams.CustomerPoolStatus = 1;
+  queryParams.MatchMode = 0
   handleQuery();
 };
-
-
+const handleSelectionChange = (val: any[]) => {
+  selectedIds.value = val.map(item => item.id);
+};
 
 //分页
 const handleSizeChange = (val: number) => {

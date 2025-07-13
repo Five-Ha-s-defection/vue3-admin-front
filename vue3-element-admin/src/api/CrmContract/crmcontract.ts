@@ -23,9 +23,9 @@ const CrmContractAPI = {
   },
 
   //删除单个合同
-  deleteContract(DeleteId: any) {
+  deleteContract(data: any) {
     return request({
-      url: `${CRM_CONTRACT_BASE_URL}/crm-contract/${DeleteId}`,
+      url: `${CRM_CONTRACT_BASE_URL}/crm-contract/${data.DeleteId}`,
       method: "delete",
     });
   },
@@ -48,24 +48,10 @@ const CrmContractAPI = {
   },
 
   //修改合同
-  updateContract(id:string,data: any) {
+  updateContract(data: any) {
     return request({
-      url: `${CRM_CONTRACT_BASE_URL}/${id}/crm-contract`,
+      url: `${CRM_CONTRACT_BASE_URL}/${data.id}/crm-contract`,
       method: "put",
-      data
-    });
-  },
-    GetCrmContractProduct(CrmContractId: string) {
-    return request({
-      url: `${CRM_CONTRACT_BASE_URL}/logs/${CrmContractId}`,
-      method: "get",
-    });
-  },
-  CrmContractInstance(id: string, approverId: string | undefined,data: { isPass: boolean, comment: string }) {
-    return request({
-      url: `${CRM_CONTRACT_BASE_URL}/${id}/approve/${approverId}`,
-      method: "post",
-      params: data,
     });
   },
 };
