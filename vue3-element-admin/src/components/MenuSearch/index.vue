@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div @click="openSearchModal">
     <div class="i-svg:search" />
     <el-dialog
@@ -28,7 +28,7 @@
       </template>
 
       <div class="search-result">
-        <!-- 搜索历史 -->
+        
         <template v-if="searchKeyword === '' && searchHistory.length > 0">
           <div class="search-history">
             <div class="search-history__title">
@@ -62,7 +62,7 @@
           </div>
         </template>
 
-        <!-- 搜索结果 -->
+        
         <template v-else>
           <ul v-if="displayResults.length > 0">
             <li
@@ -86,7 +86,7 @@
           </ul>
         </template>
 
-        <!-- 无搜索历史显示 -->
+        
         <div v-if="searchKeyword === '' && searchHistory.length === 0" class="no-history">
           <p class="no-history__text">没有搜索历史</p>
         </div>
@@ -121,9 +121,9 @@
       </template>
     </el-dialog>
   </div>
-</template>
+</template> -->
 
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 import router from "@/router";
 import { usePermissionStore } from "@/store";
 import { isExternal } from "@/utils";
@@ -312,9 +312,9 @@ function loadRoutes(routes: RouteRecordRaw[], parentPath = "") {
     }
   });
 }
-</script>
+</script> -->
 
-<style scoped lang="scss">
+<!-- <style scoped lang="scss">
 .search-result {
   max-height: 400px;
   overflow-y: auto;
@@ -519,5 +519,193 @@ html.dark {
   .key-btn::before {
     background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
   }
+}
+</style> -->
+<template>
+  <div>
+    <el-dialog v-model="visible" title="菜单搜索" width="500px" :close-on-click-modal="false">
+      <el-input v-model="keyword" placeholder="请输入菜单名称关键词" clearable @input="onSearchInput"
+        @keyup.enter="searchMenusS" />
+
+      <el-scrollbar height="300px" class="mt-3">
+        <el-empty v-if="searchResults.length === 0 && !loading" description="暂无搜索结果" />
+        <ul v-else class="menu-result-list">
+          <li v-for="item in searchResults" :key="item.id" class="result-item" @click="goToMenu(item)">
+            <div v-html="item.highlightedMenuName || item.menuName"></div>
+            <div class="menu-path">{{ item.menuPath }}</div>
+          </li>
+        </ul>
+      </el-scrollbar>
+
+      <el-pagination class="mt-3" background layout="prev, pager, next" :total="total" :page-size="pageSize"
+        :current-page="pageIndex" @current-change="handlePageChange" />
+    </el-dialog>
+
+    <!-- 搜索图标按钮 -->
+    <el-button icon="Search" circle class="menu-search-btn" @click="visible = true" />
+  </div>
+
+  <!-- 搜索输入框下显示最近搜索 -->
+  <div v-if="recentKeywords.length && keyword === ''" class="recent-keywords">
+    <div class="header">
+      <span>最近搜索</span>
+      <el-button type="text" size="small" @click="clearRecentKeywords">清除</el-button>
+    </div>
+    <el-tag v-for="item in recentKeywords" :key="item" class="mr-2 mb-2" type="info" @click="useKeyword(item)">
+      {{ item }}
+    </el-tag>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from "vue";
+import { ElMessage } from "element-plus";
+import { useRouter } from "vue-router";
+import { MenuSearchResultDto } from "@/types/menu"; // 你定义的类型
+import { searchMenus } from "@/api/MenuSearch/menuSearch.api"; // 你定义的搜索 API
+
+const visible = ref(false);
+const keyword = ref("");
+const searchResults = ref<MenuSearchResultDto[]>([]);
+const loading = ref(false);
+
+const pageIndex = ref(1);
+const pageSize = ref(10);
+const total = ref(0);
+
+const router = useRouter();
+
+// 搜索菜单数据
+const searchMenusS = async () => {
+  if (!keyword.value.trim()) return;
+
+  loading.value = true;
+  try {
+    const res:any = await searchMenus({
+      keyword: keyword.value,
+      pageIndex: pageIndex.value,
+      pageSize: pageSize.value,
+    });
+    if (res) {
+      searchResults.value = res.data;
+      total.value = res.totalCount;
+    } else {
+      ElMessage.error(res.message);
+    }
+  } catch (e) {
+    ElMessage.error("搜索失败");
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handlePageChange = (page: number) => {
+  pageIndex.value = page;
+  searchMenusS();
+};
+
+const onSearchInput = () => {
+  pageIndex.value = 1;
+  searchMenusS();
+};
+
+const goToMenu = (item: MenuSearchResultDto) => {
+  visible.value = false;
+  if (item.path) {
+    router.push(item.path);
+  } else {
+    ElMessage.warning("该菜单未配置路由");
+  }
+};
+
+// 支持 Ctrl + K 快捷打开
+onMounted(() => {
+  window.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      visible.value = true;
+    }
+  });
+});
+
+const RECENT_KEYWORDS_KEY = "menu_recent_keywords";
+const MAX_HISTORY = 10;
+
+const recentKeywords = ref<string[]>([]);
+
+// 加载历史记录
+const loadRecentKeywords = () => {
+  const raw = localStorage.getItem(RECENT_KEYWORDS_KEY);
+  recentKeywords.value = raw ? JSON.parse(raw) : [];
+};
+
+// 保存历史记录
+const saveKeyword = (word: string) => {
+  const list = recentKeywords.value.filter(k => k !== word);
+  list.unshift(word); // 最新在最前
+  if (list.length > MAX_HISTORY) list.pop();
+  localStorage.setItem(RECENT_KEYWORDS_KEY, JSON.stringify(list));
+  recentKeywords.value = list;
+};
+
+const clearRecentKeywords = () => {
+  localStorage.removeItem(RECENT_KEYWORDS_KEY);
+  recentKeywords.value = [];
+};
+
+const useKeyword = (word: string) => {
+  keyword.value = word;
+  searchMenusS();
+  saveKeyword(keyword.value); // 保存搜索关键词
+};
+onMounted(() => {
+  loadRecentKeywords();
+
+  window.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      visible.value = true;
+    }
+  });
+});
+</script>
+
+<style scoped>
+.recent-keywords {
+  margin-top: 10px;
+}
+.recent-keywords .header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #999;
+}
+.menu-result-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.result-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.result-item:hover {
+  background-color: #f5f7fa;
+}
+
+.menu-path {
+  font-size: 12px;
+  color: #999;
+}
+
+.menu-search-btn {
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  z-index: 9999;
 }
 </style>
