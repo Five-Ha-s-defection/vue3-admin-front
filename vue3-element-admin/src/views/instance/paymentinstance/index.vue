@@ -1,7 +1,6 @@
 <template>
   <div>
-
-    <el-card style="margin-top: 10px">
+    <el-card>
       <!-- 顶部筛选区 -->
       <div style="margin-bottom: 16px">
         <div style="display: flex; align-items: center; margin-bottom: 8px">
@@ -29,19 +28,13 @@
           </el-radio-group>
         </div>
       </div>
-    </el-card>
-    <el-card style="margin-top: 10px">
       <el-table ref="tableRef" v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据"
         @selection-change="handleSelectionChange" @row-click="handleRowClick">
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="paymentCode" label="收款编号">
-          <template #default="scope">
-            <span class="ellipsis-cell">{{ scope.row.paymentCode || "-" }}</span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="paymentCode" label="收款编号" />
         <el-table-column label="状态">
           <template #default="scope">
-            <span class="ellipsis-cell" :style="{
+            <span :style="{
               color:
                 scope.row.paymentStatus === 0
                   ? '#faad14'
@@ -67,58 +60,20 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="receivablePay" label="应收款">
-          <template #default="scope">
-            <span class="ellipsis-cell">{{ scope.row.receivablePay || "-" }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="amount" label="实际收款金额">
-          <template #default="scope">
-            <span class="ellipsis-cell">{{ scope.row.amount || "-" }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="paymentMethodName" label="收款方式">
-          <template #default="scope">
-            <span class="ellipsis-cell">{{ scope.row.paymentMethodName || "-" }}</span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="receivablePay" label="应收款" />
+        <el-table-column prop="amount" label="实际收款金额" />
+        <el-table-column prop="paymentMethodName" label="收款方式" />
         <el-table-column prop="paymentDate" label="收款时间">
           <template #default="scope">
-            <span class="ellipsis-cell">{{ scope.row.paymentDate?.substring(0, 10) || "-" }}</span>
+            {{ scope.row.paymentDate.substring(0, 10) }}
           </template>
         </el-table-column>
-        <el-table-column prop="customerName" label="所属客户">
-          <template #default="scope">
-            <span class="ellipsis-cell">{{ scope.row.customerName || "-" }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="contractName" label="关联合同">
-          <template #default="scope">
-            <span class="ellipsis-cell">{{ scope.row.contractName || "-" }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="realName" label="负责人">
-          <template #default="scope">
-            <span class="ellipsis-cell">{{ scope.row.realName || "-" }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="auditorNames" label="审核人">
-          <template #default="scope">
-            <span class="ellipsis-cell">{{ scope.row.auditorNames || "-" }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="currentAuditorName" label="当前审核人">
-          <template #default="scope">
-            <span class="ellipsis-cell">{{ scope.row.currentAuditorName || "-" }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="creatorRealName" label="创建人">
-          <template #default="scope">
-            <span class="ellipsis-cell">{{ scope.row.creatorRealName || "-" }}</span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="customerName" label="所属客户" />
+        <el-table-column prop="contractName" label="关联合同" />
+        <el-table-column prop="realName" label="负责人" />
+        <el-table-column prop="auditorNames" label="审核人" />
+        <el-table-column prop="creatorRealName" label="创建人" />
       </el-table>
-
 
       <!-- 分页区域 -->
       <div style="margin-top: 16px; display: flex; justify-content: center">
@@ -127,28 +82,27 @@
           layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
           @current-change="handleCurrentChange" />
       </div>
-    </el-card>
 
-    <!-- 客户选择抽屉 -->
-    <el-drawer v-model="showCustomerDrawer" title="客户列表" direction="rtl" size="80%" :with-header="true">
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 10px">
-        <el-button type="primary" @click="handleCustomerSubmit">提交</el-button>
-        <el-button @click="showCustomerDrawer = false">取消</el-button>
-      </div>
-      <el-table :data="customerList" style="width: 100%" highlight-current-row>
-        <el-table-column type="selection" width="50" :selectable="() => true" :reserve-selection="false"
-          :show-overflow-tooltip="false" :fixed="true" :label="''">
-          <template #default="{ row }">
-            <el-radio :model-value="selectedCustomer && selectedCustomer.id" :label="row.id"
-              @change="() => handleCustomerRadio(row)" />
-          </template>
-        </el-table-column>
-        <el-table-column prop="id" label="客户编号" />
-        <el-table-column prop="customerName" label="客户名称" />
-        <el-table-column prop="customerPhone" label="联系电话" />
-        <el-table-column prop="creationTime" label="创建时间" />
-      </el-table>
-    </el-drawer>
+      <!-- 客户选择抽屉 -->
+      <el-drawer v-model="showCustomerDrawer" title="客户列表" direction="rtl" size="80%" :with-header="true">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px">
+          <el-button type="primary" @click="handleCustomerSubmit">提交</el-button>
+          <el-button @click="showCustomerDrawer = false">取消</el-button>
+        </div>
+        <el-table :data="customerList" style="width: 100%" highlight-current-row>
+          <el-table-column width="50"  :fixed="true" :label="''">
+            <template #default="{ row }">
+              <el-radio :model-value="selectedCustomer && selectedCustomer.id" :label="row.id"
+                @change="() => handleCustomerRadio(row)" >&nbsp;</el-radio>
+            </template>
+          </el-table-column>
+          <el-table-column prop="id" label="客户编号" />
+          <el-table-column prop="customerName" label="客户名称" />
+          <el-table-column prop="customerPhone" label="联系电话" />
+          <el-table-column prop="creationTime" label="创建时间" />
+        </el-table>
+      </el-drawer>
+    </el-card>
 
     <el-drawer v-model="showDetailDrawer" title="收款详情" size="60%" direction="rtl" :with-header="false">
       <div style="padding: 24px 32px 0 32px">
@@ -274,20 +228,25 @@
           </el-row>
         </div>
 
-        <!-- 审核信息 -->
-        <div style="
+         <!-- 审核信息 -->
+        <div
+          style="
             font-weight: bold;
             font-size: 15px;
             border-left: 3px solid #faad14;
             padding-left: 8px;
             margin-bottom: 18px;
-          ">
+          "
+        >
           审核信息
         </div>
         <el-divider content-position="left"></el-divider>
         <div v-if="detailData.approveComments && detailData.approveComments.length">
-          <div v-for="(comment, idx) in detailData.approveComments" :key="idx"
-            style="margin-bottom: 8px; display: flex; align-items: center">
+          <div
+            v-for="(comment, idx) in detailData.approveComments"
+            :key="idx"
+            style="margin-bottom: 8px; display: flex; align-items: center"
+          >
             <el-icon style="margin-right: 4px"><el-icon-user /></el-icon>
             <span style="color: #1890ff">{{ getUserNameById(detailData.approverIds?.[idx]) }}</span>
             <span style="margin-left: 8px; color: #999">
@@ -314,9 +273,32 @@
           <el-table-column prop="invoiceNumberCode" label="发票编号" />
           <el-table-column prop="invoiceStatus" label="状态">
             <template #default="scope">
-              <span v-if="scope.row.invoiceStatus === 0">未开票</span>
-              <span v-else-if="scope.row.invoiceStatus === 1">已开票</span>
-              <span v-else>--</span>
+              <span
+                :style="{
+                  color:
+                    scope.row.invoiceStatus === 0
+                      ? '#faad14'
+                      : scope.row.invoiceStatus === 1
+                        ? '#1890ff'
+                        : scope.row.invoiceStatus === 2
+                          ? '#52c41a'
+                          : scope.row.invoiceStatus === 3
+                            ? '#f5222d'
+                            : '#999',
+                }"
+              >
+                {{
+                  scope.row.invoiceStatus === 0
+                    ? "待审核"
+                    : scope.row.invoiceStatus === 1
+                      ? "审核中"
+                      : scope.row.invoiceStatus === 2
+                        ? "已通过"
+                        : scope.row.invoiceStatus === 3
+                          ? "已驳回"
+                          : "未知状态"
+                }}
+              </span>
             </template>
           </el-table-column>
           <el-table-column prop="amount" label="开票金额" />
@@ -336,19 +318,25 @@
 
         <!-- 操作日志 -->
         <div>
-          <div style="
+          <div
+            style="
               font-weight: bold;
               font-size: 15px;
               border-left: 3px solid #faad14;
               padding-left: 8px;
               margin-bottom: 18px;
-            ">
+            "
+          >
             操作日志
           </div>
         </div>
         <el-divider content-position="left"></el-divider>
         <div v-if="recordlist && recordlist.length">
-          <div v-for="item in recordlist" :key="item.id" style="margin-bottom: 8px; display: flex; align-items: center">
+          <div
+            v-for="item in recordlist"
+            :key="item.id"
+            style="margin-bottom: 8px; display: flex; align-items: center"
+          >
             <el-icon style="vertical-align: middle; margin-right: 4px"><el-icon-user /></el-icon>
             <span style="color: #1890ff">
               <!-- 操作人ID（如有名字可替换为名字） -->
@@ -372,7 +360,7 @@
     <el-drawer v-model="showEditDrawer" title="修改收款" size="600px" direction="rtl" :with-header="true">
       <el-form ref="editFormRef" :model="editForm" :rules="addRules" label-width="120px">
         <el-form-item label="所属客户" prop="customerName">
-          <el-input v-model="editForm.customerName" @click="showCustomer" />
+          <el-input v-model="editForm.customerName" disabled/>
         </el-form-item>
         <el-form-item label="关联合同" prop="contractId">
           <el-select v-model="editForm.contractId" placeholder="请选择合同" style="width: 100%" disabled>
@@ -439,7 +427,6 @@
 import { ref, reactive, onMounted, onActivated } from "vue";
 import ReceivablesViewAPI from "@/api/Finance/receivables.api";
 import PaymentViewAPI, { PaymentSearch } from "@/api/Finance/payment.api";
-import CustomerAPI from "@/api/CustomerProcess/Customer/customer.api";
 import CrmContractAPI from "@/api/CrmContract/crmcontract";
 import UserAPI from "@/api/User/user.api";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -617,23 +604,6 @@ function handleCurrentChange(val: number) {
 // 客户列表数据（实际应从API获取，这里举例）
 const customerList: any = ref([]);
 
-function showCustomer() {
-  showCustomerDrawer.value = true;
-  const params = {
-    PageIndex: 1,
-    PageSize: 111,
-  };
-
-  CustomerAPI.GetCustomerPage(params)
-    .then((res) => {
-      console.log("客户列表数据", res.data);
-      customerList.value = res.data;
-    })
-    .finally(() => {
-      loading.value = false;
-    });
-}
-
 // 当前选中的客户
 const selectedCustomer = ref<any>(null);
 // 选择客户单选逻辑
@@ -710,6 +680,7 @@ function handleSelectionChange(selection: any) {
   selectedRows.value = selection;
 }
 
+
 // 处理表格行点击事件，显示详情抽屉
 const showDetailDrawer = ref(false);
 // 详情数据
@@ -738,11 +709,11 @@ function fetchInvoiceList(PaymentId: string) {
 // 获取操作日志列表数据
 const recordlist: any = ref([]);
 //显示查询分页
-const RecordData = async (id: any) => {
+const RecordData = async (id:any) => {
   const params = {
     bizType: "payment",
-  };
-  console.log("操作日志列表数据id", id);
+  }
+  console.log("操作日志列表数据id",id);
   try {
     const list = await RecordAPI.GetRecord(params, id);
     console.log("操作日志列表数据:", list);
@@ -750,7 +721,8 @@ const RecordData = async (id: any) => {
   } catch (err: any) {
     console.error("获取操作日志列表失败:", err.message);
   }
-};
+   
+}
 
 // 删除应收款
 function handleDelete(row: any) {
@@ -865,15 +837,10 @@ async function handleApproveSubmit() {
   min-width: 90px;
   display: inline-block;
 }
-
 .ellipsis-cell {
-  white-space: nowrap;
-  /* 禁止换行 */
-  overflow: hidden;
-  /* 隐藏溢出内容 */
-  text-overflow: ellipsis;
-  /* 显示省略号（可选） */
-  max-width: 100%;
-  /* 确保不超出单元格 */
+  white-space: nowrap;      /* 禁止换行 */
+  overflow: hidden;         /* 隐藏溢出内容 */
+  text-overflow: ellipsis;  /* 显示省略号（可选） */
+  max-width: 100%;          /* 确保不超出单元格 */
 }
 </style>

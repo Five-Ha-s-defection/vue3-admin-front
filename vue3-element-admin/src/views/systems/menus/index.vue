@@ -50,13 +50,10 @@
           <el-input v-model="form.menuName" placeholder="请输入菜单名称" />
         </el-form-item>
         <el-form-item label="路由路径" prop="path">
-          <el-input v-model="form.path" placeholder="如 /system/menu，是一个相对路径" />
+          <el-input v-model="form.path" placeholder="如 /system/menu" />
         </el-form-item>
         <el-form-item label="组件路径" prop="component">
-          <el-input
-            v-model="form.component"
-            placeholder="如 system/menu/index，需要和自己手动创建的文件夹路径一样,并且区分大小写"
-          />
+          <el-input v-model="form.component" placeholder="如 system/menu/index" />
         </el-form-item>
         <el-form-item label="图标" prop="icon">
           <el-select

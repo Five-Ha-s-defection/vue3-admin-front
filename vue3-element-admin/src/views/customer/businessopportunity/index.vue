@@ -74,13 +74,8 @@
               </el-button>
             </template>
           </el-input>
-          <el-button style="width: 80px;" icon="el-icon-filter" class="mr8 clue-large-btn"
-            @click="advancedDialogVisible = true">
-            <el-icon>
-              <Filter />
-            </el-icon>
-            高级搜索
-          </el-button>
+          <el-button icon="el-icon-filter" class="mr8 clue-large-btn"
+            @click="advancedDialogVisible = true">高级搜索</el-button>
           <el-dropdown>
             <el-button class="clue-large-btn">操作<el-icon>
                 <ArrowDown />
@@ -98,53 +93,75 @@
       </el-row>
     </el-card>
 
-    <!-- 添加商机弹出框 -->
-    <el-dialog v-model="addbusinessdialogVisible" title="添加客户" width="700">
+    <!-- 添加客户弹出框 -->
+    <el-dialog v-model="addcustomerdialogVisible" title="添加客户" width="700">
       <el-form ref="ruleFormRef" style="max-width: 600px" :model="ruleForm" :rules="rules" label-width="auto">
-        <el-form-item label="所属客户" prop="customerId">
-          <el-select v-model="ruleForm.customerId" placeholder="请选择客户">
-            <el-option v-for="item in selcustomerList" :label="item.customerName" :value="item.id" />
+        <el-form-item label="客户负责人">
+          <el-select v-model="ruleForm.userId" placeholder="请选择负责人">
+            <el-option v-for="item in userList" :label="item.userName" :value="item.id" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="优先级" prop="priorityId">
-          <el-select v-model="ruleForm.priorityId" placeholder="请选择优先级">
-            <el-option v-for="item in priorityList" :label="item.priorityName" :value="item.id" />
+        <el-form-item label="姓名" prop="customerName">
+          <el-input v-model="ruleForm.customerName" />
+        </el-form-item>
+
+        <el-form-item label="到期时间" required>
+          <el-date-picker v-model="ruleForm.customerExpireTime" type="datetime" placeholder="选择时间" />
+        </el-form-item>
+
+        <el-form-item label="体检金额">
+          <el-input v-model="ruleForm.checkAmount" />
+        </el-form-item>
+
+        <el-form-item label="车架号">
+          <el-select v-model="ruleForm.carFrameNumberId" placeholder="请选择车架号">
+            <el-option v-for="item in carList" :label="item.carFrameNumberName" :value="item.id" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="商机名称" prop="businessOpportunityName">
-          <el-input v-model="ruleForm.businessOpportunityName" />
-        </el-form-item>
-
-        <el-form-item label="销售进度" prop="salesProgressId">
-          <el-select v-model="ruleForm.salesProgressId" placeholder="请选择销售进度">
-            <el-option v-for="item in salesProgressList" :label="item.salesProgressName" :value="item.id" />
+        <el-form-item label="客户级别">
+          <el-select v-model="ruleForm.customerLevelId" placeholder="请选择客户级别">
+            <el-option v-for="item in levelList" :label="item.customerLevelName" :value="item.id" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="预算金额">
-          <el-input v-model="ruleForm.budget" />
+        <el-form-item label="联系电话" prop="customerPhone">
+          <el-input v-model="ruleForm.customerPhone" maxlength="11" show-word-limit />
         </el-form-item>
 
-        <el-form-item label="预计成交日期">
-          <el-date-picker v-model="ruleForm.expectedDate" type="datetime" placeholder="选择时间" />
+        <el-form-item label="邮箱">
+          <el-input v-model="ruleForm.customerEmail" />
+        </el-form-item>
+
+        <el-form-item label="客户类别">
+          <el-select v-model="ruleForm.customerTypeId" placeholder="请选择客户类别">
+            <el-option v-for="item in typeList" :label="item.customerTypeName" :value="item.id" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="客户来源">
+          <el-select v-model="ruleForm.customerSourceId" placeholder="请选择客户来源">
+            <el-option v-for="item in customersourceList" :label="item.clueSourceName" :value="item.id" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="客户地区">
+          <el-cascader v-model="ruleForm.customerRegionId" :options="regionList" :props="props1" clearable
+            :show-all-levels="false" />
+        </el-form-item>
+
+        <el-form-item label="客户地址">
+          <el-input v-model="ruleForm.customerAddress" />
         </el-form-item>
 
         <el-form-item label="备注">
           <div style="border: 1px solid #ccc">
             <Toolbar style="border-bottom: 1px solid #ccc" :editor="editorRef" :default-config="toolbarConfig" />
-            <Editor v-model="ruleForm.remark" style="height: 500px; overflow-y: hidden;" :default-config="editorConfig"
-              @on-created="handleCreated" />
+            <Editor v-model="ruleForm.customerRemark" style="height: 500px; overflow-y: hidden;"
+              :default-config="editorConfig" @on-created="handleCreated" />
           </div>
         </el-form-item>
-
-        <el-form-item label="所属产品">
-          <el-select v-model="ruleForm.productId" placeholder="请选择商品">
-            <el-option v-for="item in productList" :label="item.productBrand" :value="item.id" />
-          </el-select>
-        </el-form-item>
-
         <el-form-item>
           <el-button type="primary" @click="submitForm(ruleFormRef)">
             提交
@@ -154,28 +171,30 @@
       </el-form>
     </el-dialog>
 
-    <!-- 弹出抽屉，显示商机详情 -->
+    <!-- 弹出抽屉，显示客户详情 -->
     <el-drawer v-model="table" direction="rtl" size="60%" :with-header="false">
       <div class="clue-detail-new-container">
         <!-- 顶部横向信息区：线索名称和操作按钮 -->
         <div class="drawer-top-row">
-          <!-- 商机名称 -->
-          <div class="drawer-title-big">{{ currentBusiness?.businessOpportunityName || '-' }}</div>
+          <!-- 客户名称 -->
+          <div class="drawer-title-big">{{ currentCustomer?.customerName || '-' }}</div>
           <!-- 右侧操作按钮区 -->
           <div class="drawer-btns">
-            <el-button type="primary">修改</el-button>
+            <el-button type="primary">转客户</el-button>
+            <el-button>放弃</el-button>
+            <el-button>转移</el-button>
             <el-button type="danger">删除</el-button>
           </div>
         </div>
         <!-- 线索基础信息区，横向排列 -->
         <div class="drawer-info-row">
           <!-- 负责人 -->
-          <div class="info-item"><span>负责人</span>{{ currentBusiness?.userName || '--' }}</div>
+          <div class="info-item"><span>负责人</span>{{ currentCustomer?.userName || '--' }}</div>
           <!-- 最后跟进时间，若无效则显示自定义图标 -->
           <div class="info-item">
             <span>最后跟进</span>
-            <template v-if="isValidTime(currentBusiness?.lastFollowTime)">
-              {{ moment(currentBusiness.lastFollowTime).format('YYYY-MM-DD HH:mm') }}
+            <template v-if="isValidTime(currentCustomer?.lastFollowTime)">
+              {{ moment(currentCustomer.lastFollowTime).format('YYYY-MM-DD HH:mm') }}
             </template>
             <template v-else>
               <StopIcon style="font-size:32px;color:#bbb;" />
@@ -184,77 +203,81 @@
           <!-- 下次联系时间，若无效则显示自定义图标 -->
           <div class="info-item">
             <span>下次联系时间</span>
-            <template v-if="isValidTime(currentBusiness?.nextContactTime)">
-              {{ moment(currentBusiness.nextContactTime).format('YYYY-MM-DD HH:mm') }}
+            <template v-if="isValidTime(currentCustomer?.nextContactTime)">
+              {{ moment(currentCustomer.nextContactTime).format('YYYY-MM-DD HH:mm') }}
             </template>
             <template v-else>
               <StopIcon style="font-size:32px;color:#bbb;" />
             </template>
           </div>
           <!-- 创建时间 -->
-          <div class="info-item"><span>创建时间</span>{{ currentBusiness?.creationTime ?
-            moment(currentBusiness.creationTime).format('YYYY-MM-DD HH:mm') : '--' }}</div>
+          <div class="info-item"><span>创建时间</span>{{ currentCustomer?.creationTime ?
+            moment(currentCustomer.creationTime).format('YYYY-MM-DD HH:mm') : '--' }}</div>
           <!-- 创建人 -->
-          <div class="info-item"><span>创建人</span>{{ currentBusiness?.createName || '--' }}</div>
+          <div class="info-item"><span>创建人</span>{{ currentCustomer?.createName || '--' }}</div>
           <!-- 负责人 -->
           <div class="info-item"><span>录入方式</span>手动录入</div>
         </div>
-          <!-- ======================== 销售进度条 ======================== -->
-          <div class="sales-progress-container">
-            <div class="sales-progress-wrapper">
-              <div class="sales-process-flow">
-                <div 
-                  v-for="(step, index) in progressSteps" 
-                  :key="step.id"
-                  :class="['process-step', { 
-                    'active': index <= activeStepIndex, 
-                    'current': index === activeStepIndex 
-                  }]"
-                  @click="updateProgress(index)"
-                >
-                  {{ step.salesProgressName }}
-                  <div class="arrow-right" v-if="index < progressSteps.length - 1"></div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-        <!-- 商机详情标题和分割线 -->
+        <!-- 线索详情标题和分割线 -->
         <div class="clue-detail-title-row">
-          <!-- <span class="clue-detail-title">商机详情</span> -->
+          <!-- <span class="clue-detail-title">线索详情</span> -->
           <el-tabs v-model="activeTabcus" class="clue-detail-tabs" style="position:relative;">
-            <!-- 商机详情tab -->
-            <el-tab-pane label="商机详情" name="business">
+            <!-- 客户详情tab -->
+            <el-tab-pane label="客户详情" name="contact">
               <div class="contact-records">
+                <!-- 按钮 -->
+                <el-button type="primary" size="small"
+                  style="text-align: right; margin-top: 20px;width: 80px;">修改</el-button>
                 <!-- 线索详情tab，分两列展示 -->
                 <div class="detail-table-flex">
                   <!-- 左侧信息列 -->
                   <div class="detail-table-col">
-                    <div class="detail-row"><span>商机编号</span>{{ currentBusiness?.businessOpportunityCode }}</div>
-                    <div class="detail-row"><span>优先级</span>{{ currentBusiness?.priorityName }}</div>
-                    <div class="detail-row"><span>预算金额</span>{{ currentBusiness?.budget || '--' }}</div>
-                    <div class="detail-row">
-                      <span>备注</span>
-                      {{ !currentBusiness?.remark || currentBusiness.remark === 'string' ? '--' : currentBusiness.remark }}
-                    </div>
+                    <div class="detail-row"><span>客户编号</span>{{ currentCustomer?.customerCode }}</div>
+                    <div class="detail-row"><span>客户名称</span>{{ currentCustomer?.customerName }}</div>
+                    <div class="detail-row"><span>体检金额</span>{{ currentCustomer?.checkAmount || '--' }}</div>
+                    <div class="detail-row"><span>到期时间</span>{{ currentCustomer?.customerExpireTime }}</div>
+                    <div class="detail-row"><span>客户级别</span>{{ currentCustomer?.customerLevelName }}</div>
+                    <div class="detail-row"><span>邮箱</span>{{ displayValue(currentCustomer?.customerEmail) }}</div>
+                    <div class="detail-row"><span>客户来源</span>{{ displayValue(currentCustomer?.clueSourceName) }}</div>
+                    <div class="detail-row"><span>客户地址</span>{{ displayValue(currentCustomer?.customerAddress) }}</div>
+                    <div class="detail-row"><span>备注</span>{{ currentCustomer?.customerRemark }}</div>
                   </div>
                   <!-- 右侧信息列 -->
                   <div class="detail-table-col">
-                    <div class="detail-row"><span>所属客户</span>{{ displayValue(currentBusiness?.customerName) }}</div>
-                    <div class="detail-row"><span>商机名称</span>{{ displayValue(currentBusiness?.businessOpportunityName) }}</div>
-                    <div class="detail-row"><span>预计成交日期</span>{{ currentBusiness?.expectedDate ? moment(currentBusiness.expectedDate).format('YYYY-MM-DD HH:mm:ss') : '--' }}
+                    <div class="detail-row"><span>车架号</span>{{ displayValue(currentCustomer?.carFrameNumberName) }}
+                    </div>
+                    <div class="detail-row">
+                      <span>电话</span>
+                      <span>
+                        {{ displayValue(currentCustomer?.customerPhone) }}
+                        <el-icon v-if="currentCustomer?.customerPhone" class="phone-icon">
+                          <Phone />
+                        </el-icon>
+                      </span>
+                    </div>
+                    <div class="detail-row"><span>客户类别</span>{{ displayValue(currentCustomer?.customerTypeName) }}</div>
+                    <div class="detail-row"><span>客户地区</span>{{ displayValue(currentCustomer?.customerRegionName) }}
                     </div>
                   </div>
                 </div>
               </div>
             </el-tab-pane>
-            <!-- 产品详情tab -->
-            <el-tab-pane label="产品详情" name="product">
-              <div style="padding:32px 0;text-align:center;color:#bbb;">暂无产品详情</div>
+            <!-- 联系人详情tab -->
+            <el-tab-pane label="联系人" name="attachment">
+              <div style="padding:32px 0;text-align:center;color:#bbb;">暂无联系人</div>
             </el-tab-pane>
-            <!-- 合同详情tab -->
-            <el-tab-pane label="合同" name="contact">
+            <!-- 联系人详情tab -->
+            <el-tab-pane label="商机" name="attachment">
+              <div style="padding:32px 0;text-align:center;color:#bbb;">暂无商机</div>
+            </el-tab-pane>
+            <!-- 联系人详情tab -->
+            <el-tab-pane label="合同" name="attachment">
               <div style="padding:32px 0;text-align:center;color:#bbb;">暂无合同</div>
+            </el-tab-pane>
+            <!-- 联系人详情tab -->
+            <el-tab-pane label="财务" name="attachment">
+              <div style="padding:32px 0;text-align:center;color:#bbb;">暂无财务</div>
             </el-tab-pane>
           </el-tabs>
         </div>
@@ -262,7 +285,7 @@
         <!-- 详情tab区 -->
         <el-tabs v-model="activeTab" class="clue-detail-tabs" style="position:relative;">
           <!-- 联系记录tab -->
-          <el-tab-pane label="联系记录" name="communication">
+          <el-tab-pane label="联系记录" name="contact">
             <div class="contact-records">
               <!-- 添加联系记录按钮 -->
               <el-button type="primary" icon="Edit" @click="AddCommunication()">添加联系记录</el-button>
@@ -386,16 +409,16 @@
       </template>
     </el-dialog>
 
-    <!-- 显示商机列表信息 -->
+    <!-- 显示客户列表信息 -->
     <!-- 表格区域和分页保持不变 -->
     <el-card class="table-card" shadow="never">
       <el-table v-loading="loading" :data="customerList" style="width: 100%" @selection-change="handleSelectionChange"
         @row-click="handleRowClick">
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column label="优先级" prop="priorityName" width="80" align="center" />
-        <el-table-column label="商机名称" prop="businessOpportunityName" width="120" align="center" />
-        <el-table-column label="所属客户" prop="customerName" min-width="100" />
-        <el-table-column label="销售进度" prop="salesProgressName" min-width="100" />
+        <el-table-column label="优先级" prop="customerName" width="80" align="center" />
+        <el-table-column label="商机名称" prop="customerEmail" width="120" align="center" />
+        <el-table-column label="所属客户" prop="clueSourceName" min-width="100" />
+        <el-table-column label="销售进度" prop="clueSourceName" min-width="100" />
         <el-table-column label="最后跟进" prop="lastFollowTime" min-width="180">
           <template #default="{ row }">
             <template v-if="row.lastFollowTime">
@@ -473,6 +496,9 @@
     <el-dialog v-model="advancedDialogVisible" width="1000px" :close-on-click-modal="false">
       <template #header>
         <div class="advanced-dialog-header">
+          <el-icon>
+            <Filter />
+          </el-icon>
           <span class="advanced-dialog-title">高级搜索</span>
           <div class="advanced-dialog-actions">
             <el-button type="primary" class="advanced-dialog-btn" @click="handleAdvancedSearch">搜索</el-button>
@@ -520,11 +546,9 @@
                 </el-tooltip>
               </div>
             </el-form-item></el-col>
-          <el-col :span="24"><el-form-item label="所属客户">
+          <el-col :span="24"><el-form-item label="客户编号">
               <div class="form-item-flex">
-                <el-select v-model="ruleForm.customerId" placeholder="请选择客户">
-                  <el-option v-for="item in selcustomerList" :label="item.customerName" :value="item.id" />
-                </el-select>
+                <el-input v-model="queryParams.customerCode" placeholder="不包含客户编码" />
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -532,10 +556,9 @@
                 </el-tooltip>
               </div>
             </el-form-item></el-col>
-
-          <el-col :span="24"><el-form-item label="商机编号">
+          <el-col :span="24"><el-form-item label="客户名称">
               <div class="form-item-flex">
-                <el-input v-model="queryParams.BusinessOpportunityCode" placeholder="不包含客户编码" />
+                <el-input v-model="queryParams.customerName" />
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -543,58 +566,9 @@
                 </el-tooltip>
               </div>
             </el-form-item></el-col>
-
-          <el-col :span="24"><el-form-item label="优先级">
-              <div class="form-item-flex">
-                <el-select v-model="queryParams.PriorityId" placeholder="请选择">
-                  <el-option v-for="item in priorityList" :label="item.priorityName" :value="item.id" />
-                </el-select>
-                <el-tooltip content="输入/选择内容模糊查询" placement="right">
-                  <el-icon class="advanced-info">
-                    <InfoFilled />
-                  </el-icon>
-                </el-tooltip>
-              </div>
-            </el-form-item></el-col>
-
-          <el-col :span="24"><el-form-item label="商机名称">
-              <div class="form-item-flex">
-                <el-input v-model="queryParams.BusinessOpportunityName" />
-                <el-tooltip content="输入/选择内容模糊查询" placement="right">
-                  <el-icon class="advanced-info">
-                    <InfoFilled />
-                  </el-icon>
-                </el-tooltip>
-              </div>
-            </el-form-item></el-col>
-
-          <el-col :span="24"><el-form-item label="销售进度">
-              <div class="form-item-flex">
-                <el-select v-model="queryParams.SalesProgressId" placeholder="请选择">
-                  <el-option v-for="item in salesProgressList" :label="item.salesProgressName" :value="item.id" />
-                </el-select>
-                <el-tooltip content="输入/选择内容模糊查询" placement="right">
-                  <el-icon class="advanced-info">
-                    <InfoFilled />
-                  </el-icon>
-                </el-tooltip>
-              </div>
-            </el-form-item></el-col>
-
-          <el-col :span="24"><el-form-item label="预算金额">
-              <div class="form-item-flex">
-                <el-input v-model="queryParams.Budget" />
-                <el-tooltip content="输入/选择内容模糊查询" placement="right">
-                  <el-icon class="advanced-info">
-                    <InfoFilled />
-                  </el-icon>
-                </el-tooltip>
-              </div>
-            </el-form-item></el-col>
-
           <el-col :span="24"><el-form-item label="到期时间">
               <div class="form-item-flex">
-                <el-date-picker v-model="ruleForm.expectedDate" type="datetime" placeholder="选择时间" />
+                <el-date-picker v-model="ruleForm.customerExpireTime" type="datetime" placeholder="选择时间" />
                 <el-tooltip content="输入/选择内容模糊查询" placement="right">
                   <el-icon class="advanced-info">
                     <InfoFilled />
@@ -602,7 +576,83 @@
                 </el-tooltip>
               </div>
             </el-form-item></el-col>
-
+          <el-col :span="24"><el-form-item label="客户级别">
+              <div class="form-item-flex">
+                <el-select v-model="queryParams.customerLevelId" placeholder="请选择">
+                  <el-option v-for="item in levelList" :label="item.customerLevelName" :value="item.id" />
+                </el-select>
+                <el-tooltip content="输入/选择内容模糊查询" placement="right">
+                  <el-icon class="advanced-info">
+                    <InfoFilled />
+                  </el-icon>
+                </el-tooltip>
+              </div>
+            </el-form-item></el-col>
+          <el-col :span="24"><el-form-item label="联系电话">
+              <div class="form-item-flex">
+                <el-input v-model="queryParams.customerPhone" />
+                <el-tooltip content="输入/选择内容模糊查询" placement="right">
+                  <el-icon class="advanced-info">
+                    <InfoFilled />
+                  </el-icon>
+                </el-tooltip>
+              </div>
+            </el-form-item></el-col>
+          <el-col :span="24"><el-form-item label="邮箱">
+              <div class="form-item-flex">
+                <el-input v-model="queryParams.customerEmail" />
+                <el-tooltip content="输入/选择内容模糊查询" placement="right">
+                  <el-icon class="advanced-info">
+                    <InfoFilled />
+                  </el-icon>
+                </el-tooltip>
+              </div>
+            </el-form-item></el-col>
+          <el-col :span="24"><el-form-item label="客户类别">
+              <div class="form-item-flex">
+                <el-select v-model="queryParams.customerTypeId" placeholder="请选择">
+                  <el-option v-for="item in typeList" :label="item.customerTypeName" :value="item.id" />
+                </el-select>
+                <el-tooltip content="输入/选择内容模糊查询" placement="right">
+                  <el-icon class="advanced-info">
+                    <InfoFilled />
+                  </el-icon>
+                </el-tooltip>
+              </div>
+            </el-form-item></el-col>
+          <el-col :span="24"><el-form-item label="客户来源">
+              <div class="form-item-flex">
+                <el-select v-model="queryParams.customerSourceId" placeholder="请选择">
+                  <el-option v-for="item in customersourceList" :label="item.clueSourceName" :value="item.id" />
+                </el-select>
+                <el-tooltip content="输入/选择内容模糊查询" placement="right">
+                  <el-icon class="advanced-info">
+                    <InfoFilled />
+                  </el-icon>
+                </el-tooltip>
+              </div>
+            </el-form-item></el-col>
+          <el-col :span="24"><el-form-item label="客户地区">
+              <div class="form-item-flex">
+                <el-cascader v-model="ruleForm.customerRegionId" :options="regionList" :props="props1" clearable
+                  :show-all-levels="false" />
+                <el-tooltip content="输入/选择内容模糊查询" placement="right">
+                  <el-icon class="advanced-info">
+                    <InfoFilled />
+                  </el-icon>
+                </el-tooltip>
+              </div>
+            </el-form-item></el-col>
+          <el-col :span="24"><el-form-item label="地址">
+              <div class="form-item-flex">
+                <el-input v-model="queryParams.customerAddress" />
+                <el-tooltip content="输入/选择内容模糊查询" placement="right">
+                  <el-icon class="advanced-info">
+                    <InfoFilled />
+                  </el-icon>
+                </el-tooltip>
+              </div>
+            </el-form-item></el-col>
         </el-row>
       </el-form>
     </el-dialog>
@@ -610,12 +660,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch, computed } from "vue";
+import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload, Filter } from '@element-plus/icons-vue';
-import { AddBusinessOpportunity, GetCustomerSelect, GetBusinessPrioritySelect, GetBusinessSalesProgressSelect, GetProductSelect, ShowBusinessOpportunityList, DeleteBusinessOpportunity, UpdateBusinessProgress } from '@/api/CustomerProcess/BusinessOpportunity/businessopportunity.api';
+import { GetUserSelect, GetCarFrameNumberSelect, GetCustomerLevelSelect, GetCustomerRegionSelect, GetCustomerSourceSelect, GetCustomerTypeSelect, ShowCustomerList, AddCustomer } from '@/api/CustomerProcess/Customer/customer.api';
 import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
-import { GetUserSelect } from '@/api/CustomerProcess/Customer/customer.api'
 import moment from 'moment';
 import dayjs from 'dayjs';
 import { useUserStore } from "@/store";
@@ -627,57 +676,6 @@ import { onBeforeUnmount, shallowRef } from 'vue'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 
 const user = useUserStore();
-
-//=================销售进度条=======================
-// 销售进度阶段列表
-
-// 动态进度步骤，从后端获取真实数据
-const progressSteps = ref<any[]>([])
-
-
-// 当前高亮索引，根据salesProgressId确定
-const activeStepIndex = computed(() => {
-  if (!currentBusiness.value || !currentBusiness.value.salesProgressId) return 0;
-
-  // 打印每个步骤的完整对象
-  console.log('progressSteps.value结构:', JSON.parse(JSON.stringify(progressSteps.value)));
-
-  const index = progressSteps.value.findIndex(stage => {
-    console.log('对比进度条步骤ID:', stage.id, stage.salesProgressId, '与当前ID:', currentBusiness.value.salesProgressId);
-    return String(stage.id || stage.salesProgressId) === String(currentBusiness.value.salesProgressId);
-  });
-
-  return index >= 0 ? index : 0;
-});
-
-
-// 手动点击步骤时更新
-async function updateProgress(index:number) {
-  // 如果没有当前商机数据，则不执行更新
-  if (!currentBusiness.value) return;
-  
-  // 获取对应步骤
-  const selectedStep = progressSteps.value[index];
-  if (!selectedStep) return;
-  
-    try {
-    // 调用API保存进度更改，使用真实的后端ID
-    await UpdateBusinessProgress(currentBusiness.value.id, selectedStep.id);
-      
-    // 更新当前商机的销售进度信息
-    currentBusiness.value.salesProgressId = selectedStep.id;
-    currentBusiness.value.salesProgressName = selectedStep.salesProgressName;
-      
-    ElMessage.success(`销售进度已更新为: ${selectedStep.salesProgressName}`);
-    console.log('进度已改为:', selectedStep.salesProgressName, '进度ID:', selectedStep.id);
-      
-      // 可选：刷新商机列表以获取最新数据
-      // fetchBusinessList();
-    } catch (error) {
-      console.error('更新销售进度失败:', error);
-      ElMessage.error('更新销售进度失败，请稍后再试');
-  }
-}
 
 //=================添加客户附文本==================
 // 编辑器实例，必须用 shallowRef
@@ -722,12 +720,12 @@ const targetType = ref<number>(2); // 线索 1，客户 2，商机 3
 
 // 获取联系记录列表
 const fetchContactList = async () => {
-  if (!currentBusinessId.value) {
+  if (!currentCustomerId.value) {
     contactList.value = [];
     return;
   }
   try {
-    const res = await GetContactCommunication(currentBusinessId.value, targetType.value);
+    const res = await GetContactCommunication(currentCustomerId.value, targetType.value);
     console.log('GetContactCommunication返回的res:', res);
     if (Array.isArray(res)) {
       contactList.value = res.map((item: any) => ({
@@ -755,7 +753,7 @@ const uploadDialogVisible = ref(false);
 
 const AddCommunication = () => {
   // 赋值当前客户id
-  communicationruleForm.customerId = currentBusiness.value?.id || ''
+  communicationruleForm.customerId = currentCustomer.value?.id || ''
   // 重置所有表单字段
   communicationruleForm.clueId = ''
   communicationruleForm.businessOpportunityId = ''
@@ -939,82 +937,69 @@ const handleUploadExceed = () => {
 
 //=================弹出抽屉========================
 const table = ref(false)
-const currentBusiness = ref<any>(null) // 当前选中的商机数据
+const currentCustomer = ref<any>(null) // 当前选中的客户数据
 const activeTab = ref('detail') // tabs切换
-const activeTabcus = ref('business') // tabs切换
+const activeTabcus = ref('detail') // tabs切换
 
 // 处理表格行点击事件
 const handleRowClick = (row: any) => {
-  console.log('handleRowClick被调用，row.id=', row.id, '销售进度ID=', row.salesProgressId);
-
-  // 复制行数据
-  currentBusiness.value = { ...row };
-  currentBusinessId.value = row.id;
-
-  // 关键：不要做类型转换，直接用字符串
-  currentBusiness.value.salesProgressId = row.salesProgressId;
-
+  console.log('handleRowClick被调用，row.id=', row.id);
+  currentCustomer.value = row;
+  currentCustomerId.value = row.id;
   table.value = true;
-  activeTabcus.value = 'business'; // “商机详情”tab
-  activeTab.value = 'communication'; // “联系记录”tab
+  activeTabcus.value = 'contact'; // 确保默认显示"客户详情"标签页
   fetchContactList();
-
-  // 打印当前计算出的activeStepIndex
-  console.log('当前进度索引为:', activeStepIndex.value);
-};
+}
 
 
-//================添加商机===========================
-const addbusinessdialogVisible = ref(false);
+//================添加客户===========================
+const addcustomerdialogVisible = ref(false);
 interface RuleForm {
-  customerId: number | string
-  priorityId: number | string
-  businessOpportunityName: string
-  salesProgressId: number | string
-  budget: number
-  expectedDate: string
-  remark: string
-  productId: number | string
-  businessOpportunityCode: string
+  userId: number | string
+  customerName: string
+  checkAmount: number
+  customerExpireTime: string
+  carFrameNumberId: number | string
+  customerPhone: string
+  customerEmail: string
+  clueQQ: string
+  companyName: string
+  customerLevelId: number | string
+  customerTypeId: number | string
+  customerSourceId: number | string
+  customerRegionId: number | string
+  customerAddress: string
+  customerRemark: string
+  customerCode: string
 }
 
 const ruleFormRef = ref<FormInstance>()
 const ruleForm = reactive<RuleForm>({
-  customerId: '',
-  priorityId: '',
-  businessOpportunityName: '',
-  salesProgressId: '',
-  budget: 0,
-  expectedDate: '',
-  remark: '',
-  productId: '',
-  businessOpportunityCode: '',
+  userId: '',
+  customerName: '',
+  checkAmount: 0,
+  customerExpireTime: '',
+  carFrameNumberId: '',
+  customerPhone: '',
+  customerEmail: '',
+  clueQQ: '',
+  companyName: '',
+  customerLevelId: '',
+  customerTypeId: '',
+  customerSourceId: '',
+  customerRegionId: '',
+  customerAddress: '',
+  customerRemark: '',
+  customerCode: '',
 })
 
 const rules = reactive<FormRules<RuleForm>>({
-  businessOpportunityName: [
-    { required: true, message: '商机名称是必填项', trigger: 'blur' },
+  customerName: [
+    { required: true, message: '姓名是必填项', trigger: 'blur' },
   ],
-  customerId: [
-    {
-      required: true,
-      message: '所属客户是必填项',
-      trigger: 'change',
-    },
-  ],
-  priorityId: [
-    {
-      required: true,
-      message: '优先级是必填项',
-      trigger: 'change',
-    },
-  ],
-  salesProgressId: [
-    {
-      required: true,
-      message: '销售进度是必填项',
-      trigger: 'change',
-    },
+  customerPhone: [
+    { required: true, message: '电话是必填项', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号', trigger: 'blur', },
   ],
 })
 
@@ -1022,14 +1007,14 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   if (!formEl) return
   await formEl.validate(async (valid, fields) => {
     if (valid) {
-      console.log('添加商机参数：', ruleForm);
-      await AddBusinessOpportunity(ruleForm)
+      console.log('添加客户参数：', ruleForm);
+      await AddCustomer(ruleForm)
         .then((res) => {
           if (res) {
-            ElMessage.success('添加商机成功');
-            addbusinessdialogVisible.value = false;
+            ElMessage.success('添加客户成功');
+            addcustomerdialogVisible.value = false;
             resetForm(formEl);
-            fetchBusinessList(); // 刷新商机列表
+            fetchCustomerList(); // 刷新线索列表
           }
           else {
             ElMessage.success('添加客户成功');
@@ -1068,10 +1053,9 @@ const selectedIds = ref<any[]>([]);
 
 //定义查询显示参数
 const queryParams = reactive({
-  type: undefined as number | undefined, // 商机类型
+  type: undefined as number | undefined, // 线索类型
   CreatedBy: '', // 创建人uuid
   AssignedTo: '', // 负责人uuid
-  SalesProgressList: [], //销售进度（多选）
   StartTime: '', // string (date-time)
   EndTime: '', // string (date-time)
   TimeType: undefined as number | undefined, // 0,1,2
@@ -1084,13 +1068,18 @@ const queryParams = reactive({
   pageCount: 0, // 总页数
   UserIds: [],      // 负责人
   CreatedByIds: [], // 创建人
-  CustomerId: 0, // 所属客户
-  BusinessOpportunityCode: '',     // 商机编号
-  PriorityId: 0, //优先级
-  BusinessOpportunityName: '',     // 商机名称
-  SalesProgressId: 0, // 销售进度（单选）
-  Budget: 0, //预算金额
-  ExpectedDate: '', //预计成交日期
+  customerCode: '',     // 客户编号
+  customerName: '',     // 姓名
+  customerExpireTime: '', //日期
+  checkAmount: 0, //体检金额
+  carFrameNumberId: 0, //车架号
+  customerLevelId: 0, //客户级别
+  customerPhone: '',    // 电话
+  customerEmail: '',    // 邮箱
+  customerTypeId: 0,     //客户类别
+  customerSourceId: 0, // 客户来源
+  customerRegionId: 0,  //客户地区
+  customerAddress: '',  //客户地址
   MatchMode: 0, // 0: 全部满足, 1: 部分满足
 });
 
@@ -1189,57 +1178,61 @@ const selectUser = async () => {
     })
 }
 
-// 下拉框绑定客户列表
-const selcustomerList: any = ref([])
-const selectCustomer = async () => {
-  await GetCustomerSelect()
+// 下拉框绑定车架号列表
+const carList: any = ref([])
+const selectCar = async () => {
+  await GetCarFrameNumberSelect()
     .then(res => {
-      console.log('客户列表', res)
-      selcustomerList.value = res
+      console.log('车架号列表', res)
+      carList.value = res
     })
 }
 
-// 下拉框绑定优先级列表
-const priorityList: any = ref([])
-const selectPriority = async () => {
-  await GetBusinessPrioritySelect()
+// 下拉框绑定客户级别列表
+const levelList: any = ref([])
+const selectLevel = async () => {
+  await GetCustomerLevelSelect()
     .then(res => {
-      console.log('优先级列表', res)
-      priorityList.value = res
+      console.log('客户级别列表', res)
+      levelList.value = res
     })
 }
 
-// 下拉框绑定销售进度列表
-const salesProgressList: any = ref([])
-const selectSalesProgress = async () => {
-  await GetBusinessSalesProgressSelect()
+//下拉框绑定客户来源列表
+const customersourceList: any = ref([])
+const selectCustomerSource = async () => {
+  await GetCustomerSourceSelect()
     .then(res => {
-      console.log('销售进度列表', res)
-      salesProgressList.value = res
-      
-      // 将后端数据转换为进度条步骤，保持顺序
-      if (res && Array.isArray(res)) {
-        // 按照指定顺序重新排列销售进度
-        const orderedProgressNames = ['初步', '需求确认', '方案报价', '协商议价', '合同签约', '赢单', '输单'];
-        const orderedProgress = orderedProgressNames.map(name => {
-          const found = res.find((item: any) => item.salesProgressName === name);
-          return found || null;
-        }).filter(item => item !== null);
-        
-        progressSteps.value = orderedProgress;
-        // 打印完整结构
-        console.log('动态设置的进度步骤:', JSON.parse(JSON.stringify(progressSteps.value)));
-      }
+      console.log('客户来源列表', res)
+      customersourceList.value = res
     })
 }
 
-// 下拉框绑定产品列表
-const productList: any = ref([])
-const selectProduct = async () => {
-  await GetProductSelect()
+//下拉框绑定客户地区列表
+const regionList: any = ref([])
+const selectRegion = async () => {
+  await GetCustomerRegionSelect()
     .then(res => {
-      console.log('产品列表', res)
-      productList.value = res
+      console.log('客户地区列表', res)
+      regionList.value = res
+    })
+}
+const props1 = {
+  checkStrictly: true,
+  emitPath: false,
+  value: 'id',
+  label: 'customerRegionName',
+  children: 'children'
+}
+
+
+//下拉框绑定客户类别列表
+const typeList: any = ref([])
+const selectType = async () => {
+  await GetCustomerTypeSelect()
+    .then(res => {
+      console.log('客户类别列表', res)
+      typeList.value = res
     })
 }
 
@@ -1247,19 +1240,18 @@ const selectProduct = async () => {
 const handleAdvancedSearch = () => {
   // 这里可以将queryParams的内容合并到queryParams并请求
   advancedDialogVisible.value = false;
-  fetchBusinessList();
+  fetchCustomerList();
   ElMessage.success('高级搜索已应用');
 };
 
-//显示商机列表信息
-const fetchBusinessList = async () => {
+//显示线索列表信息
+const fetchCustomerList = async () => {
   loading.value = true;
   try {
     const rawParams = {
       type: queryParams.type,
       CreatedBy: queryParams.CreatedBy,
       AssignedTo: queryParams.AssignedTo,
-      SalesProgressList: queryParams.SalesProgressList, //销售进度（多选）
       StartTime: queryParams.StartTime,
       EndTime: queryParams.EndTime,
       TimeType: queryParams.TimeType,
@@ -1272,13 +1264,18 @@ const fetchBusinessList = async () => {
       pageCount: queryParams.pageCount, // 总页数
       UserIds: queryParams.UserIds,
       CreatedByIds: queryParams.CreatedByIds,
-      CustomerId: queryParams.CustomerId || null,
-      BusinessOpportunityCode: queryParams.BusinessOpportunityCode,     // 商机编号
-      PriorityId: queryParams.PriorityId || null, //优先级
-      BusinessOpportunityName: queryParams.BusinessOpportunityName,     // 商机名称
-      SalesProgressId: queryParams.SalesProgressId || null, // 销售进度（单选）
-      Budget: queryParams.Budget, //预算金额
-      ExpectedDate: queryParams.ExpectedDate, //预计成交日期
+      customerCode: queryParams.customerCode,
+      customerName: queryParams.customerName,
+      customerExpireTime: queryParams.customerExpireTime,
+      checkAmount: queryParams.checkAmount,
+      carFrameNumberId: queryParams.carFrameNumberId || null,
+      customerLevelId: queryParams.customerLevelId || null,
+      customerPhone: queryParams.customerPhone,    // 电话
+      customerEmail: queryParams.customerEmail,    // 邮箱
+      customerTypeId: queryParams.customerTypeId || null,     //客户类别
+      customerSourceId: queryParams.customerSourceId || null, // 客户来源
+      customerRegionId: queryParams.customerRegionId || null,  //客户地区
+      customerAddress: queryParams.customerAddress,  //客户地址
       MatchMode: queryParams.MatchMode
     };
     const params = filterParams(rawParams);
@@ -1289,25 +1286,15 @@ const fetchBusinessList = async () => {
     }
 
     console.log('最终请求参数:', params);
-    const res = await ShowBusinessOpportunityList(params);
-    if (res && typeof res === 'object') {
-      customerList.value = res.data || [];
-      // 使用类型断言处理返回数据
-      const typedRes = res as any;
-      queryParams.totalCount = typedRes.totalCount || 0; // 更新总记录数
-      queryParams.pageCount = typedRes.pageCount || 0; // 更新总页数
-    } else {
-      customerList.value = [];
-      queryParams.totalCount = 0;
-      queryParams.pageCount = 0;
-    }
-  } 
-  // catch (e) {
-  //   ElMessage.error('获取商机列表失败');
-  //   queryParams.totalCount = 0; // 重置总记录数
-  //   queryParams.pageCount = 0; // 重置总页数
-  // } 
-  finally {
+    const res = await ShowCustomerList(params);
+    customerList.value = res.data;
+    queryParams.totalCount = res.totalCount || 0; // 更新总记录数
+    queryParams.pageCount = res.pageCount || 0; // 更新总页数
+  } catch (e) {
+    ElMessage.error('获取线索列表失败');
+    queryParams.totalCount = 0; // 重置总记录数
+    queryParams.pageCount = 0; // 重置总页数
+  } finally {
     loading.value = false;
   }
 };
@@ -1315,7 +1302,7 @@ const fetchBusinessList = async () => {
 //查询线索列表（顶部）
 const handleQuery = () => {
   queryParams.PageIndex = 1;
-  fetchBusinessList();
+  fetchCustomerList();
 };
 
 //查询查看范围
@@ -1335,7 +1322,6 @@ const handleScopeChange = (val: number) => {
 
 // 重置查询条件
 const handleResetQuery = () => {
-  queryParams.SalesProgressList = []; //销售进度（多选）
   queryParams.TimeType = 2;
   queryParams.OrderBy = 0;
   queryParams.Keyword = "";
@@ -1343,13 +1329,18 @@ const handleResetQuery = () => {
   queryParams.PageSize = 10;
   queryParams.UserIds = [];
   queryParams.CreatedByIds = [];
-  queryParams.CustomerId = 0; // 所属客户
-  queryParams.BusinessOpportunityCode = '';    // 商机编号
-  queryParams.PriorityId = 0; //优先级
-  queryParams.BusinessOpportunityName = '';     // 商机名称
-  queryParams.SalesProgressId = 0; // 销售进度（单选）
-  queryParams.Budget = 0; //预算金额
-  queryParams.ExpectedDate = ''; //预计成交日期
+  queryParams.customerCode = '';
+  queryParams.customerName = '';
+  queryParams.customerExpireTime = '';
+  queryParams.checkAmount = 0;
+  queryParams.carFrameNumberId = 0;
+  queryParams.customerLevelId = 0;
+  queryParams.customerPhone = '';    // 电话
+  queryParams.customerEmail = '';    // 邮箱
+  queryParams.customerTypeId = 0;     //客户类别
+  queryParams.customerSourceId = 0; // 客户来源
+  queryParams.customerRegionId = 0;  //客户地区
+  queryParams.customerAddress = '';  //客户地址
   queryParams.MatchMode = 0
   handleQuery();
 };
@@ -1361,17 +1352,17 @@ const handleSelectionChange = (val: any[]) => {
 const handleSizeChange = (val: number) => {
   console.log(`${val} items per page`)
   queryParams.PageSize = val;
-  fetchBusinessList();
+  fetchCustomerList();
 }
 const handleCurrentChange = (val: number) => {
   console.log(`current page: ${val}`)
   queryParams.PageIndex = val;
-  fetchBusinessList();
+  fetchCustomerList();
 }
 
 // 添加线索方法
 const handleAddClue = () => {
-  addbusinessdialogVisible.value = true;
+  addcustomerdialogVisible.value = true;
 };
 // const handleEdit = (row: any) => {
 //   ElMessage.info('编辑功能开发中...');
@@ -1393,7 +1384,7 @@ const handleOrderClick = (value: number) => {
     queryParams.OrderBy = value;
     queryParams.OrderDesc = true;
   }
-  fetchBusinessList();
+  fetchCustomerList();
 };
 
 // 处理查询参数，过滤掉不必要的参数
@@ -1464,15 +1455,16 @@ watch([
 });
 
 // 钩子函数======================================================
-const currentBusinessId = ref<string>(''); // 当前客户id，实际赋值方式根据你的业务调整
+const currentCustomerId = ref<string>(''); // 当前客户id，实际赋值方式根据你的业务调整
 
 onMounted(() => {
-  fetchBusinessList();
-  selectUser(); //获取用户列表
-  selectCustomer(); // 获取客户列表
-  selectPriority(); //获取优先级列表
-  selectSalesProgress(); //获取销售进度列表
-  selectProduct(); //获取产品列表
+  fetchCustomerList();
+  selectUser(); // 获取用户列表
+  selectCar(); //获取车架号列表
+  selectLevel(); //获取客户级别列表
+  selectCustomerSource(); // 获取客户来源列表
+  selectRegion(); //获取客户地区列表
+  selectType(); //获取客户类别列表
   handleScopeChange(1); // 默认查看我负责的线索
 
   selectCommunicationType(); // 获取沟通类型列表
@@ -1485,112 +1477,6 @@ console.log('当前登录用户信息', user.userInfo);
 </script>
 
 <style scoped>
-.drawer-info-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-bottom: 16px;
-}
-
-.info-item {
-  min-width: 180px;
-  color: #333;
-}
-
-.sales-progress-container {
-  height: 50px; /* 固定高度，防止上下滚动 */
-  margin-bottom: 15px;
-  position: relative;
-}
-
-.sales-progress-wrapper {
-  padding: 10px 0;
-  overflow-x: auto;
-  overflow-y: hidden; /* 防止垂直滚动 */
-  width: 100%;
-  -webkit-overflow-scrolling: touch; /* 提高移动端滚动体验 */
-  scrollbar-width: none; /* 隐藏Firefox滚动条 */
-}
-
-.sales-progress-wrapper::-webkit-scrollbar {
-  display: none; /* 隐藏WebKit滚动条 */
-}
-
-.sales-process-flow {
-  display: flex;
-  width: 100%;
-  min-width: 600px;
-  height: 32px;
-  margin: 0 auto;
-  position: relative;
-  padding: 0 8px; /* 添加左右内边距，防止箭头溢出 */
-}
-
-.process-step {
-  position: relative;
-  height: 32px;
-  line-height: 32px;
-  padding: 0 15px;
-  text-align: center;
-  font-size: 13px;
-  background-color: #f0f0f0; /* 默认灰色背景 */
-  color: #666;
-  cursor: pointer;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  font-weight: 500;
-  margin-right: 16px; /* 为箭头留出空间 */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.process-step:first-child {
-  border-top-left-radius: 4px;
-  border-bottom-left-radius: 4px;
-}
-
-.process-step:last-child {
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-  margin-right: 0;
-}
-
-.arrow-right {
-  position: absolute;
-  right: -16px;
-  top: 0;
-  width: 0;
-  height: 0;
-  border-top: 16px solid transparent;
-  border-bottom: 16px solid transparent;
-  border-left: 16px solid #f0f0f0; /* 默认灰色箭头 */
-  z-index: 2;
-  pointer-events: none; /* 防止箭头触发鼠标事件 */
-}
-
-/* 删除固定样式，改为完全依赖动态类 */
-
-/* 动态样式 */
-.process-step.active {
-  background-color: #4CD964;
-  color: #fff;
-}
-
-.process-step.active .arrow-right {
-  border-left-color: #4CD964;
-}
-
-.process-step.current {
-  background-color: #4080FF;
-  color: #fff;
-}
-
-.process-step.current .arrow-right {
-  border-left-color: #4080FF;
-}
-
 .app-container {
   padding: 20px;
 }

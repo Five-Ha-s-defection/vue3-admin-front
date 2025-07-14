@@ -85,21 +85,16 @@
               </el-button>
             </template>
           </el-input>
-          <el-button style="width: 80px;" icon="el-icon-filter" class="mr8 clue-large-btn"
-            @click="advancedDialogVisible = true">
-            <el-icon>
-              <Filter />
-            </el-icon>
-            高级搜索
-          </el-button>
+          <el-button icon="el-icon-filter" class="mr8 clue-large-btn"
+            @click="advancedDialogVisible = true">高级搜索</el-button>
           <el-dropdown>
             <el-button class="clue-large-btn">操作<el-icon>
                 <ArrowDown />
               </el-icon></el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="openAbandonDialog(getSelectedClueIds())">放弃线索</el-dropdown-item>
-                <el-dropdown-item @click="openUserSelectDialog">转移线索</el-dropdown-item>
+                <el-dropdown-item>放弃线索</el-dropdown-item>
+                <el-dropdown-item>转移线索</el-dropdown-item>
                 <el-dropdown-item>删除线索</el-dropdown-item>
                 <el-dropdown-item>导出数据</el-dropdown-item>
                 <el-dropdown-item>Excel导入</el-dropdown-item>
@@ -110,48 +105,6 @@
         </el-col>
       </el-row>
     </el-card>
-
-     <!-- 转移线索弹出框 -->
-    <el-dialog v-model="userSelectDialogVisible" title="用户列表" width="900px">
-      <el-table :data="showuserList" style="width: 100%" :row-key="row => row.id" :current-row-key="selectUserId"
-        highlight-current-row @row-click="uhandleRowClick">
-        <el-table-column label="选择" width="60">
-          <template #default="{ row }">
-            <input v-model="selectUserId" type="radio" :value="String(row.userId)" :name="'assignUser'"
-              @click.stop="uhandleRowClick(row)" />
-          </template>
-        </el-table-column>
-
-        <el-table-column type="index" label="#" width="50" />
-        <el-table-column prop="realName" label="用户名" />
-        <el-table-column prop="email" label="电子邮箱" />
-        <el-table-column prop="phoneInfo" label="手机号" />
-        <el-table-column prop="roleName" label="用户角色" />
-      </el-table>
-      <template #footer>
-        <el-button @click="userSelectDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAssignSubmit">提交</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 放弃线索原因弹出框 -->
-    <el-dialog title="选择放弃原因" v-model="abandonDialogVisible" width="500px">
-      <el-form>
-        <el-form-item label="放弃原因">
-          <el-select v-model="abandonReason" placeholder="请选择放弃原因" style="width: 300px" filterable>
-            <el-option v-for="item in abandonReasonOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <div style="color: #409EFF; margin-left: 100px;">
-          备注：放弃后线索将进入公海
-        </div>
-      </el-form>
-      <template #footer>
-        <el-button @click="abandonDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAbandonSubmit">提交</el-button>
-      </template>
-    </el-dialog>
-
     <!-- 添加线索弹出框 -->
     <el-dialog v-model="addcluedialogVisible" title="添加线索" width="500">
       <el-form ref="ruleFormRef" style="max-width: 600px" :model="ruleForm" :rules="rules" label-width="auto">
@@ -351,7 +304,7 @@
               <Upload />
             </el-icon>
             上传附件
-          </el-button>
+            </el-button>
           <!-- 已上传文件名回显 -->
           <div v-if="fileList.length" style="margin-top:8px;">
             <div v-for="file in fileList" :key="file.uid" style="font-size:13px;color:#666;">
@@ -391,7 +344,7 @@
         <el-form-item>
           <el-button type="primary" @click="communicationsubmitForm(communicationruleFormRef)">
             添加记录
-          </el-button>
+            </el-button>
           <el-button @click="communicationresetForm(communicationruleFormRef)">重置</el-button>
         </el-form-item>
       </el-form>
@@ -405,7 +358,7 @@
         :on-exceed="handleUploadExceed" :on-progress="handleUploadProgress" list-type="text">
         <template #trigger>
           <el-button type="primary">选择文件</el-button>
-        </template>
+      </template>
         <el-button type="success" style="margin-left: 12px;" @click="submitUpload">开始上传</el-button>
         <template #file="{ file }">
           <span>{{ file.name }}</span>
@@ -442,9 +395,7 @@
         <el-table-column label="电话" prop="cluePhone" min-width="120">
           <template #default="{ row }">
             <span>{{ row.cluePhone }}</span>
-            <el-icon v-if="row.cluePhone !== 'string'" style="margin-left:4px;" class="phone-icon">
-              <Phone />
-            </el-icon>
+            <el-icon style="margin-left:4px;"><i class="el-icon-phone" /></el-icon>
           </template>
         </el-table-column>
         <el-table-column label="线索来源" prop="clueSourceName" min-width="100" />
@@ -486,7 +437,7 @@
             </template>
           </template>
         </el-table-column>
-        <el-table-column label="负责人" prop="realName" min-width="100" />
+        <el-table-column label="负责人" prop="userName" min-width="100" />
         <el-table-column label="创建人" prop="createName" min-width="100" />
         <el-table-column label="操作" width="120" align="center">
           <!-- <template #default="{ row }">
@@ -702,7 +653,7 @@
 import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload } from '@element-plus/icons-vue';
-import { ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue, ClueAction,ShowUserList } from '@/api/CustomerProcess/Clue/clue.api';
+import { ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue } from '@/api/CustomerProcess/Clue/clue.api';
 import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
 import moment from 'moment';
 import dayjs from 'dayjs';
@@ -711,128 +662,6 @@ import type { FormInstance, FormRules, UploadInstance, UploadUserFile, UploadFil
 import StopIcon from '@/components/icons/StopIcon.vue'
 
 const user = useUserStore();
-
-//================转移线索===========================
-const selectUserId = ref(''); // 推荐用字符串
-const userSelectDialogVisible = ref(false); // 控制弹窗显示
-
-const uhandleRowClick = (row: any) => {
-  selectUserId.value = String(row.userId);
-};
-
-const openUserSelectDialog = () => {
-  showUser()
-  userSelectDialogVisible.value = true
-}
-
-const assignClue = async (clueIds: any, targetUserId: any) => {
-  if (!clueIds.length) {
-    ElMessage.warning('请先选择线索');
-    return;
-  }
-  // 判断目标用户是否为自己
-  if (targetUserId === user.userInfo.id) {
-    ElMessage.warning('目标用户无效，不能是自己');
-    return;
-  }
-  for (const clueId of clueIds) {
-    await ClueAction({ clueId, actionType: 'assign', targetUserId });
-  }
-  ElMessage.success('分配成功');
-  // 刷新列表
-  fetchClueList()
-  showUser()
-};
-
-// 提交按钮
-const handleAssignSubmit = () => {
-  if (!selectUserId.value || selectUserId.value === 'undefined') {
-    ElMessage.warning('请选择分配对象');
-    return;
-  }
-  if (selectUserId.value === user.userInfo.id) {
-    ElMessage.warning('目标用户无效，不能是自己');
-    return;
-  }
-  assignClue(getSelectedClueIds(), selectUserId.value);
-  userSelectDialogVisible.value = false;
-};
-
-// 显示用户列表
-const showuserList = ref<any[]>([]);
-const queryUser = reactive({
-  Keyword: '', // string
-  PageIndex: 1, // int32
-  PageSize: 10, // int32
-  totalCount: 0, // 总记录数
-  pageCount: 0, // 总页数
-})
-const showUser = async () => {
-  const rawParams = {
-    Keyword: queryUser.Keyword,
-    PageIndex: queryUser.PageIndex,
-    PageSize: queryUser.PageSize,
-    totalCount: queryUser.totalCount, // 总记录数
-    pageCount: queryUser.pageCount, // 总页数
-  };
-  const params = filterParams(rawParams);
-
-  // 传递正确的分页参数
-  const res = await ShowUserList(params)
-  console.log("ShowUserList完整返回：", res.data)
-  showuserList.value = res.data
-  queryUser.totalCount = res.totalCount || 0; // 更新总记录数
-  queryUser.pageCount = res.pageCount || 0; // 更新总页数
-  console.log('showuserList:', showuserList.value);
-}
-
-//=================放弃原因==========================
-const abandonDialogVisible = ref(false);
-const abandonReason = ref('');
-const abandonClueIds = ref<any[]>([]);
-const abandonReasonOptions = [
-  { label: '放弃购买', value: '放弃购买' },
-  { label: '预算少', value: '预算少' },
-  { label: '信息有误', value: '信息有误' },
-];
-
-const openAbandonDialog = (clueIds: any[]) => {
-  if (!clueIds.length) {
-    ElMessage.warning('请先选择线索');
-    return;
-  }
-  abandonClueIds.value = clueIds;
-  abandonReason.value = '';
-  abandonDialogVisible.value = true;
-};
-
-const handleAbandonSubmit = async () => {
-  if (!abandonReason.value) {
-    ElMessage.warning('请选择放弃原因');
-    return;
-  }
-  // 这里可以将原因传给后端
-  for (const clueId of abandonClueIds.value) {
-    const clue = clueList.value.find(item => item.id === clueId);
-    if (!clue) continue;
-    if (clue.userId !== user.userInfo.id) continue;
-    await ClueAction({ clueId, actionType: 'abandon', abandonReason: abandonReason.value });
-  }
-  ElMessage.success('放弃成功');
-  abandonDialogVisible.value = false;
-  fetchClueList();
-};
-
-//=================放弃线索========================
-const selectedRows = ref<any[]>([]); // 保存所有选中的行
-const handleSelectionChange = (rows: any) => {
-  selectedRows.value = rows;
-};
-
-const getSelectedClueIds = () => {
-  return selectedRows.value.map(row => row.id);
-};
-
 
 //=================显示联系记录====================
 const contactList = ref<any[]>([]);
@@ -1085,8 +914,6 @@ interface RuleForm {
   address: string
   remark: string
   status: number
-  cluePoolStatus: number
-  abandonReason: string
 }
 
 const ruleFormRef = ref<FormInstance>()
@@ -1103,8 +930,6 @@ const ruleForm = reactive<RuleForm>({
   address: '',
   remark: '',
   status: 0,
-  cluePoolStatus: 0,
-  abandonReason: '',
 })
 
 const rules = reactive<FormRules<RuleForm>>({
@@ -1163,6 +988,7 @@ const orderOptions = [
 
 const loading = ref(false);
 const clueList = ref<any[]>([]);
+const selectedIds = ref<any[]>([]);
 
 //定义查询显示参数
 const queryParams = reactive({
@@ -1194,7 +1020,6 @@ const queryParams = reactive({
   IndustryId: 0,   // 行业
   Address: '',      // 地址
   MatchMode: 0, // 0: 全部满足, 1: 部分满足
-  CluePoolStatus: 1
 });
 
 const advancedDialogVisible = ref(false);
@@ -1305,7 +1130,7 @@ const selectCustomReply = async (typeId: string | number) => {
     .then(res => {
       customReplyList.value = res || [];
       console.log('自定义回复列表', customReplyList.value);
-    });
+  });
 };
 
 //下拉框绑定沟通类型列表
@@ -1387,8 +1212,7 @@ const fetchClueList = async () => {
       CompanyName: queryParams.CompanyName,
       IndustryId: queryParams.IndustryId,
       Address: queryParams.Address,
-      MatchMode: queryParams.MatchMode,
-      CluePoolStatus: queryParams.CluePoolStatus
+      MatchMode: queryParams.MatchMode
     };
     const params = filterParams(rawParams);
 
@@ -1454,8 +1278,10 @@ const handleResetQuery = () => {
   queryParams.MatchMode = 0; // 重置为全部满足
   queryParams.PageIndex = 1;
   queryParams.PageSize = 10;
-  queryParams.CluePoolStatus = 1;
   handleQuery();
+};
+const handleSelectionChange = (val: any[]) => {
+  selectedIds.value = val.map(item => item.id);
 };
 
 //分页
@@ -1579,6 +1405,8 @@ onMounted(() => {
   // selectCustomReply(); // 获取自定义回复列表 - 移至watch中
   console.log('clueList:', clueList.value);
 });
+
+
 </script>
 
 <style scoped>
@@ -1586,9 +1414,9 @@ onMounted(() => {
   padding: 20px;
 }
 
-.search-card {
-  margin-bottom: 20px;
-}
+  .search-card {
+    margin-bottom: 20px;
+  }
 
 .clue-header {
   font-size: 16px;
@@ -1630,9 +1458,9 @@ onMounted(() => {
 
 .ml16 {
   margin-left: 16px;
-}
+  }
 
-.table-card {
+  .table-card {
   margin-top: 0;
 }
 
@@ -1723,7 +1551,7 @@ onMounted(() => {
   font-size: 14px;
   color: #303133;
   font-weight: 400;
-  text-align: right;
+    text-align: right;
   flex-shrink: 0;
   margin-left: 40px;
 }
@@ -1885,7 +1713,6 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
 }
-
 
 .phone-icon {
   color: #409eff;
