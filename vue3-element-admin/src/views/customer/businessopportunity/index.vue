@@ -82,7 +82,7 @@
               </el-icon></el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="delbus(getSelectedClueIds())">删除商机</el-dropdown-item>
+                <el-dropdown-item>删除商机</el-dropdown-item>
                 <el-dropdown-item>导出数据</el-dropdown-item>
                 <el-dropdown-item>Excel导入</el-dropdown-item>
                 <el-dropdown-item>下载模版</el-dropdown-item>
@@ -677,120 +677,6 @@ import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 
 const user = useUserStore();
 
-//=================删除商机==========================
-/**
- * 批量删除商机
- * @param busIds 选中的商机ID数组
- * 1. 校验是否有选中线索
- * 2. 弹窗二次确认
- * 3. 循环调用DeleteClue删除每条商机
- * 4. 删除成功/失败分别统计并提示
- * 5. 删除成功后刷新线索列表
- */
-const delbus = async (busIds: any[]) => {
-  if (!busIds || !busIds.length) {
-    ElMessage.warning('请先选择要删除的商机');
-    return;
-  }
-  try {
-    // 弹窗二次确认
-    await ElMessageBox.confirm(
-      `确定要删除选中的${busIds.length}条商机吗？删除后不可恢复！`,
-      '警告',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    );
-    let successCount = 0; // 成功删除数量
-    let failCount = 0;    // 删除失败数量
-    // 循环删除每个线索
-    for (const busId of busIds) {
-      try {
-        await DeleteBusinessOpportunity(busId);
-        successCount++;
-      } catch (e) {
-        failCount++;
-      }
-    }
-    // 删除成功提示
-    if (successCount > 0) {
-      ElMessage.success(`成功删除${successCount}条商机`);
-      fetchBusinessList(); // 刷新商机列表
-    }
-    // 删除失败提示
-    if (failCount > 0) {
-      ElMessage.error(`有${failCount}条商机删除失败`);
-    }
-  } catch {
-    // 用户取消操作
-    ElMessage.info('已取消删除');
-  }
-}
-
-const selectedRows = ref<any[]>([]); // 保存所有选中的行
-const getSelectedClueIds = () => {
-  return selectedRows.value.map(row => row.id);
-};
-
-const handleSelectionChange = (rows:any) => {
-  selectedRows.value = rows;
-};
-
-
-
-//=================销售进度条=======================
-// 销售进度阶段列表
-
-// 动态进度步骤，从后端获取真实数据
-const progressSteps = ref<any[]>([])
-
-
-// 当前高亮索引，根据salesProgressId确定
-const activeStepIndex = computed(() => {
-  if (!currentBusiness.value || !currentBusiness.value.salesProgressId) return 0;
-
-  // 打印每个步骤的完整对象
-  console.log('progressSteps.value结构:', JSON.parse(JSON.stringify(progressSteps.value)));
-
-  const index = progressSteps.value.findIndex(stage => {
-    console.log('对比进度条步骤ID:', stage.id, stage.salesProgressId, '与当前ID:', currentBusiness.value.salesProgressId);
-    return String(stage.id || stage.salesProgressId) === String(currentBusiness.value.salesProgressId);
-  });
-
-  return index >= 0 ? index : 0;
-});
-
-
-// 手动点击步骤时更新
-async function updateProgress(index:number) {
-  // 如果没有当前商机数据，则不执行更新
-  if (!currentBusiness.value) return;
-  
-  // 获取对应步骤
-  const selectedStep = progressSteps.value[index];
-  if (!selectedStep) return;
-  
-    try {
-    // 调用API保存进度更改，使用真实的后端ID
-    await UpdateBusinessProgress(currentBusiness.value.id, selectedStep.id);
-      
-    // 更新当前商机的销售进度信息
-    currentBusiness.value.salesProgressId = selectedStep.id;
-    currentBusiness.value.salesProgressName = selectedStep.salesProgressName;
-      
-    ElMessage.success(`销售进度已更新为: ${selectedStep.salesProgressName}`);
-    console.log('进度已改为:', selectedStep.salesProgressName, '进度ID:', selectedStep.id);
-      
-      // 可选：刷新商机列表以获取最新数据
-      // fetchBusinessList();
-    } catch (error) {
-      console.error('更新销售进度失败:', error);
-      ElMessage.error('更新销售进度失败，请稍后再试');
-  }
-}
-
 //=================添加客户附文本==================
 // 编辑器实例，必须用 shallowRef
 const editorRef = shallowRef()
@@ -1061,8 +947,7 @@ const handleRowClick = (row: any) => {
   currentCustomer.value = row;
   currentCustomerId.value = row.id;
   table.value = true;
-  activeTabcus.value = 'business'; // "商机详情"tab
-  activeTab.value = 'communication'; // "联系记录"tab
+  activeTabcus.value = 'contact'; // 确保默认显示"客户详情"标签页
   fetchContactList();
 }
 
@@ -1115,10 +1000,6 @@ const rules = reactive<FormRules<RuleForm>>({
   customerPhone: [
     { required: true, message: '电话是必填项', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号', trigger: 'blur', },
-  ],
-  businessEmail: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'change'] }
   ],
 })
 
@@ -1463,7 +1344,9 @@ const handleResetQuery = () => {
   queryParams.MatchMode = 0
   handleQuery();
 };
-
+const handleSelectionChange = (val: any[]) => {
+  selectedIds.value = val.map(item => item.id);
+};
 
 //分页
 const handleSizeChange = (val: number) => {

@@ -61,23 +61,3 @@ export const DeleteBusinessOpportunity = (id: string) => {
     method: "delete",
   });
 };
-
-// 更新商机销售进度
-export const UpdateBusinessProgress = (id: string, salesProgressId: string | number) => {
-  return request({
-    url: `${BusinessOpportunity_BASE_URL}/${id}/update-progress`,
-    method: "put",
-    data: {
-      salesProgressId
-    }
-  });
-};
-
-// 导出线索
-export const ExportClue = () => {
-  return request({
-    url: `${BusinessOpportunity_BASE_URL}/export-all-clue`,
-    method: "get",
-    responseType: "blob", // 关键
-  });
-}
