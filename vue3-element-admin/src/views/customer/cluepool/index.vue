@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <!-- 查询线索池 -->
+     <!-- 查询线索池 -->
     <el-card class="search-card" shadow="never">
       <div class="clue-header">
         <span>线索池列表 | 总记录数：<b>{{ queryParams.totalCount }}</b> 条</span>
@@ -237,14 +237,14 @@
         <div class="clue-detail-title-row">
           <span class="clue-detail-title">线索详情</span>
           <!-- 详情tab右下角的"修改"按钮 -->
-           <div class="detail-row-btn">
+          <div class="detail-row-btn">
             <el-button type="primary" size="small" v-if="!isEdit" @click="isEdit = true">修改</el-button>
             <el-button type="primary" size="small" v-else @click="submitEdit">完成</el-button>
           </div>
         </div>
         <el-divider class="divider-mt" />
         <!-- 详情tab区 -->
-       <el-tabs v-model="activeTab" class="clue-detail-tabs" style="position:relative;">
+        <el-tabs v-model="activeTab" class="clue-detail-tabs" style="position:relative;">
           <!-- 线索详情tab，分两列展示 -->
           <div class="detail-table-flex">
             <!-- 左侧信息列 -->
