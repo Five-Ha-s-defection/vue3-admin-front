@@ -597,6 +597,10 @@ const addContactRules = {
   contactName: [{ required: true, message: "请输入联系人姓名", trigger: "blur" }],
   mobile: [{ required: true, message: "请输入手机号", trigger: "blur" }],
   wechat: [{ required: true, message: "请输入微信号", trigger: "blur" }],
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'change'] }
+  ],
 };
 
 // 当前选中的客户

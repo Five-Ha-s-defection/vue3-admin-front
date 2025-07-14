@@ -89,8 +89,8 @@
               <el-dropdown-menu>
                 <el-dropdown-item @click="receiveClue(getSelectedClueIds())">领取</el-dropdown-item>
                 <el-dropdown-item @click="openUserSelectDialog">分配</el-dropdown-item>
-                <el-dropdown-item>删除线索</el-dropdown-item>
-                <el-dropdown-item>导出数据</el-dropdown-item>
+                <el-dropdown-item @click="delclue(getSelectedClueIds())">删除线索</el-dropdown-item>
+                <el-dropdown-item @click="exportclue(0)">导出数据</el-dropdown-item>
                 <el-dropdown-item>Excel导入</el-dropdown-item>
                 <el-dropdown-item>下载模版</el-dropdown-item>
               </el-dropdown-menu>
@@ -238,38 +238,110 @@
         <div class="clue-detail-title-row">
           <span class="clue-detail-title">线索详情</span>
           <!-- 详情tab右下角的"修改"按钮 -->
-          <div class="detail-row-btn">
-            <el-button type="primary" size="small">修改</el-button>
+           <div class="detail-row-btn">
+            <el-button type="primary" size="small" v-if="!isEdit" @click="isEdit = true">修改</el-button>
+            <el-button type="primary" size="small" v-else @click="submitEdit">完成</el-button>
           </div>
         </div>
         <el-divider class="divider-mt" />
         <!-- 详情tab区 -->
-        <el-tabs v-model="activeTab" class="clue-detail-tabs" style="position:relative;">
+       <el-tabs v-model="activeTab" class="clue-detail-tabs" style="position:relative;">
           <!-- 线索详情tab，分两列展示 -->
           <div class="detail-table-flex">
             <!-- 左侧信息列 -->
             <div class="detail-table-col">
               <div class="detail-row"><span>线索编号</span>{{ currentClue?.clueCode || '--' }}</div>
               <div class="detail-row">
-                <span>电话</span>
-                <span>
+                <span class="value">电话</span>
+                <template v-if="isEdit">
+                  <el-input class="value" v-model="editForm.cluePhone" size="small" />
+                </template>
+                <template v-else>
                   {{ displayValue(currentClue?.cluePhone) }}
                   <el-icon v-if="currentClue?.cluePhone" class="phone-icon">
                     <Phone />
                   </el-icon>
-                </span>
+                </template>
               </div>
-              <div class="detail-row"><span>邮箱</span>{{ displayValue(currentClue?.clueEmail) }}</div>
-              <div class="detail-row"><span>QQ</span>{{ displayValue(currentClue?.clueQQ) }}</div>
-              <div class="detail-row"><span>行业</span>{{ displayValue(currentClue?.industryName) }}</div>
+              <div class="detail-row">
+                <span class="value">邮箱</span>
+                <template v-if="isEdit">
+                  <el-input class="value" v-model="editForm.clueEmail" size="small" />
+                </template>
+                <template v-else>
+                  {{ displayValue(currentClue?.clueEmail) }}
+                </template>
+              </div>
+              <div class="detail-row">
+                <span class="value">QQ</span>
+                <template v-if="isEdit">
+                  <el-input class="value" v-model="editForm.clueQQ" size="small" />
+                </template>
+                <template v-else>
+                  {{ displayValue(currentClue?.clueQQ) }}
+                </template>
+              </div>
+              <div class="detail-row">
+                <span class="value">行业</span>
+                <template v-if="isEdit">
+                  <el-select class="value" v-model="editForm.industryId" placeholder="请选择行业">
+                    <el-option v-for="item in industryList" :label="item.industryName" :value="item.id" />
+                  </el-select>
+                </template>
+                <template v-else>
+                  {{ displayValue(currentClue?.industryName) }}
+                </template>
+              </div>
             </div>
             <!-- 右侧信息列 -->
             <div class="detail-table-col">
-              <div class="detail-row"><span>姓名</span>{{ displayValue(currentClue?.clueName) }}</div>
-              <div class="detail-row"><span>线索来源</span>{{ displayValue(currentClue?.clueSourceName) }}</div>
-              <div class="detail-row"><span>微信号</span>{{ displayValue(currentClue?.clueWechat) }}</div>
-              <div class="detail-row"><span>公司名称</span>{{ displayValue(currentClue?.companyName) }}</div>
-              <div class="detail-row"><span>地址</span>{{ displayValue(currentClue?.address) }}</div>
+              <div class="detail-row">
+                <span class="value">姓名</span>
+                <template v-if="isEdit">
+                  <el-input class="value" v-model="editForm.clueName" size="small" />
+                </template>
+                <template v-else>
+                  {{ displayValue(currentClue?.clueName) }}
+                </template>
+              </div>
+              <div class="detail-row">
+                <span class="value">线索来源</span>
+                <template v-if="isEdit">
+                  <el-select class="value" v-model="editForm.clueSourceId" placeholder="请选择线索来源">
+                    <el-option v-for="item in cluesourceList" :label="item.clueSourceName" :value="item.id" />
+                  </el-select>
+                </template>
+                <template v-else>
+                  {{ displayValue(currentClue?.clueSourceName) }}
+                </template>
+              </div>
+              <div class="detail-row">
+                <span class="value">微信号</span>
+                <template v-if="isEdit">
+                  <el-input class="value" v-model="editForm.clueWechat" size="small" />
+                </template>
+                <template v-else>
+                  {{ displayValue(currentClue?.clueWechat) }}
+                </template>
+              </div>
+              <div class="detail-row">
+                <span class="value">公司名称</span>
+                <template v-if="isEdit">
+                  <el-input class="value" v-model="editForm.companyName" size="small" />
+                </template>
+                <template v-else>
+                  {{ displayValue(currentClue?.companyName) }}
+                </template>
+              </div>
+              <div class="detail-row">
+                <span class="value">地址</span>
+                <template v-if="isEdit">
+                  <el-input class="value" v-model="editForm.address" size="small" />
+                </template>
+                <template v-else>
+                  {{ displayValue(currentClue?.address) }}
+                </template>
+              </div>
             </div>
           </div>
           <!-- 联系记录tab -->
@@ -673,7 +745,7 @@
 import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload } from '@element-plus/icons-vue';
-import { ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue, ClueAction, ShowUserList } from '@/api/CustomerProcess/Clue/clue.api';
+import { UpdateClue,GetClueDetail,ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue, ClueAction, ShowUserList,ExportClue,DeleteClue } from '@/api/CustomerProcess/Clue/clue.api';
 import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
 import moment from 'moment';
 import dayjs from 'dayjs';
@@ -682,6 +754,144 @@ import type { FormInstance, FormRules, UploadInstance, UploadUserFile, UploadFil
 import StopIcon from '@/components/icons/StopIcon.vue'
 
 const user = useUserStore();
+
+//=================修改线索===================================================================
+const isEdit = ref(false); // 是否处于编辑状态
+
+const editForm = ref({
+  clueName: '',
+  cluePhone: '',
+  clueSourceId: '',
+  clueEmail: '',
+  clueWechat: '',
+  clueQQ: '',
+  companyName: '',
+  industryId: '',
+  address: '',
+  remark:'',
+  cluePoolStatus: 0,
+}); // 编辑用的表单数据
+
+// 进入编辑时，拷贝一份当前线索数据
+watch(isEdit, (val) => {
+  if (val && currentClue.value) {
+    editForm.value = { ...currentClue.value };
+  }
+});
+
+const submitEdit = async () => {
+  try {
+    const data = {
+      clueName: editForm.value.clueName,
+      cluePhone: editForm.value.cluePhone,
+      clueSourceId: editForm.value.clueSourceId,
+      clueEmail: editForm.value.clueEmail,
+      clueWechat: editForm.value.clueWechat,
+      clueQQ: editForm.value.clueQQ,
+      companyName: editForm.value.companyName,
+      industryId: editForm.value.industryId,
+      address: editForm.value.address,
+      remark:editForm.value.remark,
+      cluePoolStatus: editForm.value.cluePoolStatus,
+    };
+    await UpdateClue(currentClue.value.id, data);
+    ElMessage.success('提交成功');
+    isEdit.value = false;
+    await fetchClueDetail(currentClue.value.id); // 重新拉详情
+  } catch (e) {
+    ElMessage.error('提交失败');
+  }
+};
+
+// 线索详情
+const fetchClueDetail = async (id:any) => {
+  const res = await GetClueDetail(id);
+  Object.assign(currentClue.value, res.data); 
+};
+
+//================导出线索============================
+// 导出客户数据并自动下载 Excel 文件
+const exportclue = async (cluePoolStatus:number) => {
+  // 调用后端导出接口，传递筛选条件
+  const res = await ExportClue(cluePoolStatus);
+
+  // 从响应头中获取文件名，默认文件名为"客户数据.xlsx"
+  const disposition = res.headers['content-disposition'];
+  let fileName = '线索数据.xlsx';
+  if (disposition) {
+    // 匹配 filename 或 filename*=UTF-8'' 这两种格式
+    const match = disposition.match(/filename\*?=(?:UTF-8'')?([^;]+)/i);
+    if (match && match[1]) {
+      // 解码文件名，去除引号
+      fileName = decodeURIComponent(match[1].replace(/["']/g, ''));
+    }
+  }
+
+  // 创建 Blob 对象，指定类型为 Excel
+  const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  // 创建临时 a 标签用于下载
+  const link = document.createElement('a');
+  link.href = window.URL.createObjectURL(blob); // 生成下载链接
+  link.download = fileName; // 设置下载文件名
+  link.click(); // 触发点击，开始下载
+
+  // 释放 URL 对象，避免内存泄漏
+  window.URL.revokeObjectURL(link.href);
+}
+
+
+//=================删除线索==========================
+/**
+ * 批量删除线索
+ * @param clueIds 选中的线索ID数组
+ * 1. 校验是否有选中线索
+ * 2. 弹窗二次确认
+ * 3. 循环调用DeleteClue删除每条线索
+ * 4. 删除成功/失败分别统计并提示
+ * 5. 删除成功后刷新线索列表
+ */
+const delclue = async (clueIds: any[]) => {
+  if (!clueIds || !clueIds.length) {
+    ElMessage.warning('请先选择要删除的线索');
+    return;
+  }
+  try {
+    // 弹窗二次确认
+    await ElMessageBox.confirm(
+      `确定要删除选中的${clueIds.length}条线索吗？删除后不可恢复！`,
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+    let successCount = 0; // 成功删除数量
+    let failCount = 0;    // 删除失败数量
+    // 循环删除每个线索
+    for (const clueId of clueIds) {
+      try {
+        await DeleteClue(clueId);
+        successCount++;
+      } catch (e) {
+        failCount++;
+      }
+    }
+    // 删除成功提示
+    if (successCount > 0) {
+      ElMessage.success(`成功删除${successCount}条线索`);
+      fetchClueList(); // 刷新线索列表
+    }
+    // 删除失败提示
+    if (failCount > 0) {
+      ElMessage.error(`有${failCount}条线索删除失败`);
+    }
+  } catch {
+    // 用户取消操作
+    ElMessage.info('已取消删除');
+  }
+}
 
 //=================分配、领取=====================
 //获取线索Id方便分配、领取
@@ -1525,6 +1735,52 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.detail-row .label {
+  width: 80px;
+  /* 字段名宽度，可根据实际调整 */
+  color: #888;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.detail-row .value {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  color: #303133;
+}
+
+.detail-table-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-table-flex {
+  display: flex;
+  justify-content: center;
+  gap: 180px;
+  margin: 0 auto 20px auto;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e4e7ed;
+  max-width: 1000px;
+  min-width: 700px;
+}
+
+
+.clue-detail-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .app-container {
   padding: 20px;
 }

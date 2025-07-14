@@ -32,10 +32,12 @@ export const GetCustomerDetail = (id: string) => {
 // 删除客户
 export const DeleteCustomer = (id: string) => {
   return request({
-    url: `${CUSTOMER_BASE_URL}/${id}/delete-customer`,
+    url: `${CUSTOMER_BASE_URL}/${id}/del-customer`,
     method: "delete",
   });
 };
+
+
 
 // 修改客户
 export const UpdateCustomer = (id: string, data: any) => {
@@ -115,6 +117,18 @@ export const ShowUserList=(data:any)=>{
     url: `${CUSTOMER_BASE_URL}/show-user-list`,
     method: "get",
     params:data
+  });
+}
+
+// 导出客户
+export const ExportCustomer = (customerPoolStatus:number) => {
+  return request({
+    url: `${CUSTOMER_BASE_URL}/export-all-customer`,
+    method: "get",
+    params: {
+      customerPoolStatus, // 将筛选条件传递给后端
+    },
+    responseType: "blob", // 关键
   });
 }
 

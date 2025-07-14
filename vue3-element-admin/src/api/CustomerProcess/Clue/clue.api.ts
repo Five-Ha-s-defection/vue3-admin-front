@@ -91,3 +91,16 @@ export const ShowUserList=(data:any)=>{
     params:data
   });
 }
+
+
+// 导出线索
+export const ExportClue = (cluePoolStatus:number) => {
+  return request({
+    url: `${CLUE_BASE_URL}/export-all-clue`,
+    method: "get",
+    params: {
+      cluePoolStatus, // 将筛选条件传递给后端
+    },
+    responseType: "blob", // 关键
+  });
+}

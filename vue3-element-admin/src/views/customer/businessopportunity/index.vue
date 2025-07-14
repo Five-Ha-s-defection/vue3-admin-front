@@ -87,7 +87,7 @@
               </el-icon></el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>删除商机</el-dropdown-item>
+                <el-dropdown-item @click="delbus(getSelectedClueIds())">删除商机</el-dropdown-item>
                 <el-dropdown-item>导出数据</el-dropdown-item>
                 <el-dropdown-item>Excel导入</el-dropdown-item>
                 <el-dropdown-item>下载模版</el-dropdown-item>
@@ -628,6 +628,69 @@ import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 
 const user = useUserStore();
 
+//=================删除商机==========================
+/**
+ * 批量删除商机
+ * @param busIds 选中的商机ID数组
+ * 1. 校验是否有选中线索
+ * 2. 弹窗二次确认
+ * 3. 循环调用DeleteClue删除每条商机
+ * 4. 删除成功/失败分别统计并提示
+ * 5. 删除成功后刷新线索列表
+ */
+const delbus = async (busIds: any[]) => {
+  if (!busIds || !busIds.length) {
+    ElMessage.warning('请先选择要删除的商机');
+    return;
+  }
+  try {
+    // 弹窗二次确认
+    await ElMessageBox.confirm(
+      `确定要删除选中的${busIds.length}条商机吗？删除后不可恢复！`,
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+    let successCount = 0; // 成功删除数量
+    let failCount = 0;    // 删除失败数量
+    // 循环删除每个线索
+    for (const busId of busIds) {
+      try {
+        await DeleteBusinessOpportunity(busId);
+        successCount++;
+      } catch (e) {
+        failCount++;
+      }
+    }
+    // 删除成功提示
+    if (successCount > 0) {
+      ElMessage.success(`成功删除${successCount}条商机`);
+      fetchBusinessList(); // 刷新商机列表
+    }
+    // 删除失败提示
+    if (failCount > 0) {
+      ElMessage.error(`有${failCount}条商机删除失败`);
+    }
+  } catch {
+    // 用户取消操作
+    ElMessage.info('已取消删除');
+  }
+}
+
+const selectedRows = ref<any[]>([]); // 保存所有选中的行
+const getSelectedClueIds = () => {
+  return selectedRows.value.map(row => row.id);
+};
+
+const handleSelectionChange = (rows:any) => {
+  selectedRows.value = rows;
+};
+
+
+
 //=================销售进度条=======================
 // 销售进度阶段列表
 
@@ -955,8 +1018,8 @@ const handleRowClick = (row: any) => {
   currentBusiness.value.salesProgressId = row.salesProgressId;
 
   table.value = true;
-  activeTabcus.value = 'business'; // “商机详情”tab
-  activeTab.value = 'communication'; // “联系记录”tab
+  activeTabcus.value = 'business'; // "商机详情"tab
+  activeTab.value = 'communication'; // "联系记录"tab
   fetchContactList();
 
   // 打印当前计算出的activeStepIndex
@@ -1015,6 +1078,10 @@ const rules = reactive<FormRules<RuleForm>>({
       message: '销售进度是必填项',
       trigger: 'change',
     },
+  ],
+  businessEmail: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'change'] }
   ],
 })
 
@@ -1353,9 +1420,7 @@ const handleResetQuery = () => {
   queryParams.MatchMode = 0
   handleQuery();
 };
-const handleSelectionChange = (val: any[]) => {
-  selectedIds.value = val.map(item => item.id);
-};
+
 
 //分页
 const handleSizeChange = (val: number) => {
