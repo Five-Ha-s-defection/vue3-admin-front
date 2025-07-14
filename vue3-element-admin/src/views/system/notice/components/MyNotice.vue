@@ -133,7 +133,7 @@ const noticeDetail = ref<NoticeDetailVO | null>(null);
 
 // 查询通知公告
 function handleQuery() {
-  loading.value = true;
+  /* loading.value = true;
   NoticeAPI.getMyNoticePage(queryParams)
     .then((data) => {
       pageData.value = data.list;
@@ -141,7 +141,7 @@ function handleQuery() {
     })
     .finally(() => {
       loading.value = false;
-    });
+    }); */
 }
 
 // 重置通知公告查询

@@ -3,7 +3,7 @@
     <!-- 查询客户部分 -->
     <el-card class="search-card" shadow="never">
       <div class="clue-header">
-        <span>线索列表 | 总记录数：<b>{{ queryParams.totalCount }}</b> 条</span>
+        <span>客户列表 | 总记录数：<b>{{ queryParams.totalCount }}</b> 条</span>
       </div>
       <!-- 查看范围 -->
       <el-row class="clue-row" align="middle">
@@ -82,10 +82,10 @@
               </el-icon></el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>放弃客户</el-dropdown-item>
-                <el-dropdown-item>客户转移</el-dropdown-item>
-                <el-dropdown-item>删除客户</el-dropdown-item>
-                <el-dropdown-item>导出数据</el-dropdown-item>
+                <el-dropdown-item @click="openAbandonDialog(getSelectedClueIds())">放弃客户</el-dropdown-item>
+                <el-dropdown-item @click="openUserSelectDialog([currentCustomer.id])">客户转移</el-dropdown-item>
+                <el-dropdown-item @click="openDeleteDialog([currentCustomer.id])">删除客户</el-dropdown-item>
+                <el-dropdown-item @click="exportcustomer(1)">导出数据</el-dropdown-item>
                 <el-dropdown-item>Excel导入</el-dropdown-item>
                 <el-dropdown-item>下载模版</el-dropdown-item>
               </el-dropdown-menu>
@@ -94,6 +94,48 @@
         </el-col>
       </el-row>
     </el-card>
+    
+     <!-- 转移线索弹出框 -->
+    <el-dialog v-model="userSelectDialogVisible" title="用户列表" width="900px">
+      <el-table :data="showuserList" style="width: 100%" :row-key="row => row.id" :current-row-key="selectUserId"
+        highlight-current-row @row-click="uhandleRowClick">
+        <el-table-column label="选择" width="60">
+          <template #default="{ row }">
+            <input v-model="selectUserId" type="radio" :value="String(row.userId)" :name="'assignUser'"
+              @click.stop="uhandleRowClick(row)" />
+          </template>
+        </el-table-column>
+
+        <el-table-column type="index" label="#" width="50" />
+        <el-table-column prop="realName" label="用户名" />
+        <el-table-column prop="email" label="电子邮箱" />
+        <el-table-column prop="phoneInfo" label="手机号" />
+        <el-table-column prop="roleName" label="用户角色" />
+      </el-table>
+      <template #footer>
+        <el-button @click="userSelectDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleAssignSubmit">提交</el-button>
+      </template>
+    </el-dialog>
+
+    
+    <!-- 放弃线索原因弹出框 -->
+    <el-dialog title="选择放弃原因" v-model="abandonDialogVisible" width="500px">
+      <el-form>
+        <el-form-item label="放弃原因">
+          <el-select v-model="abandonReason" placeholder="请选择放弃原因" style="width: 300px" filterable>
+            <el-option v-for="item in abandonReasonOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <div style="color: #409EFF; margin-left: 100px;">
+          备注：放弃后线索将进入公海
+        </div>
+      </el-form>
+      <template #footer>
+        <el-button @click="abandonDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleAbandonSubmit">提交</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 添加客户弹出框 -->
     <el-dialog v-model="addcustomerdialogVisible" title="添加客户" width="700">
@@ -183,9 +225,9 @@
           <!-- 右侧操作按钮区 -->
           <div class="drawer-btns">
             <el-button type="primary">转客户</el-button>
-            <el-button>放弃</el-button>
-            <el-button>转移</el-button>
-            <el-button type="danger">删除</el-button>
+            <el-button  type="primary" @click="openAbandonDialog([currentCustomer.id])">放弃</el-button>
+            <el-button  type="warning" @click="openUserSelectDialog([currentCustomer.id])">转移</el-button>
+            <el-button type="danger" @click="openDeleteDialog([currentCustomer.id])">删除</el-button>
           </div>
         </div>
         <!-- 线索基础信息区，横向排列 -->
@@ -229,37 +271,141 @@
             <el-tab-pane label="客户详情" name="contact">
               <div class="contact-records">
                 <!-- 按钮 -->
-                <el-button type="primary" size="small"
-                  style="text-align: right; margin-top: 20px;width: 80px;">修改</el-button>
+                <el-button v-if="!isEdit" type="primary" size="small" @click="isEdit = true">修改</el-button>
+                <el-button v-else type="primary" size="small" @click="submitEdit">完成</el-button>
                 <!-- 线索详情tab，分两列展示 -->
                 <div class="detail-table-flex">
                   <!-- 左侧信息列 -->
                   <div class="detail-table-col">
                     <div class="detail-row"><span>客户编号</span>{{ currentCustomer?.customerCode }}</div>
-                    <div class="detail-row"><span>客户名称</span>{{ currentCustomer?.customerName }}</div>
-                    <div class="detail-row"><span>体检金额</span>{{ currentCustomer?.checkAmount || '--' }}</div>
-                    <div class="detail-row"><span>到期时间</span>{{ currentCustomer?.customerExpireTime }}</div>
-                    <div class="detail-row"><span>客户级别</span>{{ currentCustomer?.customerLevelName }}</div>
-                    <div class="detail-row"><span>邮箱</span>{{ displayValue(currentCustomer?.customerEmail) }}</div>
-                    <div class="detail-row"><span>客户来源</span>{{ displayValue(currentCustomer?.clueSourceName) }}</div>
-                    <div class="detail-row"><span>客户地址</span>{{ displayValue(currentCustomer?.customerAddress) }}</div>
-                    <div class="detail-row"><span>备注</span>{{ currentCustomer?.customerRemark }}</div>
+                    <div class="detail-row">
+                      <span>客户名称</span>
+                      <template v-if="isEdit">
+                        <el-input v-model="editForm.customerName" class="value" size="small" />
+                      </template>
+                      <template v-else>
+                        {{ currentCustomer?.customerName }}
+                      </template>
+                    </div>
+                    <div class="detail-row">
+                      <span>体检金额</span>
+                      <template v-if="isEdit">
+                        <el-input v-model="editForm.checkAmount" class="value" size="small" />
+                      </template>
+                      <template v-else>
+                        {{ currentCustomer?.checkAmount || '--' }}
+                      </template>
+                    </div>
+                    <div class="detail-row">
+                      <span>到期时间</span>
+                      <template v-if="isEdit">
+                        <el-input v-model="editForm.customerExpireTime" class="value" size="small" />
+                      </template>
+                      <template v-else>
+                        {{ currentCustomer?.customerExpireTime }}
+                      </template>
+                    </div>
+                    <div class="detail-row">
+                      <span>客户级别</span>
+                      <template v-if="isEdit">
+                        <el-select v-model="editForm.customerLevelId" placeholder="请选择客户级别">
+                          <el-option v-for="item in levelList" :label="item.customerLevelName" :value="item.id" />
+                        </el-select>
+                      </template>
+                      <template v-else>
+                        {{ currentCustomer?.customerLevelName }}
+                      </template>
+                    </div>
+                    <div class="detail-row">
+                      <span>邮箱</span>
+                      <template v-if="isEdit">
+                        <el-input v-model="editForm.customerEmail" class="value" size="small" />
+                      </template>
+                      <template v-else>
+                        {{ displayValue(currentCustomer?.customerEmail) }}
+                      </template>
+                    </div>
+                    <div class="detail-row">
+                      <span>客户来源</span>
+                      <template v-if="isEdit">
+                        <el-select v-model="editForm.customerSourceId" placeholder="请选择客户来源">
+                          <el-option v-for="item in customersourceList" :label="item.clueSourceName" :value="item.id" />
+                        </el-select>
+                      </template>
+                      <template v-else>
+                        {{ displayValue(currentCustomer?.customerEmail) }}
+                      </template>
+                    </div>
+                    <div class="detail-row">
+                      <span>客户地址</span>
+                      <template v-if="isEdit">
+                        <el-input v-model="editForm.customerAddress" class="value" size="small" />
+                      </template>
+                      <template v-else>
+                        {{ displayValue(currentCustomer?.customerAddress) }}
+                      </template>
+                    </div>
+                    <div class="detail-row">
+                      <span>备注</span>
+                      <template v-if="isEdit">
+                        <el-input v-model="editForm.customerRemark" class="value" size="small" />
+                        <div style="border: 1px solid #ccc">
+                          <Toolbar style="border-bottom: 1px solid #ccc" :editor="editorRef"
+                            :default-config="toolbarConfig" />
+                          <Editor v-model="ruleForm.customerRemark" style="height: 500px; overflow-y: hidden;"
+                            :default-config="editorConfig" @on-created="handleCreated" />
+                        </div>
+                      </template>
+                      <template v-else>
+                        {{ currentCustomer?.customerRemark }}
+                      </template>
+                    </div>
                   </div>
                   <!-- 右侧信息列 -->
                   <div class="detail-table-col">
-                    <div class="detail-row"><span>车架号</span>{{ displayValue(currentCustomer?.carFrameNumberName) }}
+                    <div class="detail-row">
+                      <span>车架号</span>
+                      <template v-if="isEdit">
+                        <el-select v-model="editForm.carFrameNumberId" placeholder="请选择车架号">
+                          <el-option v-for="item in carList" :label="item.carFrameNumberName" :value="item.id" />
+                        </el-select>
+                      </template>
+                      <template v-else>
+                        {{ displayValue(currentCustomer?.carFrameNumberName) }}
+                      </template>
                     </div>
                     <div class="detail-row">
                       <span>电话</span>
-                      <span>
+                      <template v-if="isEdit">
+                        <el-input v-model="editForm.customerPhone" class="value" size="small" />
+                      </template>
+                      <template v-else>
                         {{ displayValue(currentCustomer?.customerPhone) }}
                         <el-icon v-if="currentCustomer?.customerPhone" class="phone-icon">
                           <Phone />
                         </el-icon>
-                      </span>
+                      </template>
                     </div>
-                    <div class="detail-row"><span>客户类别</span>{{ displayValue(currentCustomer?.customerTypeName) }}</div>
-                    <div class="detail-row"><span>客户地区</span>{{ displayValue(currentCustomer?.customerRegionName) }}
+                    <div class="detail-row">
+                      <span>客户类别</span>
+                      <template v-if="isEdit">
+                        <el-select v-model="editForm.customerTypeId" placeholder="请选择客户类别">
+                          <el-option v-for="item in typeList" :label="item.customerTypeName" :value="item.id" />
+                        </el-select>
+                      </template>
+                      <template v-else>
+                        {{ displayValue(currentCustomer?.customerTypeName) }}
+                      </template>
+                    </div>
+                    <div class="detail-row">
+                      <span>客户地区</span>
+                      <template v-if="isEdit">
+                        <el-cascader v-model="editForm.customerRegionId" :options="regionList" :props="props1" clearable
+                          :show-all-levels="false" />
+                      </template>
+                      <template v-else>
+                        {{ displayValue(currentCustomer?.customerRegionName) }}
+                      </template>
                     </div>
                   </div>
                 </div>
@@ -476,7 +622,7 @@
             </template>
           </template>
         </el-table-column>
-        <el-table-column label="负责人" prop="userName" min-width="100" />
+        <el-table-column label="负责人" prop="realName" min-width="100" />
         <el-table-column label="创建人" prop="createName" min-width="100" />
       </el-table>
       <!-- 分页区域 -->
@@ -684,7 +830,7 @@
 import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload, Filter } from '@element-plus/icons-vue';
-import { GetUserSelect, GetCarFrameNumberSelect, GetCustomerLevelSelect, GetCustomerRegionSelect, GetCustomerSourceSelect, GetCustomerTypeSelect, ShowCustomerList, AddCustomer } from '@/api/CustomerProcess/Customer/customer.api';
+import {GetCustomerDetail, GetUserSelect, GetCarFrameNumberSelect, GetCustomerLevelSelect, GetCustomerRegionSelect, GetCustomerSourceSelect, GetCustomerTypeSelect, ShowCustomerList, AddCustomer, CustomerAction, ShowUserList, DeleteCustomer, ExportCustomer, UpdateCustomer } from '@/api/CustomerProcess/Customer/customer.api';
 import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
 import moment from 'moment';
 import dayjs from 'dayjs';
@@ -697,6 +843,389 @@ import { onBeforeUnmount, shallowRef } from 'vue'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 
 const user = useUserStore();
+
+//=================修改线索===================================================================
+const isEdit = ref(false); // 是否处于编辑状态
+
+const editForm = ref({
+  customerName: '',
+  checkAmount: '',
+  customerExpireTime: '',
+  customerLevelId: '',
+  customerEmail: '',
+  customerSourceId: '',
+  customerAddress: '',
+  customerRemark: '',
+  carFrameNumberId: '',
+  customerPhone: '',
+  customerTypeId: '',
+  customerRegionId:'',
+  customerPoolStatus: 1,
+}); // 编辑用的表单数据
+
+// 进入编辑时，拷贝一份当前线索数据
+watch(isEdit, (val) => {
+  if (val && currentCustomer.value) {
+    editForm.value = { ...currentCustomer.value };
+  }
+});
+
+const submitEdit = async () => {
+  try {
+    const data = {
+      customerName: editForm.value.customerName,
+      checkAmount: editForm.value.checkAmount,
+      customerExpireTime: editForm.value.customerExpireTime,
+      customerLevelId: editForm.value.customerLevelId,
+      customerEmail: editForm.value.customerEmail,
+      customerSourceId: editForm.value.customerSourceId,
+      customerAddress: editForm.value.customerAddress,
+      customerRemark: editForm.value.customerRemark,
+      carFrameNumberId: editForm.value.carFrameNumberId,
+      customerPhone: editForm.value.customerPhone,
+      customerTypeId: editForm.value.customerTypeId,
+      customerRegionId: editForm.value.customerRegionId,
+      customerPoolStatus: editForm.value.customerPoolStatus,
+    };
+    await UpdateCustomer(currentCustomer.value.id, data);
+    ElMessage.success('提交成功');
+    isEdit.value = false;
+    await fetchCustomerDetail(currentCustomer.value.id); // 重新拉详情
+  } catch (e) {
+    ElMessage.error('提交失败');
+  }
+};
+
+// 线索详情
+const fetchCustomerDetail = async (id: any) => {
+  const res = await GetCustomerDetail(id);
+  Object.assign(currentCustomer.value, res.data);
+};
+
+
+//================导出客户============================
+// 导出客户数据并自动下载 Excel 文件
+const exportcustomer = async (customerPoolStatus: number) => {
+  // 调用后端导出接口，传递筛选条件
+  const res = await ExportCustomer(customerPoolStatus);
+
+  // 从响应头中获取文件名，默认文件名为"客户数据.xlsx"
+  const disposition = res.headers['content-disposition'];
+  let fileName = '客户数据.xlsx';
+  if (disposition) {
+    // 匹配 filename 或 filename*=UTF-8'' 这两种格式
+    const match = disposition.match(/filename\*?=(?:UTF-8'')?([^;]+)/i);
+    if (match && match[1]) {
+      // 解码文件名，去除引号
+      fileName = decodeURIComponent(match[1].replace(/["']/g, ''));
+    }
+  }
+
+  // 创建 Blob 对象，指定类型为 Excel
+  const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  // 创建临时 a 标签用于下载
+  const link = document.createElement('a');
+  link.href = window.URL.createObjectURL(blob); // 生成下载链接
+  link.download = fileName; // 设置下载文件名
+  link.click(); // 触发点击，开始下载
+
+  // 释放 URL 对象，避免内存泄漏
+  window.URL.revokeObjectURL(link.href);
+}
+
+
+
+//=================删除客户==========================
+/**
+ * 批量删除客户
+ * @param customerIds 选中的客户ID数组
+ * 1. 校验是否有选中线索
+ * 2. 弹窗二次确认
+ * 3. 循环调用DeleteClue删除每条客户
+ * 4. 删除成功/失败分别统计并提示
+ * 5. 删除成功后刷新客户列表
+ */
+const delcustomer = async (customerIds: any[]) => {
+  if (!customerIds || !customerIds.length) {
+    ElMessage.warning('请先选择要删除的客户');
+    return;
+  }
+  try {
+    // 弹窗二次确认
+    await ElMessageBox.confirm(
+      `确定要删除选中的${customerIds.length}条客户吗？删除后不可恢复！`,
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+    let successCount = 0; // 成功删除数量
+    let failCount = 0;    // 删除失败数量
+    // 循环删除每个客户
+    for (const customerId of customerIds) {
+      try {
+        await DeleteCustomer(customerId);
+        successCount++;
+      } catch (e) {
+        failCount++;
+      }
+    }
+    // 删除成功提示
+    if (successCount > 0) {
+      ElMessage.success(`成功删除${successCount}条客户`);
+      fetchCustomerList(); // 刷新线索列表
+    }
+    // 删除失败提示
+    if (failCount > 0) {
+      ElMessage.error(`有${failCount}条客户删除失败`);
+    }
+  } catch {
+    // 用户取消操作
+    ElMessage.info('已取消删除');
+  }
+}
+
+// 新增：删除客户方法，支持传入客户id
+const openDeleteDialog = (customerIds?: any[]) => {
+  const ids = customerIds && customerIds.length ? customerIds : getSelectedClueIds();
+  if (!ids.length) {
+    ElMessage.warning('请先选择要删除的客户');
+    return;
+  }
+  delcustomer(ids);
+}
+
+//================转移客户===========================
+const selectUserId = ref(''); // 推荐用字符串
+const userSelectDialogVisible = ref(false); // 控制弹窗显示
+
+const uhandleRowClick = (row: any) => {
+  selectUserId.value = String(row.userId);
+};
+
+// 新增：保存要转移的客户id
+const transferCustomerIds = ref<any[]>([]);
+
+// 修改openUserSelectDialog，支持传入客户id
+const openUserSelectDialog = (customerIds?: any[]) => {
+  // 如果有传入客户id，优先用，否则用已选中的
+  const ids = customerIds && customerIds.length ? customerIds : getSelectedClueIds();
+  if (!ids.length) {
+    ElMessage.warning('请先选择要转移的客户');
+    return;
+  }
+  transferCustomerIds.value = ids;
+  showUser();
+  userSelectDialogVisible.value = true;
+}
+
+// 修改assignClue，直接用transferCustomerIds
+const assignClue = async (targetUserId: any) => {
+  if (!transferCustomerIds.value.length) {
+    ElMessage.warning('请先选择客户');
+    return;
+  }
+  if (targetUserId === user.userInfo.id) {
+    ElMessage.warning('目标用户无效，不能是自己');
+    return;
+  }
+  for (const customerId of transferCustomerIds.value) {
+    await CustomerAction({ customerId, actionType: 'assign', targetUserId });
+  }
+  ElMessage.success('分配成功');
+  fetchCustomerList();
+  showUser();
+}
+
+// 修改handleAssignSubmit，调用assignClue
+const handleAssignSubmit = () => {
+  if (!selectUserId.value || selectUserId.value === 'undefined') {
+    ElMessage.warning('请选择分配对象');
+    return;
+  }
+  if (selectUserId.value === user.userInfo.id) {
+    ElMessage.warning('目标用户无效，不能是自己');
+    return;
+  }
+  assignClue(selectUserId.value);
+  userSelectDialogVisible.value = false;
+};
+
+// 显示用户列表
+const showuserList = ref<any[]>([]);
+const queryUser = reactive({
+  Keyword: '', // string
+  PageIndex: 1, // int32
+  PageSize: 10, // int32
+  totalCount: 0, // 总记录数
+  pageCount: 0, // 总页数
+})
+const showUser = async () => {
+  const rawParams = {
+    Keyword: queryUser.Keyword,
+    PageIndex: queryUser.PageIndex,
+    PageSize: queryUser.PageSize,
+    totalCount: queryUser.totalCount, // 总记录数
+    pageCount: queryUser.pageCount, // 总页数
+  };
+  const params = filterParams(rawParams);
+
+  // 传递正确的分页参数
+  const res = await ShowUserList(params)
+  console.log("ShowUserList完整返回：", res.data)
+  showuserList.value = res.data
+  queryUser.totalCount = res.totalCount || 0; // 更新总记录数
+  queryUser.pageCount = res.pageCount || 0; // 更新总页数
+  console.log('showuserList:', showuserList.value);
+}
+
+//=================放弃原因==========================
+/**
+ * 放弃客户相关的状态变量
+ */
+const abandonDialogVisible = ref(false); // 控制放弃原因弹窗的显示/隐藏
+const abandonReason = ref(''); // 存储用户选择的放弃原因
+const abandonCustomerIds = ref<any[]>([]); // 存储要放弃的客户ID数组
+
+/**
+ * 放弃原因选项列表
+ * 用户可以从这些预设的原因中选择一个
+ */
+const abandonReasonOptions = [
+  { label: '放弃购买', value: '放弃购买' },
+  { label: '预算少', value: '预算少' },
+  { label: '信息有误', value: '信息有误' },
+];
+
+const openAbandonDialog = (customerIds?: any[]) => {
+  // 如果没有传入参数，使用选中的客户ID
+  const ids = customerIds || getSelectedClueIds();
+  if (!ids.length) {
+    ElMessage.warning('请先选择客户');
+    return;
+  }
+  abandonCustomerIds.value = ids;
+  abandonReason.value = '';
+  abandonDialogVisible.value = true;
+};
+
+/**
+ * 提交放弃客户操作
+ * 功能说明：
+ * 1. 校验放弃原因是否已选择
+ * 2. 遍历所有要放弃的客户ID
+ * 3. 检查每个客户是否属于当前用户
+ * 4. 检查客户状态是否为已分配状态
+ * 5. 调用后端接口执行放弃操作
+ * 6. 统计成功和失败数量并给出相应提示
+ * 7. 成功后刷新客户列表
+ */
+const handleAbandonSubmit = async () => {
+  if (!abandonReason.value) {
+    ElMessage.warning('请选择放弃原因');
+    return;
+  }
+  
+  console.log('=== 开始放弃客户操作 ===');
+  console.log('放弃原因:', abandonReason.value);
+  console.log('要放弃的客户ID:', abandonCustomerIds.value);
+  console.log('当前用户ID:', user.userInfo.id);
+  
+  let successCount = 0;
+  let failCount = 0;
+  
+  for (const customerId of abandonCustomerIds.value) {
+    try {
+      const customer = customerList.value.find(item => item.id === customerId);
+      console.log(`查找客户ID ${customerId}:`, customer);
+      
+      if (!customer) {
+        console.warn(`未找到客户ID: ${customerId}，可能数据已过期`);
+        failCount++;
+        continue;
+      }
+      
+      console.log(`客户负责人ID: ${customer.userId}, 当前用户ID: ${user.userInfo.id}`);
+      console.log(`客户状态: ${customer.customerPoolStatus}`);
+      
+      // 权限校验：只有客户负责人才能放弃该客户
+      if (customer.userId !== user.userInfo.id) {
+        console.warn(`客户ID ${customerId} 不是当前用户负责的，跳过操作`);
+        ElMessage.warning(`客户【${customer.customerName || customer.id}】不是你负责，不能放弃`);
+        failCount++;
+        continue;
+      }
+      
+      // 状态校验：只有已分配状态的客户才能被放弃
+      if (customer.customerPoolStatus !== 1) {
+        console.warn(`客户ID ${customerId} 不是已分配状态，跳过操作`);
+        ElMessage.warning(`客户【${customer.customerName || customer.id}】不是已分配状态，不能放弃`);
+        failCount++;
+        continue;
+      }
+      
+      console.log(`准备调用CustomerAction接口，参数:`, {
+        customerId,
+        actionType: 'abandon',
+        abandonReason: abandonReason.value
+      });
+      
+      // 调用后端接口执行放弃操作
+      const result = await CustomerAction({ 
+        customerId, 
+        actionType: 'abandon', 
+        abandonReason: abandonReason.value 
+      });
+      
+      console.log(`CustomerAction接口返回结果:`, result);
+      successCount++;
+      
+    } catch (error) {
+      console.error(`放弃客户 ${customerId} 失败:`, error);
+      failCount++;
+    }
+  }
+  
+  console.log(`=== 放弃操作完成，成功: ${successCount}, 失败: ${failCount} ===`);
+  
+  if (successCount > 0) {
+    ElMessage.success(`成功放弃${successCount}个客户`);
+    abandonDialogVisible.value = false;
+    fetchCustomerList();
+  }
+  
+  if (failCount > 0) {
+    ElMessage.warning(`有${failCount}个客户放弃失败`);
+  }
+};
+
+//=================放弃客户========================
+/**
+ * 表格选择相关的状态变量
+ */
+const selectedRows = ref<any[]>([]); // 保存所有选中的行数据
+
+/**
+ * 处理表格选择变化事件
+ * @param rows 当前选中的行数据数组
+ */
+const handleSelectionChange = (rows: any) => {
+  selectedRows.value = rows;
+};
+
+/**
+ * 获取当前选中客户的ID数组
+ * @returns 选中客户的ID数组
+ */
+const getSelectedClueIds = () => {
+  return selectedRows.value.map(row => row.id);
+};
+
+
+
 
 //=================添加客户附文本==================
 // 编辑器实例，必须用 shallowRef
@@ -1022,6 +1551,10 @@ const rules = reactive<FormRules<RuleForm>>({
     { required: true, message: '电话是必填项', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号', trigger: 'blur', },
   ],
+    customerEmail: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'change'] }
+  ]
 })
 
 const submitForm = async (formEl: FormInstance | undefined) => {
@@ -1101,7 +1634,8 @@ const queryParams = reactive({
   customerSourceId: 0, // 客户来源
   customerRegionId: 0,  //客户地区
   customerAddress: '',  //客户地址
-  MatchMode: 0, // 0: 全部满足, 1: 部分满足
+  MatchMode: 0, // 0: 全部满足, 1: 部分满足\
+  customerPoolStatus:1
 });
 
 const advancedDialogVisible = ref(false);
@@ -1297,7 +1831,8 @@ const fetchCustomerList = async () => {
       customerSourceId: queryParams.customerSourceId || null, // 客户来源
       customerRegionId: queryParams.customerRegionId || null,  //客户地区
       customerAddress: queryParams.customerAddress,  //客户地址
-      MatchMode: queryParams.MatchMode
+      MatchMode: queryParams.MatchMode,
+      CustomerPoolStatus: queryParams.customerPoolStatus
     };
     const params = filterParams(rawParams);
 
@@ -1365,9 +1900,7 @@ const handleResetQuery = () => {
   queryParams.MatchMode = 0
   handleQuery();
 };
-const handleSelectionChange = (val: any[]) => {
-  selectedIds.value = val.map(item => item.id);
-};
+
 
 //分页
 const handleSizeChange = (val: number) => {
@@ -1498,6 +2031,36 @@ console.log('当前登录用户信息', user.userInfo);
 </script>
 
 <style scoped>
+.detail-table-flex {
+  display: flex;
+  gap: 40px;
+  /* 左右列间距 */
+}
+
+.detail-table-col {
+  flex: 1;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.detail-row .label {
+  width: 80px;
+  /* 字段名宽度，可根据实际调整 */
+  color: #888;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.detail-row .value {
+  flex: 1;
+  min-width: 0;
+}
+
+
 .app-container {
   padding: 20px;
 }

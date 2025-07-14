@@ -23,11 +23,7 @@
           <el-image :src="logo" style="width: 84px" />
 
           <!-- 标题 -->
-          <h2>
-            <el-badge :value="`v ${defaultSettings.version}`" type="success">
-              {{ defaultSettings.title }}
-            </el-badge>
-          </h2>
+          <h2>CRM客户管理系统</h2>
 
           <!-- 组件切换 -->
           <transition name="fade-slide" mode="out-in">
@@ -45,10 +41,11 @@
 </template>
 
 <script setup lang="ts">
-import logo from "@/assets/logo.png";
-import { defaultSettings } from "@/settings";
 import CommonWrapper from "@/components/CommonWrapper/index.vue";
 import DarkModeSwitch from "@/components/DarkModeSwitch/index.vue";
+
+const logo =
+  "https://ts1.tc.mm.bing.net/th/id/OIP-C.82l3uGIVQfMrSvoWF2onwwHaHa?w=184&h=211&c=8&rs=1&qlt=90&o=6&dpr=1.6&pid=3.1&rm=2";
 
 type LayoutMap = "login" | "register" | "resetPwd";
 
@@ -72,6 +69,7 @@ const formComponents = {
   justify-content: center;
   width: 100%;
   height: 100%;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%);
 }
 
 // 添加伪元素作为背景层
@@ -125,5 +123,23 @@ const formComponents = {
 .fade-slide-leave-to {
   opacity: 0;
   transform: translateX(30px);
+}
+.p-4xl {
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(60, 60, 100, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.el-image {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(60, 60, 100, 0.1);
+  margin-bottom: 18px;
+}
+
+h2 {
+  margin-bottom: 18px;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 2px;
 }
 </style>
