@@ -69,3 +69,38 @@ export const GetIndustry = () => {
   });
 };
 
+//分配、领取、放弃
+export const ClueAction = (data: {
+  clueId: string;
+  actionType: 'assign' | 'receive' | 'abandon';
+  targetUserId?: string;
+  abandonReason?: string;  // 新增的放弃原因字段
+}) => {
+  return request({
+    url: `${CLUE_BASE_URL}/handle-clue-action`,
+    method: 'put',
+    data,
+  });
+};
+
+//显示用户列表
+export const ShowUserList=(data:any)=>{
+   return request({
+    url: `${CLUE_BASE_URL}/show-user-list`,
+    method: "get",
+    params:data
+  });
+}
+
+
+// 导出线索
+export const ExportClue = (cluePoolStatus:number) => {
+  return request({
+    url: `${CLUE_BASE_URL}/export-all-clue`,
+    method: "get",
+    params: {
+      cluePoolStatus, // 将筛选条件传递给后端
+    },
+    responseType: "blob", // 关键
+  });
+}
