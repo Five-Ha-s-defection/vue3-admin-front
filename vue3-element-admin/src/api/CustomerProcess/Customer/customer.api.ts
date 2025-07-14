@@ -3,14 +3,13 @@ import request from "@/utils/request";
 const CUSTOMER_BASE_URL = "/api/app/customer";
 
 // 添加客户
-export const AddCustomer= (data: any) => {
+export const AddCustomer = (data: any) => {
   return request({
     url: `${CUSTOMER_BASE_URL}/customer`,
     method: "post",
     data,
   });
-}
-
+};
 
 // 显示客户
 export const ShowCustomerList = (data: any) => {
@@ -32,7 +31,7 @@ export const GetCustomerDetail = (id: string) => {
 // 删除客户
 export const DeleteCustomer = (id: string) => {
   return request({
-    url: `${CUSTOMER_BASE_URL}/${id}/delete-customer`,
+    url: `${CUSTOMER_BASE_URL}/${id}/del-customer`,
     method: "delete",
   });
 };
@@ -94,6 +93,41 @@ export const GetCustomerTypeSelect = () => {
   });
 };
 
+//分配、领取、放弃
+export const CustomerAction = (data: {
+  customerId: string;
+  actionType: "assign" | "receive" | "abandon";
+  targetUserId?: string;
+  abandonReason?: string; // 新增的放弃原因字段
+}) => {
+  return request({
+    url: `${CUSTOMER_BASE_URL}/handle-customer-action`,
+    method: "put",
+    data,
+  });
+};
+
+//显示用户列表
+export const ShowUserList = (data: any) => {
+  return request({
+    url: `${CUSTOMER_BASE_URL}/show-user-list`,
+    method: "get",
+    params: data,
+  });
+};
+
+// 导出客户
+export const ExportCustomer = (customerPoolStatus: number) => {
+  return request({
+    url: `${CUSTOMER_BASE_URL}/export-all-customer`,
+    method: "get",
+    params: {
+      customerPoolStatus, // 将筛选条件传递给后端
+    },
+    responseType: "blob", // 关键
+  });
+};
+
 //================刘畅的封装=================================
 const CustomerAPI = {
   GetCustomerPage(data: any) {
@@ -101,7 +135,7 @@ const CustomerAPI = {
       url: `/api/app/customer/show-customer`,
       method: "get",
       params: data,
-    }); 
+    });
   },
 };
 
