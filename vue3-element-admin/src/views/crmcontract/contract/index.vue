@@ -52,8 +52,7 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item @click="deleteManyContracts">删除合同</el-dropdown-item>
-                  <el-dropdown-item>导出数据</el-dropdown-item>
-                  <el-dropdown-item>导入excel</el-dropdown-item>
+                  <el-dropdown-item @click="handleExport()">导出数据</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -1170,6 +1169,10 @@ function handleDelete(row: any) {
         ElMessage.error("删除失败");
       });
   });
+}
+// 导出
+function handleExport() {
+  location.href = "https://localhost:44341/api/app/crm-contract/export-async-excel";
 }
 
 //#region 图片

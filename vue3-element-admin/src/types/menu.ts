@@ -1,6 +1,8 @@
 export interface MenuSearchResultDto {
   id: string;
   parentId?: string;
+  menuNamePinyin:string;
+  menuNameInitials:string;
   menuName: string;
   path: string;
   component?: string;
