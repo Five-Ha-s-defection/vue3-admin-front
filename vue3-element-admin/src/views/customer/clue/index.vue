@@ -219,10 +219,10 @@
           <div class="drawer-title-big">{{ currentClue?.clueName || '-' }}</div>
           <!-- 右侧操作按钮区 -->
           <div class="drawer-btns">
-            <el-button type="primary">转客户</el-button>
-            <el-button>放弃</el-button>
-            <el-button>转移</el-button>
-            <el-button type="danger">删除</el-button>
+            <el-button type="success">转客户</el-button>
+            <el-button type="primary" @click="openAbandonDialog([currentClue.id])">放弃</el-button>
+            <el-button type="warning" @click="openUserSelectDialog([currentClue.id])">转移</el-button>
+            <el-button type="danger"  @click="delclue([currentClue.id])">删除</el-button>
           </div>
         </div>
         <!-- 线索基础信息区，横向排列 -->
@@ -874,22 +874,27 @@ const exportclue = async (cluePoolStatus: number) => {
 //=================删除线索==========================
 /**
  * 批量删除线索
- * @param clueIds 选中的线索ID数组
+ * @param clueIds 要删除的线索ID数组，可选参数
+ * 功能说明：
  * 1. 校验是否有选中线索
- * 2. 弹窗二次确认
+ * 2. 弹窗二次确认删除操作
  * 3. 循环调用DeleteClue删除每条线索
  * 4. 删除成功/失败分别统计并提示
  * 5. 删除成功后刷新线索列表
  */
-const delclue = async (clueIds: any[]) => {
-  if (!clueIds || !clueIds.length) {
+const delclue = async (clueIds?: any[]) => {
+  // 如果没有传入参数，使用选中的线索ID
+  const ids = clueIds || getSelectedClueIds();
+  
+  // 校验：必须选择至少一条线索
+  if (!ids || !ids.length) {
     ElMessage.warning('请先选择要删除的线索');
     return;
   }
   try {
     // 弹窗二次确认
     await ElMessageBox.confirm(
-      `确定要删除选中的${clueIds.length}条线索吗？删除后不可恢复！`,
+      `确定要删除选中的${ids.length}条线索吗？删除后不可恢复！`,
       '警告',
       {
         confirmButtonText: '确定',
@@ -900,7 +905,7 @@ const delclue = async (clueIds: any[]) => {
     let successCount = 0; // 成功删除数量
     let failCount = 0;    // 删除失败数量
     // 循环删除每个线索
-    for (const clueId of clueIds) {
+    for (const clueId of ids) {
       try {
         await DeleteClue(clueId);
         successCount++;
@@ -924,30 +929,61 @@ const delclue = async (clueIds: any[]) => {
 }
 
 //================转移线索===========================
-const selectUserId = ref(''); // 推荐用字符串
-const userSelectDialogVisible = ref(false); // 控制弹窗显示
+/**
+ * 转移线索相关的状态变量
+ */
+const selectUserId = ref(''); // 存储选中的目标用户ID，推荐用字符串类型
+const userSelectDialogVisible = ref(false); // 控制用户选择弹窗的显示/隐藏
+const transferClueIds = ref<any[]>([]); // 存储要转移的线索ID数组
 
+/**
+ * 处理用户选择弹窗中的行点击事件
+ * @param row 被点击的用户行数据
+ */
 const uhandleRowClick = (row: any) => {
+  // 将选中用户的ID转换为字符串并存储
   selectUserId.value = String(row.userId);
 };
 
-const openUserSelectDialog = () => {
+/**
+ * 打开用户选择弹窗
+ * @param clueIds 要转移的线索ID数组，可选参数
+ * 功能说明：
+ * 1. 如果传入了线索ID，则存储到全局变量；否则清空存储的线索ID
+ * 2. 调用showUser()获取用户列表数据
+ * 3. 显示用户选择弹窗
+ */
+const openUserSelectDialog = (clueIds?: any[]) => {
+  // 如果传入了线索ID，则存储；否则清空存储的线索ID，使用选中的线索ID
+  transferClueIds.value = clueIds || [];
+  
+  // 获取用户列表数据
   showUser()
+  
+  // 显示用户选择弹窗
   userSelectDialogVisible.value = true
 }
 
-const assignClue = async (clueIds: any, targetUserId: any) => {
-  if (!clueIds.length) {
+const assignClue = async (clueIds?: any, targetUserId?: any) => {
+  // 如果没有传入线索ID参数，使用选中的线索ID
+  const ids = clueIds || getSelectedClueIds();
+  if (!ids.length) {
     ElMessage.warning('请先选择线索');
     return;
   }
+  // 如果没有传入目标用户ID，使用当前选择的用户ID
+  const userId = targetUserId || selectUserId.value;
+  if (!userId || userId === 'undefined') {
+    ElMessage.warning('请选择分配对象');
+    return;
+  }
   // 判断目标用户是否为自己
-  if (targetUserId === user.userInfo.id) {
+  if (userId === user.userInfo.id) {
     ElMessage.warning('目标用户无效，不能是自己');
     return;
   }
-  for (const clueId of clueIds) {
-    await ClueAction({ clueId, actionType: 'assign', targetUserId });
+  for (const clueId of ids) {
+    await ClueAction({ clueId, actionType: 'assign', targetUserId: userId });
   }
   ElMessage.success('分配成功');
   // 刷新列表
@@ -955,18 +991,26 @@ const assignClue = async (clueIds: any, targetUserId: any) => {
   showUser()
 };
 
-// 提交按钮
+/**
+ * 处理转移线索的提交操作
+ * 功能说明：
+ * 1. 使用存储的线索ID，如果没有则使用选中的线索ID
+ * 2. 调用assignClue方法执行转移操作
+ * 3. 关闭用户选择弹窗
+ * 4. 清空存储的线索ID，避免影响下次操作
+ */
 const handleAssignSubmit = () => {
-  if (!selectUserId.value || selectUserId.value === 'undefined') {
-    ElMessage.warning('请选择分配对象');
-    return;
-  }
-  if (selectUserId.value === user.userInfo.id) {
-    ElMessage.warning('目标用户无效，不能是自己');
-    return;
-  }
-  assignClue(getSelectedClueIds(), selectUserId.value);
+  // 使用存储的线索ID，如果没有则使用选中的线索ID
+  const clueIds = transferClueIds.value.length > 0 ? transferClueIds.value : undefined;
+  
+  // 调用assignClue方法执行转移操作
+  assignClue(clueIds, selectUserId.value);
+  
+  // 关闭用户选择弹窗
   userSelectDialogVisible.value = false;
+  
+  // 清空存储的线索ID，避免影响下次操作
+  transferClueIds.value = [];
 };
 
 // 显示用户列表
@@ -998,48 +1042,165 @@ const showUser = async () => {
 }
 
 //=================放弃原因==========================
-const abandonDialogVisible = ref(false);
-const abandonReason = ref('');
-const abandonClueIds = ref<any[]>([]);
+/**
+ * 放弃线索相关的状态变量
+ */
+const abandonDialogVisible = ref(false); // 控制放弃原因弹窗的显示/隐藏
+const abandonReason = ref(''); // 存储用户选择的放弃原因
+const abandonClueIds = ref<any[]>([]); // 存储要放弃的线索ID数组
+
+/**
+ * 放弃原因选项列表
+ * 用户可以从这些预设的原因中选择一个
+ */
 const abandonReasonOptions = [
   { label: '放弃购买', value: '放弃购买' },
   { label: '预算少', value: '预算少' },
   { label: '信息有误', value: '信息有误' },
 ];
 
-const openAbandonDialog = (clueIds: any[]) => {
-  if (!clueIds.length) {
+/**
+ * 打开放弃线索对话框
+ * @param clueIds 要放弃的线索ID数组，可选参数
+ * 功能说明：
+ * 1. 如果没有传入线索ID，则使用当前选中的线索ID
+ * 2. 校验是否有线索被选中
+ * 3. 存储要放弃的线索ID到全局变量
+ * 4. 重置放弃原因为空
+ * 5. 显示放弃原因选择弹窗
+ */
+const openAbandonDialog = (clueIds?: any[]) => {
+  // 如果没有传入参数，使用选中的线索ID
+  const ids = clueIds || getSelectedClueIds();
+  
+  // 校验：必须选择至少一条线索
+  if (!ids.length) {
     ElMessage.warning('请先选择线索');
     return;
   }
-  abandonClueIds.value = clueIds;
+  
+  // 存储要放弃的线索ID到全局变量，供提交时使用
+  abandonClueIds.value = ids;
+  
+  // 重置放弃原因为空，确保每次都是重新选择
   abandonReason.value = '';
+  
+  // 显示放弃原因选择弹窗
   abandonDialogVisible.value = true;
 };
 
+/**
+ * 提交放弃线索操作
+ * 功能说明：
+ * 1. 校验放弃原因是否已选择
+ * 2. 遍历所有要放弃的线索ID
+ * 3. 检查每个线索是否属于当前用户
+ * 4. 调用后端接口执行放弃操作
+ * 5. 统计成功和失败数量并给出相应提示
+ * 6. 成功后刷新线索列表
+ */
 const handleAbandonSubmit = async () => {
+  // 校验：必须选择放弃原因
   if (!abandonReason.value) {
     ElMessage.warning('请选择放弃原因');
     return;
   }
-  // 这里可以将原因传给后端
+  
+  // 调试信息：打印操作开始的关键信息
+  console.log('=== 开始放弃线索操作 ===');
+  console.log('放弃原因:', abandonReason.value);
+  console.log('要放弃的线索ID:', abandonClueIds.value);
+  console.log('当前用户ID:', user.userInfo.id);
+  
+  // 初始化计数器
+  let successCount = 0; // 成功放弃的线索数量
+  let failCount = 0;    // 放弃失败的线索数量
+  
+  // 遍历所有要放弃的线索ID
   for (const clueId of abandonClueIds.value) {
-    const clue = clueList.value.find(item => item.id === clueId);
-    if (!clue) continue;
-    if (clue.userId !== user.userInfo.id) continue;
-    await ClueAction({ clueId, actionType: 'abandon', abandonReason: abandonReason.value });
+    try {
+      // 在线索列表中查找对应的线索数据
+      const clue = clueList.value.find(item => item.id === clueId);
+      console.log(`查找线索ID ${clueId}:`, clue);
+      
+      // 校验：检查是否找到了对应的线索数据
+      if (!clue) {
+        console.warn(`未找到线索ID: ${clueId}，可能数据已过期`);
+        failCount++;
+        continue; // 跳过当前线索，继续处理下一个
+      }
+      
+      // 调试信息：打印线索负责人和当前用户的ID对比
+      console.log(`线索负责人ID: ${clue.userId}, 当前用户ID: ${user.userInfo.id}`);
+      
+      // 权限校验：只有线索的负责人才能放弃该线索
+      // 这是业务逻辑要求，防止用户放弃不属于自己的线索
+      if (clue.userId !== user.userInfo.id) {
+        console.warn(`线索ID ${clueId} 不是当前用户负责的，跳过操作`);
+        failCount++;
+        continue; // 跳过当前线索，继续处理下一个
+      }
+      
+      // 调试信息：打印即将发送给后端的参数
+      console.log(`准备调用ClueAction接口，参数:`, {
+        clueId,
+        actionType: 'abandon',
+        abandonReason: abandonReason.value
+      });
+      
+      // 调用后端接口执行放弃操作
+      // ClueAction接口会更新线索状态为"已放弃"
+      const result = await ClueAction({ 
+        clueId, 
+        actionType: 'abandon', 
+        abandonReason: abandonReason.value 
+      });
+      
+      // 调试信息：打印接口返回结果
+      console.log(`ClueAction接口返回结果:`, result);
+      successCount++; // 接口调用成功，增加成功计数
+      
+    } catch (error) {
+      // 异常处理：接口调用失败时的错误处理
+      console.error(`放弃线索 ${clueId} 失败:`, error);
+      failCount++; // 接口调用失败，增加失败计数
+    }
   }
-  ElMessage.success('放弃成功');
-  abandonDialogVisible.value = false;
-  fetchClueList();
+  
+  // 调试信息：打印最终操作结果统计
+  console.log(`=== 放弃操作完成，成功: ${successCount}, 失败: ${failCount} ===`);
+  
+  // 成功处理：如果有线索成功放弃
+  if (successCount > 0) {
+    ElMessage.success(`成功放弃${successCount}条线索`);
+    abandonDialogVisible.value = false; // 关闭放弃原因弹窗
+    fetchClueList(); // 刷新线索列表，显示最新状态
+  }
+  
+  // 失败处理：如果有线索放弃失败
+  if (failCount > 0) {
+    ElMessage.warning(`有${failCount}条线索放弃失败，可能不是您负责的线索`);
+  }
 };
 
 //=================放弃线索========================
-const selectedRows = ref<any[]>([]); // 保存所有选中的行
+/**
+ * 表格选择相关的状态变量
+ */
+const selectedRows = ref<any[]>([]); // 保存所有选中的行数据
+
+/**
+ * 处理表格选择变化事件
+ * @param rows 当前选中的行数据数组
+ */
 const handleSelectionChange = (rows: any) => {
   selectedRows.value = rows;
 };
 
+/**
+ * 获取当前选中线索的ID数组
+ * @returns 选中线索的ID数组
+ */
 const getSelectedClueIds = () => {
   return selectedRows.value.map(row => row.id);
 };

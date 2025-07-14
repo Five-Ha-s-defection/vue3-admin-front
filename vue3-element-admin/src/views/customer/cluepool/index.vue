@@ -190,10 +190,9 @@
           <div class="drawer-title-big">{{ currentClue?.clueName || '-' }}</div>
           <!-- 右侧操作按钮区 -->
           <div class="drawer-btns">
-            <el-button type="primary">转客户</el-button>
-            <el-button>放弃</el-button>
-            <el-button>转移</el-button>
-            <el-button type="danger">删除</el-button>
+            <el-button type="primary" @click="receiveClue([currentClue.id])">领取</el-button>
+            <el-button type="warning" @click="openUserSelectDialog([currentClue.id])">分配</el-button>
+            <el-button type="danger" @click="delclue([currentClue.id])">删除</el-button>
           </div>
         </div>
         <!-- 线索基础信息区，横向排列 -->
@@ -851,15 +850,17 @@ const exportclue = async (cluePoolStatus:number) => {
  * 4. 删除成功/失败分别统计并提示
  * 5. 删除成功后刷新线索列表
  */
-const delclue = async (clueIds: any[]) => {
-  if (!clueIds || !clueIds.length) {
+const delclue = async (clueIds?: any[]) => {
+  // 如果没有传入参数，使用选中的线索ID
+  const ids = clueIds || getSelectedClueIds();
+  if (!ids || !ids.length) {
     ElMessage.warning('请先选择要删除的线索');
     return;
   }
   try {
     // 弹窗二次确认
     await ElMessageBox.confirm(
-      `确定要删除选中的${clueIds.length}条线索吗？删除后不可恢复！`,
+      `确定要删除选中的${ids.length}条线索吗？删除后不可恢复！`,
       '警告',
       {
         confirmButtonText: '确定',
@@ -870,7 +871,7 @@ const delclue = async (clueIds: any[]) => {
     let successCount = 0; // 成功删除数量
     let failCount = 0;    // 删除失败数量
     // 循环删除每个线索
-    for (const clueId of clueIds) {
+    for (const clueId of ids) {
       try {
         await DeleteClue(clueId);
         successCount++;
@@ -899,12 +900,14 @@ const getSelectedClueIds = () => {
   return selectedRows.value.map(row => row.id);
 };
 // 领取线索
-const receiveClue = async (clueIds: any) => {
-  if (!clueIds.length) {
+const receiveClue = async (clueIds?: any) => {
+  // 如果没有传入参数，使用选中的线索ID
+  const ids = clueIds || getSelectedClueIds();
+  if (!ids.length) {
     ElMessage.warning('请先选择线索');
     return;
   }
-  for (const clueId of clueIds) {
+  for (const clueId of ids) {
     await ClueAction({ clueId, actionType: 'receive' });
   }
   ElMessage.success('领取成功');
@@ -915,27 +918,38 @@ const receiveClue = async (clueIds: any) => {
 // 分配线索
 const selectUserId = ref(''); // 推荐用字符串
 const userSelectDialogVisible = ref(false); // 控制弹窗显示
+const transferClueIds = ref<any[]>([]); // 存储要转移的线索ID
 
 const uhandleRowClick = (row: any) => {
   selectUserId.value = String(row.userId);
 };
 
-const openUserSelectDialog = () => {
+const openUserSelectDialog = (clueIds?: any[]) => {
+  // 如果传入了线索ID，则存储；否则清空存储的线索ID，使用选中的线索ID
+  transferClueIds.value = clueIds || [];
   showUser()
   userSelectDialogVisible.value = true
 }
-const assignClue = async (clueIds: any, targetUserId: any) => {
-  if (!clueIds.length) {
+const assignClue = async (clueIds?: any, targetUserId?: any) => {
+  // 如果没有传入线索ID参数，使用选中的线索ID
+  const ids = clueIds || getSelectedClueIds();
+  if (!ids.length) {
     ElMessage.warning('请先选择线索');
     return;
   }
+  // 如果没有传入目标用户ID，使用当前选择的用户ID
+  const userId = targetUserId || selectUserId.value;
+  if (!userId || userId === 'undefined') {
+    ElMessage.warning('请选择分配对象');
+    return;
+  }
   // 判断目标用户是否为自己
-  if (targetUserId === user.userInfo.id) {
+  if (userId === user.userInfo.id) {
     ElMessage.warning('目标用户无效，不能是自己');
     return;
   }
-  for (const clueId of clueIds) {
-    await ClueAction({ clueId, actionType: 'assign', targetUserId });
+  for (const clueId of ids) {
+    await ClueAction({ clueId, actionType: 'assign', targetUserId: userId });
   }
   ElMessage.success('分配成功');
   // 刷新列表
@@ -945,16 +959,12 @@ const assignClue = async (clueIds: any, targetUserId: any) => {
 
 // 提交按钮
 const handleAssignSubmit = () => {
-  if (!selectUserId.value || selectUserId.value === 'undefined') {
-    ElMessage.warning('请选择分配对象');
-    return;
-  }
-  if (selectUserId.value === user.userInfo.id) {
-    ElMessage.warning('目标用户无效，不能是自己');
-    return;
-  }
-  assignClue(getSelectedClueIds(), selectUserId.value);
+  // 使用存储的线索ID，如果没有则使用选中的线索ID
+  const clueIds = transferClueIds.value.length > 0 ? transferClueIds.value : undefined;
+  assignClue(clueIds, selectUserId.value);
   userSelectDialogVisible.value = false;
+  // 清空存储的线索ID
+  transferClueIds.value = [];
 };
 
 // 显示用户列表

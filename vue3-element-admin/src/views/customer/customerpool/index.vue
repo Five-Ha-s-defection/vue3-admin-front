@@ -210,8 +210,8 @@
           <div class="drawer-title-big">{{ currentCustomer?.customerName || '-' }}</div>
           <!-- 右侧操作按钮区 -->
           <div class="drawer-btns">
-            <el-button type="primary">领取</el-button>
-            <el-button type="success">分配</el-button>
+            <el-button type="primary" @click="receiveClue([currentCustomer.id])">领取</el-button>
+            <el-button type="success" @click="openUserSelectDialog([currentCustomer.id])">分配</el-button>
             <el-button type="danger" @click="openDeleteDialog([currentCustomer.id])">删除</el-button>
           </div>
         </div>
@@ -995,12 +995,14 @@ const getSelectedClueIds = () => {
   return selectedRows.value.map(row => row.id);
 };
 // 领取客户
-const receiveClue = async (customerIds: any) => {
-  if (!customerIds.length) {
+const receiveClue = async (customerIds?: any) => {
+  // 如果没有传入参数，使用选中的客户ID
+  const ids = customerIds || getSelectedClueIds();
+  if (!ids.length) {
     ElMessage.warning('请先选择客户');
     return;
   }
-  for (const customerId of customerIds) {
+  for (const customerId of ids) {
     await CustomerAction({ customerId, actionType: 'receive' });
   }
   ElMessage.success('领取成功');
@@ -1009,28 +1011,39 @@ const receiveClue = async (customerIds: any) => {
 };
 const selectUserId = ref(''); // 推荐用字符串
 const userSelectDialogVisible = ref(false); // 控制弹窗显示
+const transferCustomerIds = ref<any[]>([]); // 存储要分配的客户ID
 
 const uhandleRowClick = (row: any) => {
   selectUserId.value = String(row.userId);
 };
 
-const openUserSelectDialog = () => {
+const openUserSelectDialog = (customerIds?: any[]) => {
+  // 如果传入了客户ID，则存储；否则清空存储的客户ID，使用选中的客户ID
+  transferCustomerIds.value = customerIds || [];
   showUser()
   userSelectDialogVisible.value = true
 }
 
-const assignClue = async (customerIds: any, targetUserId: any) => {
-  if (!customerIds.length) {
+const assignClue = async (customerIds?: any, targetUserId?: any) => {
+  // 如果没有传入客户ID参数，使用选中的客户ID
+  const ids = customerIds || getSelectedClueIds();
+  if (!ids.length) {
     ElMessage.warning('请先选择线索');
     return;
   }
+  // 如果没有传入目标用户ID，使用当前选择的用户ID
+  const userId = targetUserId || selectUserId.value;
+  if (!userId || userId === 'undefined') {
+    ElMessage.warning('请选择分配对象');
+    return;
+  }
   // 判断目标用户是否为自己
-  if (targetUserId === user.userInfo.id) {
+  if (userId === user.userInfo.id) {
     ElMessage.warning('目标用户无效，不能是自己');
     return;
   }
-  for (const customerId of customerIds) {
-    await CustomerAction({ customerId, actionType: 'assign', targetUserId });
+  for (const customerId of ids) {
+    await CustomerAction({ customerId, actionType: 'assign', targetUserId: userId });
   }
   ElMessage.success('分配成功');
   // 刷新列表
@@ -1040,16 +1053,12 @@ const assignClue = async (customerIds: any, targetUserId: any) => {
 
 // 提交按钮
 const handleAssignSubmit = () => {
-  if (!selectUserId.value || selectUserId.value === 'undefined') {
-    ElMessage.warning('请选择分配对象');
-    return;
-  }
-  if (selectUserId.value === user.userInfo.id) {
-    ElMessage.warning('目标用户无效，不能是自己');
-    return;
-  }
-  assignClue(getSelectedClueIds(), selectUserId.value);
+  // 使用存储的客户ID，如果没有则使用选中的客户ID
+  const customerIds = transferCustomerIds.value.length > 0 ? transferCustomerIds.value : undefined;
+  assignClue(customerIds, selectUserId.value);
   userSelectDialogVisible.value = false;
+  // 清空存储的客户ID
+  transferCustomerIds.value = [];
 };
 
 // 显示用户列表

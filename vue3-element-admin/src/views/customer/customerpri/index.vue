@@ -228,7 +228,7 @@
           <div class="drawer-title-big">{{ currentCustomer?.customerName || '-' }}</div>
           <!-- 右侧操作按钮区 -->
           <div class="drawer-btns">
-            <el-button  type="primary" @click="openAbandonDialog(getSelectedClueIds())">放弃</el-button>
+            <el-button  type="primary" @click="openAbandonDialog([currentCustomer.id])">放弃</el-button>
             <el-button  type="warning" @click="openUserSelectDialog([currentCustomer.id])">转移</el-button>
             <el-button type="danger" @click="openDeleteDialog([currentCustomer.id])">删除</el-button>
           </div>
@@ -992,6 +992,15 @@ const delcustomer = async (customerIds: any[]) => {
   }
 }
 
+// 新增：删除客户方法，支持传入客户id
+const openDeleteDialog = (customerIds?: any[]) => {
+  const ids = customerIds && customerIds.length ? customerIds : getSelectedClueIds();
+  if (!ids.length) {
+    ElMessage.warning('请先选择要删除的客户');
+    return;
+  }
+  delcustomer(ids);
+}
 
 //================转移客户===========================
 const selectUserId = ref(''); // 推荐用字符串
@@ -1078,59 +1087,143 @@ const showUser = async () => {
 }
 
 //=================放弃原因==========================
-const abandonDialogVisible = ref(false);
-const abandonReason = ref('');
-const abandonCustomerIds = ref<any[]>([]);
+/**
+ * 放弃客户相关的状态变量
+ */
+const abandonDialogVisible = ref(false); // 控制放弃原因弹窗的显示/隐藏
+const abandonReason = ref(''); // 存储用户选择的放弃原因
+const abandonCustomerIds = ref<any[]>([]); // 存储要放弃的客户ID数组
+
+/**
+ * 放弃原因选项列表
+ * 用户可以从这些预设的原因中选择一个
+ */
 const abandonReasonOptions = [
   { label: '放弃购买', value: '放弃购买' },
   { label: '预算少', value: '预算少' },
   { label: '信息有误', value: '信息有误' },
 ];
 
-const openAbandonDialog = (customerIds: any[]) => {
-  if (!customerIds.length) {
+const openAbandonDialog = (customerIds?: any[]) => {
+  // 如果没有传入参数，使用选中的客户ID
+  const ids = customerIds || getSelectedClueIds();
+  if (!ids.length) {
     ElMessage.warning('请先选择客户');
     return;
   }
-  abandonCustomerIds.value = customerIds;
+  abandonCustomerIds.value = ids;
   abandonReason.value = '';
   abandonDialogVisible.value = true;
 };
 
+/**
+ * 提交放弃客户操作
+ * 功能说明：
+ * 1. 校验放弃原因是否已选择
+ * 2. 遍历所有要放弃的客户ID
+ * 3. 检查每个客户是否属于当前用户
+ * 4. 检查客户状态是否为已分配状态
+ * 5. 调用后端接口执行放弃操作
+ * 6. 统计成功和失败数量并给出相应提示
+ * 7. 成功后刷新客户列表
+ */
 const handleAbandonSubmit = async () => {
   if (!abandonReason.value) {
     ElMessage.warning('请选择放弃原因');
     return;
   }
-  let hasValid = false;
+  
+  console.log('=== 开始放弃客户操作 ===');
+  console.log('放弃原因:', abandonReason.value);
+  console.log('要放弃的客户ID:', abandonCustomerIds.value);
+  console.log('当前用户ID:', user.userInfo.id);
+  
+  let successCount = 0;
+  let failCount = 0;
+  
   for (const customerId of abandonCustomerIds.value) {
-    const customer = customerList.value.find(item => item.id === customerId);
-    if (!customer) continue;
-    if (customer.userId !== user.userInfo.id) {
-      ElMessage.warning(`客户【${customer.customerName || customer.id}】不是你负责，不能放弃`);
-      continue;
+    try {
+      const customer = customerList.value.find(item => item.id === customerId);
+      console.log(`查找客户ID ${customerId}:`, customer);
+      
+      if (!customer) {
+        console.warn(`未找到客户ID: ${customerId}，可能数据已过期`);
+        failCount++;
+        continue;
+      }
+      
+      console.log(`客户负责人ID: ${customer.userId}, 当前用户ID: ${user.userInfo.id}`);
+      console.log(`客户状态: ${customer.customerPoolStatus}`);
+      
+      // 权限校验：只有客户负责人才能放弃该客户
+      if (customer.userId !== user.userInfo.id) {
+        console.warn(`客户ID ${customerId} 不是当前用户负责的，跳过操作`);
+        ElMessage.warning(`客户【${customer.customerName || customer.id}】不是你负责，不能放弃`);
+        failCount++;
+        continue;
+      }
+      
+      // 状态校验：只有已分配状态的客户才能被放弃
+      if (customer.customerPoolStatus !== 1) {
+        console.warn(`客户ID ${customerId} 不是已分配状态，跳过操作`);
+        ElMessage.warning(`客户【${customer.customerName || customer.id}】不是已分配状态，不能放弃`);
+        failCount++;
+        continue;
+      }
+      
+      console.log(`准备调用CustomerAction接口，参数:`, {
+        customerId,
+        actionType: 'abandon',
+        abandonReason: abandonReason.value
+      });
+      
+      // 调用后端接口执行放弃操作
+      const result = await CustomerAction({ 
+        customerId, 
+        actionType: 'abandon', 
+        abandonReason: abandonReason.value 
+      });
+      
+      console.log(`CustomerAction接口返回结果:`, result);
+      successCount++;
+      
+    } catch (error) {
+      console.error(`放弃客户 ${customerId} 失败:`, error);
+      failCount++;
     }
-    console.log("状态", customer.customerPoolStatus)
-    if (customer.customerPoolStatus !== 1) {
-      ElMessage.warning(`客户【${customer.customerName || customer.id}】不是已分配状态，不能放弃`);
-      continue;
-    }
-    hasValid = true;
-    await CustomerAction({ customerId, actionType: 'abandon', abandonReason: abandonReason.value });
   }
-  if (hasValid) {
-    ElMessage.success('放弃成功');
+  
+  console.log(`=== 放弃操作完成，成功: ${successCount}, 失败: ${failCount} ===`);
+  
+  if (successCount > 0) {
+    ElMessage.success(`成功放弃${successCount}个客户`);
     abandonDialogVisible.value = false;
     fetchCustomerList();
+  }
+  
+  if (failCount > 0) {
+    ElMessage.warning(`有${failCount}个客户放弃失败`);
   }
 };
 
 //=================放弃客户========================
-const selectedRows = ref<any[]>([]); // 保存所有选中的行
+/**
+ * 表格选择相关的状态变量
+ */
+const selectedRows = ref<any[]>([]); // 保存所有选中的行数据
+
+/**
+ * 处理表格选择变化事件
+ * @param rows 当前选中的行数据数组
+ */
 const handleSelectionChange = (rows: any) => {
   selectedRows.value = rows;
 };
 
+/**
+ * 获取当前选中客户的ID数组
+ * @returns 选中客户的ID数组
+ */
 const getSelectedClueIds = () => {
   return selectedRows.value.map(row => row.id);
 };
@@ -1939,16 +2032,6 @@ onMounted(() => {
 });
 
 console.log('当前登录用户信息', user.userInfo);
-
-// 新增：删除客户方法，支持传入客户id
-const openDeleteDialog = (customerIds?: any[]) => {
-  const ids = customerIds && customerIds.length ? customerIds : getSelectedClueIds();
-  if (!ids.length) {
-    ElMessage.warning('请先选择要删除的客户');
-    return;
-  }
-  delcustomer(ids);
-}
 
 </script>
 
