@@ -39,7 +39,7 @@
       <!-- <el-form-item prop="captchaCode">-->
 
       <!-- 验证码 -->
-      <el-form-item prop="captchaCode">
+      <el-form-item prop="captchaCode" >
         <el-row :gutter="8" align="middle">
           <el-col :span="14">
             <el-input
