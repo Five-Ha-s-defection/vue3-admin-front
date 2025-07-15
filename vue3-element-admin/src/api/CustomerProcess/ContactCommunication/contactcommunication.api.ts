@@ -70,10 +70,10 @@ export const GetCustomReplyByType = (id: string | number) => {
     method: "get",
   });
 };
-
+//导出成功后关闭弹窗
 export const ExportAllCommunicationToAsync = () => {
   return request({
-    url: `${COMMUNICATION_BASE_URL}/export-all-to`,
+    url: `${COMMUNICATION_BASE_URL}/export-all-communication-to`,
     method: "get",
     responseType: "blob",
   });

@@ -147,7 +147,14 @@
       >
         导出全部
       </el-button>
-      <span style="margin-left: 16px">分页导出</span>
+      <el-button
+        :type="exportRange === 'part' ? 'primary' : 'default'"
+        @click="exportRange = 'part'"
+        plain
+        style="margin-left: 8px"
+      >
+        分页导出
+      </el-button>
       <el-input-number
         v-model="exportPageStart"
         :min="1"
@@ -165,7 +172,7 @@
         :disabled="exportRange !== 'part'"
       />
     </div>
-
+    <div style="color: orange; margin-top: 8px">* 导出10页以上，请选择分页导出，分批次导出！</div>
     <div style="text-align: center; margin-top: 24px">
       <el-button type="primary" @click="handleExport" size="large">开始导出</el-button>
     </div>
@@ -224,15 +231,71 @@ function toggleField(field: string) {
   }
 }
 
-const exportRange = ref<"page" | "all" | "part">("all");
+const exportRange = ref<"page" | "all" | "part">("page");
 const exportPageStart = ref(1);
 const exportPageEnd = ref(1);
 
+// 导出操作
 function handleExport() {
-  // 这里写你的导出逻辑
-  // 可用 selectedFields.value, exportRange.value, exportPageStart.value, exportPageEnd.value
+  if (exportRange.value === "page") {
+    handleExportPage();
+  } else if (exportRange.value === "all") {
+    handleExportAll();
+  } else if (exportRange.value === "part") {
+    handleExportPart();
+  }
   exportDialogVisible.value = false;
-  // 调用后端导出接口
+}
+
+// 导出本页
+async function handleExportPage() {
+  try {
+    // 你当前的接口不需要参数
+    const res = await ExportAllCommunicationToAsync();
+    downloadBlob(res.data, "联系记录_本页导出.xlsx");
+  } catch (e) {
+    ElMessage.error("导出本页失败");
+  }
+}
+
+// 导出全部
+async function handleExportAll() {
+  try {
+    const res = await ExportAllCommunicationToAsync();
+    downloadBlob(res.data, "联系记录_全部导出.xlsx");
+  } catch (e) {
+    ElMessage.error("导出全部失败");
+  }
+}
+
+// 分页导出
+async function handleExportPart() {
+  try {
+    if (exportPageStart.value > exportPageEnd.value) {
+      ElMessage.error("起始页不能大于结束页");
+      return;
+    }
+    for (let i = exportPageStart.value; i <= exportPageEnd.value; i++) {
+      // 你当前接口不需要参数，直接调用
+      const res = await ExportAllCommunicationToAsync();
+      downloadBlob(res.data, `联系记录_第${i}页导出.xlsx`);
+    }
+  } catch (e) {
+    ElMessage.error("分页导出失败");
+  }
+}
+
+// 下载工具函数
+function downloadBlob(data: any, filename: string) {
+  const blob = new Blob([data]);
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
 }
 
 const fetchContactList = async () => {
@@ -339,24 +402,6 @@ function onDelete(row: any) {
 onMounted(() => {
   fetchContactList();
 });
-
-//导出全部联系人信息导出
-const handleExportCategory = async () => {
-  try {
-    const res = await ExportAllCommunicationToAsync();
-    const blob = new Blob([res.data]);
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "丛先生help李小姐的联系人信息导出.xlsx"; // 可自定义文件名
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  } catch (e) {
-    ElMessage.error("导出失败");
-  }
-};
 </script>
 
 <style scoped>
