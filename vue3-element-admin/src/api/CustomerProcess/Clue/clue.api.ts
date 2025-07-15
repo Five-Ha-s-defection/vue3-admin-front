@@ -103,3 +103,35 @@ export const ExportClue = (cluePoolStatus: number) => {
     responseType: "blob", // 关键
   });
 };
+
+
+// 转换线索为客户
+export const ConvertClueToCustomer = async (clueId:any, customerId:any, conversionDto:any) => {
+  try {
+    const response = await request({
+      url: `${CLUE_BASE_URL}/convert-clue-to-customer/${clueId}/${customerId}`,
+      method: 'POST',
+      data: conversionDto
+    });
+    return response.data; // 返回转换后的客户信息
+  } catch (error) {
+    console.error('转换线索为客户失败:', error);
+    throw error; // 这里可以根据需要定制错误处理
+  }
+};
+
+// 获取客户列表（用于选择关联客户）
+export const ShowCustomerList = async (dto:any) => {
+  try {
+    const response = await request({
+      url: `${CLUE_BASE_URL}/show-customer-list`,
+      method: 'GET',
+      params: dto
+    });
+    // 现在 response 就是数组
+    return response
+  } catch (error) {
+    console.error('获取客户列表失败:', error);
+    return []
+  }
+};

@@ -22,7 +22,7 @@
             <span class="clue-label">线索状态</span>
             <el-checkbox-group v-model="queryParams.Status" @change="handleQuery">
               <el-checkbox v-for="item in statusOptions" :key="item.value" :label="item.value">{{ item.label
-              }}</el-checkbox>
+                }}</el-checkbox>
             </el-checkbox-group>
           </div>
         </el-col>
@@ -93,7 +93,7 @@
               </el-icon></el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                 <el-dropdown-item @click="openAbandonDialog(getSelectedClueIds())">放弃线索</el-dropdown-item>
+                <el-dropdown-item @click="openAbandonDialog(getSelectedClueIds())">放弃线索</el-dropdown-item>
                 <el-dropdown-item @click="openUserSelectDialog">转移线索</el-dropdown-item>
                 <el-dropdown-item @click="delclue(getSelectedClueIds())">删除线索</el-dropdown-item>
                 <el-dropdown-item @click="exportclue(1)">导出数据</el-dropdown-item>
@@ -106,7 +106,7 @@
       </el-row>
     </el-card>
 
-      <!-- 转移线索弹出框 -->
+    <!-- 转移线索弹出框 -->
     <el-dialog v-model="userSelectDialogVisible" title="用户列表" width="900px">
       <el-table :data="showuserList" style="width: 100%" :row-key="row => row.id" :current-row-key="selectUserId"
         highlight-current-row @row-click="uhandleRowClick">
@@ -130,7 +130,7 @@
     </el-dialog>
 
     <!-- 放弃线索原因弹出框 -->
-    <el-dialog title="选择放弃原因" v-model="abandonDialogVisible" width="500px">
+    <el-dialog v-model="abandonDialogVisible" title="选择放弃原因" width="500px">
       <el-form>
         <el-form-item label="放弃原因">
           <el-select v-model="abandonReason" placeholder="请选择放弃原因" style="width: 300px" filterable>
@@ -215,10 +215,10 @@
           <div class="drawer-title-big">{{ currentClue?.clueName || '-' }}</div>
           <!-- 右侧操作按钮区 -->
           <div class="drawer-btns">
-            <el-button type="success">转客户</el-button>
+            <el-button type="success" @click="transform()">转客户</el-button>
             <el-button type="primary" @click="openAbandonDialog([currentClue.id])">放弃</el-button>
             <el-button type="warning" @click="openUserSelectDialog([currentClue.id])">转移</el-button>
-            <el-button type="danger"  @click="delclue([currentClue.id])">删除</el-button>
+            <el-button type="danger" @click="delclue([currentClue.id])">删除</el-button>
           </div>
         </div>
         <!-- 线索基础信息区，横向排列 -->
@@ -264,8 +264,8 @@
           <span class="clue-detail-title">线索详情</span>
           <!-- 详情tab右下角的"修改"按钮 -->
           <div class="detail-row-btn">
-            <el-button type="primary" size="small" v-if="!isEdit" @click="isEdit = true">修改</el-button>
-            <el-button type="primary" size="small" v-else @click="submitEdit">完成</el-button>
+            <el-button v-if="!isEdit" type="primary" size="small" @click="isEdit = true">修改</el-button>
+            <el-button v-else type="primary" size="small" @click="submitEdit">完成</el-button>
           </div>
         </div>
         <el-divider class="divider-mt" />
@@ -279,7 +279,7 @@
               <div class="detail-row">
                 <span class="value">电话</span>
                 <template v-if="isEdit">
-                  <el-input class="value" v-model="editForm.cluePhone" size="small" />
+                  <el-input v-model="editForm.cluePhone" class="value" size="small" />
                 </template>
                 <template v-else>
                   {{ displayValue(currentClue?.cluePhone) }}
@@ -291,7 +291,7 @@
               <div class="detail-row">
                 <span class="value">邮箱</span>
                 <template v-if="isEdit">
-                  <el-input class="value" v-model="editForm.clueEmail" size="small" />
+                  <el-input v-model="editForm.clueEmail" class="value" size="small" />
                 </template>
                 <template v-else>
                   {{ displayValue(currentClue?.clueEmail) }}
@@ -300,7 +300,7 @@
               <div class="detail-row">
                 <span class="value">QQ</span>
                 <template v-if="isEdit">
-                  <el-input class="value" v-model="editForm.clueQQ" size="small" />
+                  <el-input v-model="editForm.clueQQ" class="value" size="small" />
                 </template>
                 <template v-else>
                   {{ displayValue(currentClue?.clueQQ) }}
@@ -309,7 +309,7 @@
               <div class="detail-row">
                 <span class="value">行业</span>
                 <template v-if="isEdit">
-                  <el-select class="value" v-model="editForm.industryId" placeholder="请选择行业">
+                  <el-select v-model="editForm.industryId" class="value" placeholder="请选择行业">
                     <el-option v-for="item in industryList" :label="item.industryName" :value="item.id" />
                   </el-select>
                 </template>
@@ -319,11 +319,11 @@
               </div>
             </div>
             <!-- 右侧信息列 -->
-             <div class="detail-table-col">
+            <div class="detail-table-col">
               <div class="detail-row">
                 <span class="value">姓名</span>
                 <template v-if="isEdit">
-                  <el-input class="value" v-model="editForm.clueName" size="small" />
+                  <el-input v-model="editForm.clueName" class="value" size="small" />
                 </template>
                 <template v-else>
                   {{ displayValue(currentClue?.clueName) }}
@@ -332,7 +332,7 @@
               <div class="detail-row">
                 <span class="value">线索来源</span>
                 <template v-if="isEdit">
-                  <el-select class="value" v-model="editForm.clueSourceId" placeholder="请选择线索来源">
+                  <el-select v-model="editForm.clueSourceId" class="value" placeholder="请选择线索来源">
                     <el-option v-for="item in cluesourceList" :label="item.clueSourceName" :value="item.id" />
                   </el-select>
                 </template>
@@ -343,7 +343,7 @@
               <div class="detail-row">
                 <span class="value">微信号</span>
                 <template v-if="isEdit">
-                  <el-input class="value" v-model="editForm.clueWechat" size="small" />
+                  <el-input v-model="editForm.clueWechat" class="value" size="small" />
                 </template>
                 <template v-else>
                   {{ displayValue(currentClue?.clueWechat) }}
@@ -352,7 +352,7 @@
               <div class="detail-row">
                 <span class="value">公司名称</span>
                 <template v-if="isEdit">
-                  <el-input class="value" v-model="editForm.companyName" size="small" />
+                  <el-input v-model="editForm.companyName" class="value" size="small" />
                 </template>
                 <template v-else>
                   {{ displayValue(currentClue?.companyName) }}
@@ -361,7 +361,7 @@
               <div class="detail-row">
                 <span class="value">地址</span>
                 <template v-if="isEdit">
-                  <el-input class="value" v-model="editForm.address" size="small" />
+                  <el-input v-model="editForm.address" class="value" size="small" />
                 </template>
                 <template v-else>
                   {{ displayValue(currentClue?.address) }}
@@ -376,7 +376,7 @@
               <el-button type="primary" icon="Edit" @click="AddCommunication()">添加联系记录</el-button>
               <!-- 联系记录列表 -->
               <div class="contact-list">
-                <div class="contact-item" v-for="item in contactList" :key="item.id">
+                <div v-for="item in contactList" :key="item.id" class="contact-item">
                   <div class="contact-meta">
                     <span class="contact-type">{{ item.typeName }}</span>
                     <span class="contact-time">{{ item.time }}</span>
@@ -419,7 +419,7 @@
               <Upload />
             </el-icon>
             上传附件
-            </el-button>
+          </el-button>
           <!-- 已上传文件名回显 -->
           <div v-if="fileList.length" style="margin-top:8px;">
             <div v-for="file in fileList" :key="file.uid" style="font-size:13px;color:#666;">
@@ -459,7 +459,7 @@
         <el-form-item>
           <el-button type="primary" @click="communicationsubmitForm(communicationruleFormRef)">
             添加记录
-            </el-button>
+          </el-button>
           <el-button @click="communicationresetForm(communicationruleFormRef)">重置</el-button>
         </el-form-item>
       </el-form>
@@ -473,7 +473,7 @@
         :on-exceed="handleUploadExceed" :on-progress="handleUploadProgress" list-type="text">
         <template #trigger>
           <el-button type="primary">选择文件</el-button>
-      </template>
+        </template>
         <el-button type="success" style="margin-left: 12px;" @click="submitUpload">开始上传</el-button>
         <template #file="{ file }">
           <span>{{ file.name }}</span>
@@ -747,22 +747,498 @@
         </el-row>
       </el-form>
     </el-dialog>
+
+    <!-- 转客户抽屉 -->
+    <el-drawer v-model="trantable" direction="rtl" size="60%" :with-header="false" class="transfer-customer-drawer">
+      <div class="transfer-header">
+        <div></div>
+        <div>
+          <el-button type="primary" @click="handleTransferSubmit">提交</el-button>
+          <el-button @click="trantable = false">取消</el-button>
+        </div>
+      </div>
+      <div class="transfer-content">
+        <!-- 转换方式 -->
+        <div class="transfer-section">
+          <div class="transfer-title">转换方式</div>
+          <el-row :gutter="24" class="transfer-row">
+            <el-col :span="24">
+              <el-radio-group v-model="transferForm.transferType">
+                <el-radio :label="'new'">新建客户</el-radio>
+                <el-radio :label="'related'">关联客户</el-radio>
+              </el-radio-group>
+            </el-col>
+          </el-row>
+
+          <!-- 只在选择"关联客户"时显示 -->
+          <el-row v-if="transferForm.transferType === 'related'" style="margin: 16px 0;">
+            <el-col :span="24" style="display: flex; align-items: center;">
+              <el-radio-group v-model="transferForm.selectedCustomerId">
+                <el-radio :label="transferForm.selectedCustomerId">
+                  <span v-if="selectedCustomerName">
+                    已选择客户：{{ selectedCustomerName }}
+                  </span>
+                  <span v-else>
+                    未选择客户
+                  </span>
+                </el-radio>
+              </el-radio-group>
+              <el-button type="primary" style="margin-left: 16px;" @click="openSelectCustomerDialog">
+                {{ selectedCustomerName ? '更换客户' : '选择客户' }}
+              </el-button>
+            </el-col>
+          </el-row>
+
+          <!-- 紧跟在选择客户下面 -->
+          <el-row style="margin-bottom: 16px;">
+            <el-col :span="24">
+              <el-radio-group v-model="transferForm.syncContact" style="margin-right: 32px;">
+                <el-radio :label="true">同步联系记录</el-radio>
+                <el-radio :label="false">不同步</el-radio>
+              </el-radio-group>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-radio-group v-model="transferForm.createContact">
+                <el-radio :label="true">创建联系人</el-radio>
+                <el-radio :label="false">不创建</el-radio>
+              </el-radio-group>
+            </el-col>
+          </el-row>
+        </div>
+        <el-row :gutter="40" class="transfer-main-row">
+          <!-- 客户信息 -->
+          <el-col :span="12" v-if="transferForm.transferType === 'new'">
+            <div class="transfer-section">
+              <div class="transfer-title">客户信息</div>
+              <el-form :model="transferForm.customer" label-width="90px" class="transfer-form">
+                <el-form-item label="客户负责人">
+                  <el-select v-model="transferForm.customer.userId" placeholder="请选择负责人">
+                    <el-option v-for="item in userList" :label="item.userName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+
+                <el-form-item label="姓名" prop="customerName">
+                  <el-input v-model="transferForm.customer.customerName" />
+                </el-form-item>
+
+                <el-form-item label="到期时间" required>
+                  <el-date-picker v-model="transferForm.customer.customerExpireTime" type="datetime"
+                    placeholder="选择时间" />
+                </el-form-item>
+
+                <el-form-item label="体检金额">
+                  <el-input v-model="transferForm.customer.checkAmount" />
+                </el-form-item>
+
+                <el-form-item label="车架号">
+                  <el-select v-model="transferForm.customer.carFrameNumberId" placeholder="请选择车架号">
+                    <el-option v-for="item in carList" :label="item.carFrameNumberName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+
+                <el-form-item label="客户级别">
+                  <el-select v-model="transferForm.customer.customerLevelId" placeholder="请选择客户级别">
+                    <el-option v-for="item in levelList" :label="item.customerLevelName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+
+                <el-form-item label="联系电话" prop="customerPhone">
+                  <el-input v-model="transferForm.customer.customerPhone" maxlength="11" show-word-limit />
+                </el-form-item>
+
+                <el-form-item label="邮箱">
+                  <el-input v-model="transferForm.customer.customerEmail" />
+                </el-form-item>
+
+                <el-form-item label="客户类别">
+                  <el-select v-model="transferForm.customer.customerTypeId" placeholder="请选择客户类别">
+                    <el-option v-for="item in typeList" :label="item.customerTypeName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+
+                <el-form-item label="客户来源">
+                  <el-select v-model="transferForm.customer.customerSourceId" placeholder="请选择客户来源">
+                    <el-option v-for="item in customersourceList" :label="item.clueSourceName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+
+                <el-form-item label="客户地区">
+                  <el-cascader v-model="transferForm.customer.customerRegionId" :options="regionList" :props="props1"
+                    clearable :show-all-levels="false" />
+                </el-form-item>
+
+                <el-form-item label="客户地址">
+                  <el-input v-model="transferForm.customer.customerAddress" />
+                </el-form-item>
+
+                <el-form-item label="备注">
+                  <div style="border: 1px solid #ccc">
+                    <Toolbar style="border-bottom: 1px solid #ccc" :editor="editorRef1"
+                      :default-config="toolbarConfig" />
+                    <Editor v-model="transferForm.customer.customerRemark" style="height: 500px; overflow-y: hidden;"
+                      :default-config="editorConfig" @on-created="handleCreated1" />
+                  </div>
+                </el-form-item>
+              </el-form>
+            </div>
+          </el-col>
+          <!-- 客户联系人 -->
+          <el-col :span="12" v-if="transferForm.createContact">
+            <div class="transfer-section">
+              <div class="transfer-title">客户联系人</div>
+              <el-form :model="transferForm.contact" label-width="100px" class="transfer-form">
+                <el-form-item label="联系人姓名" prop="contactName" required>
+                  <el-input v-model="transferForm.contact.contactName" placeholder="请输入联系人姓名" />
+                </el-form-item>
+                <el-form-item label="联系人关系" prop="contactRelationId">
+                  <el-select v-model="transferForm.contact.contactRelationId" placeholder="请选择联系人关系">
+                    <el-option v-for="item in relationList" :key="item.id" :label="item.contactRelationName"
+                      :value="item.id" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="角色" prop="roleId">
+                  <el-select v-model="transferForm.contact.roleId" placeholder="请选择角色">
+                    <el-option v-for="item in roleList" :key="item.id" :label="item.roleName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="尊称" prop="salutation">
+                  <el-radio-group v-model="transferForm.contact.salutation">
+                    <el-radio :label="true">先生</el-radio>
+                    <el-radio :label="false">女士</el-radio>
+                  </el-radio-group>
+                </el-form-item>
+                <el-form-item label="职位" prop="position">
+                  <el-input v-model="transferForm.contact.position" placeholder="请输入职位" />
+                </el-form-item>
+                <el-form-item label="手机" prop="mobile" required>
+                  <el-input v-model="transferForm.contact.mobile" placeholder="请输入手机号" />
+                </el-form-item>
+                <el-form-item label="QQ" prop="qq">
+                  <el-input v-model="transferForm.contact.qq" placeholder="请输入QQ" />
+                </el-form-item>
+                <el-form-item label="邮箱" prop="email">
+                  <el-input v-model="transferForm.contact.email" placeholder="请输入邮箱" />
+                </el-form-item>
+                <el-form-item label="微信号" prop="wechat" required>
+                  <el-input v-model="transferForm.contact.wechat" placeholder="请输入微信号" />
+                </el-form-item>
+                <el-form-item label="备注" prop="remark">
+                  <div style="border: 1px solid #ccc">
+                    <Toolbar style="border-bottom: 1px solid #ccc" :editor="editorRef2"
+                      :default-config="toolbarConfig" />
+                    <Editor v-model="transferForm.contact.remark" style="height: 500px; overflow-y: hidden;"
+                      :default-config="editorConfig" @on-created="handleCreated2" />
+                  </div>
+                </el-form-item>
+              </el-form>
+            </div>
+          </el-col>
+        </el-row>
+      </div>
+    </el-drawer>
+
+    <!-- 关联客户弹出框 -->
+    <el-dialog v-model="selectCustomerDialogVisible" title="客户列表" width="80%" :close-on-click-modal="false">
+      <div style="display: flex; align-items: center; margin-bottom: 16px;">
+        <el-input v-model="customerSearchKeyword" placeholder="客户名称/联系电话" style="width: 200px; margin-left: 16px;"
+          @keyup.enter="() => { customerPageIndex = 1; fetchCustomerList() }" />
+        <el-button type="primary" style="margin-left: 8px;"
+          @click="() => { customerPageIndex = 1; fetchCustomerList() }">搜索</el-button>
+      </div>
+      <el-table :data="customerList" v-loading="customerLoading" style="width: 100%;"
+        @row-click="row => selectedCustomerId = row.id"
+        :row-class-name="({ row }) => row.id === selectedCustomerId ? 'is-selected' : ''">
+        <el-table-column label="" width="300">
+          <template #default="{ row }">
+            <el-radio v-model="selectedCustomerId" :label="row.id" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="customerCode" label="客户编号" />
+        <el-table-column prop="customerName" label="客户名称" />
+        <el-table-column prop="customerPhone" label="联系电话" />
+        <el-table-column prop="creationTime" label="创建时间" />
+      </el-table>
+      <el-pagination v-if="customerTotal > 0" :current-page="customerPageIndex" :page-size="customerPageSize"
+        :total="customerTotal" @current-change="(page) => { customerPageIndex = page; fetchCustomerList() }"
+        @size-change="(size) => { customerPageSize = size; fetchCustomerList() }"
+        layout="total, sizes, prev, pager, next, jumper" :page-sizes="[10, 20, 50, 100]"
+        style="margin-top: 16px; text-align: right;" />
+      <template #footer>
+        <el-button type="primary" @click="handleCustomerSelectSubmit">提交</el-button>
+        <el-button @click="handleCustomerSelectCancel">取消</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from "vue";
+import { ref, reactive, onMounted, watch, shallowRef, onBeforeUnmount } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload } from '@element-plus/icons-vue';
-import { UpdateClue, ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue, ClueAction, ShowUserList, DeleteClue, ExportClue, GetClueDetail } from '@/api/CustomerProcess/Clue/clue.api';
+import { UpdateClue, ShowClueList, GetClueSource, GetIndustry, AddClue, ClueAction, ShowUserList, DeleteClue, ExportClue, GetClueDetail, ShowCustomerList } from '@/api/CustomerProcess/Clue/clue.api';
 import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
 import moment from 'moment';
 import dayjs from 'dayjs';
 import { useUserStore } from "@/store";
 import type { FormInstance, FormRules, UploadInstance, UploadUserFile, UploadFile, UploadProgressEvent } from 'element-plus'
 import StopIcon from '@/components/icons/StopIcon.vue'
+import { GetUserSelect, GetCarFrameNumberSelect, GetCustomerLevelSelect, GetCustomerRegionSelect, GetCustomerSourceSelect, GetCustomerTypeSelect } from '@/api/CustomerProcess/Customer/customer.api';
+import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
+import '@wangeditor/editor/dist/css/style.css'
+import CustomerContactAPI from "@/api/CustomerProcess/CustomerContact/customercontact.api";
 
 const user = useUserStore();
+
+//===================================转客户====================================================================================
+const trantable = ref(false)
+
+const transform = async () => {
+  trantable.value = true
+}
+
+// 转客户表单数据
+const transferForm = reactive({
+  transferType: 'new', // 'new' 或 'related'
+  selectedCustomerId: '', // 关联客户时选中的客户ID
+  syncContact: true,   // 是否同步联系记录
+  createContact: true, // 是否创建联系人
+  customer: {
+    userId: '',
+    customerName: '',
+    checkAmount: 0,
+    customerExpireTime: '',
+    carFrameNumberId: '',
+    customerPhone: '',
+    customerEmail: '',
+    clueQQ: '',
+    companyName: '',
+    customerLevelId: '',
+    customerTypeId: '',
+    customerSourceId: '',
+    customerRegionId: '',
+    customerAddress: '',
+    customerRemark: '',
+    customerCode: '',
+  },
+  contact: {
+    customerName: "",
+    contactName: "",
+    contactRelationId: "",
+    roleId: "",
+    salutation: true,
+    position: "",
+    mobile: "",
+    qq: "",
+    email: "",
+    wechat: "",
+    remark: "",
+  },
+})
+
+// 提交转客户
+const handleTransferSubmit = () => {
+  // 这里可以对接API
+  console.log('转客户表单数据：', JSON.parse(JSON.stringify(transferForm)))
+  ElMessage.success('提交成功！')
+  trantable.value = false
+}
+
+
+// 控制弹窗显示
+const selectCustomerDialogVisible = ref(false)
+
+// 客户列表数据
+const customerList = ref<any[]>([]) // 推荐用具体类型
+const customerLoading = ref(false)
+
+// 当前选中的客户ID
+const selectedCustomerId = ref('')
+const selectedCustomerName = ref('') // 新增：保存选中客户名称
+
+// 搜索关键字
+const customerSearchKeyword = ref('')
+
+// 打开弹窗
+function openSelectCustomerDialog() {
+  selectCustomerDialogVisible.value = true
+  customerPageIndex.value = 1
+  fetchCustomerList()
+}
+
+// 获取客户列表（伪代码，实际请用你的API）
+async function fetchCustomerList() {
+  customerLoading.value = true
+  try {
+    const params = {
+      Keyword: customerSearchKeyword.value,
+      PageIndex: customerPageIndex.value,
+      PageSize: customerPageSize.value,
+    }
+    const res = await ShowCustomerList(params)
+    customerList.value = res
+    customerTotal.value = res.length
+  } finally {
+    customerLoading.value = false
+  }
+}
+
+// 提交选择
+function handleCustomerSelectSubmit() {
+  const customer = customerList.value.find(
+    (item: any) => item.id === selectedCustomerId.value
+  )
+  if (customer) {
+    selectedCustomerName.value = customer.customerName // 保存客户名称
+    transferForm.selectedCustomerId = customer.id // 反填ID
+
+    // 自动填充客户信息
+    Object.assign(transferForm.customer, customer)
+  }
+  selectCustomerDialogVisible.value = false
+}
+
+// 取消
+function handleCustomerSelectCancel() {
+  selectCustomerDialogVisible.value = false
+}
+
+//=================添加客户附文本==================
+// 编辑器实例，必须用 shallowRef
+const editorRef1 = shallowRef()
+const editorRef2 = shallowRef()
+const content1 = ref('')
+const content2 = ref('')
+
+// 模拟 ajax 异步获取内容
+onMounted(() => {
+  setTimeout(() => {
+    content1.value = '<p>模拟 Ajax 异步设置内容</p>'
+    content2.value = '<p>模拟 Ajax 异步设置内容</p>'
+  }, 1500)
+})
+
+const toolbarConfig = {}
+const editorConfig = {
+  placeholder: '请输入内容...',
+  MENU_CONF: {
+    uploadImage: {
+      fieldName: 'file',
+      server: 'https://localhost:44341/api/app/customer/upload-image-for-edit',
+    }
+  }
+}
+
+// 组件销毁时，也及时销毁编辑器
+onBeforeUnmount(() => {
+  if (editorRef1.value) editorRef1.value.destroy()
+  if (editorRef2.value) editorRef2.value.destroy()
+})
+
+const handleCreated1 = (editor: any) => {
+  editorRef1.value = editor
+}
+const handleCreated2 = (editor: any) => {
+  editorRef2.value = editor
+}
+
+//下拉框绑定联系人关系
+// 关系和角色下拉数据（请用接口数据替换）
+const relationList: any = ref([]);
+//显示查询分页
+const GetrelationData = async () => {
+  CustomerContactAPI.GetRelationSelect()
+    .then((res) => {
+      console.log("联系人关系列表数据", res);
+      relationList.value = res;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+};
+
+//下拉框绑定角色
+const roleList: any = ref([]);
+//显示查询分页
+const GetRoleData = async () => {
+  CustomerContactAPI.GetRoleSelect()
+    .then((res) => {
+      console.log("联系人关系列表数据", res);
+      roleList.value = res;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+};
+
+// 下拉框绑定用户列表
+const userList: any = ref([])
+const selectUser = async () => {
+  await GetUserSelect()
+    .then(res => {
+      console.log('用户列表', res)
+      userList.value = res
+    })
+}
+
+// 下拉框绑定车架号列表
+const carList: any = ref([])
+const selectCar = async () => {
+  await GetCarFrameNumberSelect()
+    .then(res => {
+      console.log('车架号列表', res)
+      carList.value = res
+    })
+}
+
+// 下拉框绑定客户级别列表
+const levelList: any = ref([])
+const selectLevel = async () => {
+  await GetCustomerLevelSelect()
+    .then(res => {
+      console.log('客户级别列表', res)
+      levelList.value = res
+    })
+}
+
+//下拉框绑定客户来源列表
+const customersourceList: any = ref([])
+const selectCustomerSource = async () => {
+  await GetCustomerSourceSelect()
+    .then(res => {
+      console.log('客户来源列表', res)
+      customersourceList.value = res
+    })
+}
+
+//下拉框绑定客户地区列表
+const regionList: any = ref([])
+const selectRegion = async () => {
+  await GetCustomerRegionSelect()
+    .then(res => {
+      console.log('客户地区列表', res)
+      regionList.value = res
+    })
+}
+const props1 = {
+  checkStrictly: true,
+  emitPath: false,
+  value: 'id',
+  label: 'customerRegionName',
+  children: 'children'
+}
+
+
+//下拉框绑定客户类别列表
+const typeList: any = ref([])
+const selectType = async () => {
+  await GetCustomerTypeSelect()
+    .then(res => {
+      console.log('客户类别列表', res)
+      typeList.value = res
+    })
+}
 
 //=================修改线索===================================================================
 const isEdit = ref(false); // 是否处于编辑状态
@@ -777,7 +1253,7 @@ const editForm = ref({
   companyName: '',
   industryId: '',
   address: '',
-  remark:'',
+  remark: '',
   cluePoolStatus: 1,
 }); // 编辑用的表单数据
 
@@ -800,7 +1276,7 @@ const submitEdit = async () => {
       companyName: editForm.value.companyName,
       industryId: editForm.value.industryId,
       address: editForm.value.address,
-      remark:editForm.value.remark,
+      remark: editForm.value.remark,
       cluePoolStatus: editForm.value.cluePoolStatus,
     };
     await UpdateClue(currentClue.value.id, data);
@@ -813,9 +1289,9 @@ const submitEdit = async () => {
 };
 
 // 线索详情
-const fetchClueDetail = async (id:any) => {
+const fetchClueDetail = async (id: any) => {
   const res = await GetClueDetail(id);
-  Object.assign(currentClue.value, res.data); 
+  Object.assign(currentClue.value, res.data);
 };
 
 
@@ -865,7 +1341,7 @@ const exportclue = async (cluePoolStatus: number) => {
 const delclue = async (clueIds?: any[]) => {
   // 如果没有传入参数，使用选中的线索ID
   const ids = clueIds || getSelectedClueIds();
-  
+
   // 校验：必须选择至少一条线索
   if (!ids || !ids.length) {
     ElMessage.warning('请先选择要删除的线索');
@@ -936,10 +1412,10 @@ const uhandleRowClick = (row: any) => {
 const openUserSelectDialog = (clueIds?: any[]) => {
   // 如果传入了线索ID，则存储；否则清空存储的线索ID，使用选中的线索ID
   transferClueIds.value = clueIds || [];
-  
+
   // 获取用户列表数据
   showUser()
-  
+
   // 显示用户选择弹窗
   userSelectDialogVisible.value = true
 }
@@ -982,13 +1458,13 @@ const assignClue = async (clueIds?: any, targetUserId?: any) => {
 const handleAssignSubmit = () => {
   // 使用存储的线索ID，如果没有则使用选中的线索ID
   const clueIds = transferClueIds.value.length > 0 ? transferClueIds.value : undefined;
-  
+
   // 调用assignClue方法执行转移操作
   assignClue(clueIds, selectUserId.value);
-  
+
   // 关闭用户选择弹窗
   userSelectDialogVisible.value = false;
-  
+
   // 清空存储的线索ID，避免影响下次操作
   transferClueIds.value = [];
 };
@@ -1052,19 +1528,19 @@ const abandonReasonOptions = [
 const openAbandonDialog = (clueIds?: any[]) => {
   // 如果没有传入参数，使用选中的线索ID
   const ids = clueIds || getSelectedClueIds();
-  
+
   // 校验：必须选择至少一条线索
   if (!ids.length) {
     ElMessage.warning('请先选择线索');
     return;
   }
-  
+
   // 存储要放弃的线索ID到全局变量，供提交时使用
   abandonClueIds.value = ids;
-  
+
   // 重置放弃原因为空，确保每次都是重新选择
   abandonReason.value = '';
-  
+
   // 显示放弃原因选择弹窗
   abandonDialogVisible.value = true;
 };
@@ -1085,34 +1561,34 @@ const handleAbandonSubmit = async () => {
     ElMessage.warning('请选择放弃原因');
     return;
   }
-  
+
   // 调试信息：打印操作开始的关键信息
   console.log('=== 开始放弃线索操作 ===');
   console.log('放弃原因:', abandonReason.value);
   console.log('要放弃的线索ID:', abandonClueIds.value);
   console.log('当前用户ID:', user.userInfo.id);
-  
+
   // 初始化计数器
   let successCount = 0; // 成功放弃的线索数量
   let failCount = 0;    // 放弃失败的线索数量
-  
+
   // 遍历所有要放弃的线索ID
   for (const clueId of abandonClueIds.value) {
     try {
       // 在线索列表中查找对应的线索数据
       const clue = clueList.value.find(item => item.id === clueId);
       console.log(`查找线索ID ${clueId}:`, clue);
-      
+
       // 校验：检查是否找到了对应的线索数据
       if (!clue) {
         console.warn(`未找到线索ID: ${clueId}，可能数据已过期`);
         failCount++;
         continue; // 跳过当前线索，继续处理下一个
       }
-      
+
       // 调试信息：打印线索负责人和当前用户的ID对比
       console.log(`线索负责人ID: ${clue.userId}, 当前用户ID: ${user.userInfo.id}`);
-      
+
       // 权限校验：只有线索的负责人才能放弃该线索
       // 这是业务逻辑要求，防止用户放弃不属于自己的线索
       if (clue.userId !== user.userInfo.id) {
@@ -1120,43 +1596,43 @@ const handleAbandonSubmit = async () => {
         failCount++;
         continue; // 跳过当前线索，继续处理下一个
       }
-      
+
       // 调试信息：打印即将发送给后端的参数
       console.log(`准备调用ClueAction接口，参数:`, {
         clueId,
         actionType: 'abandon',
         abandonReason: abandonReason.value
       });
-      
+
       // 调用后端接口执行放弃操作
       // ClueAction接口会更新线索状态为"已放弃"
-      const result = await ClueAction({ 
-        clueId, 
-        actionType: 'abandon', 
-        abandonReason: abandonReason.value 
+      const result = await ClueAction({
+        clueId,
+        actionType: 'abandon',
+        abandonReason: abandonReason.value
       });
-      
+
       // 调试信息：打印接口返回结果
       console.log(`ClueAction接口返回结果:`, result);
       successCount++; // 接口调用成功，增加成功计数
-      
+
     } catch (error) {
       // 异常处理：接口调用失败时的错误处理
       console.error(`放弃线索 ${clueId} 失败:`, error);
       failCount++; // 接口调用失败，增加失败计数
     }
   }
-  
+
   // 调试信息：打印最终操作结果统计
   console.log(`=== 放弃操作完成，成功: ${successCount}, 失败: ${failCount} ===`);
-  
+
   // 成功处理：如果有线索成功放弃
   if (successCount > 0) {
     ElMessage.success(`成功放弃${successCount}条线索`);
     abandonDialogVisible.value = false; // 关闭放弃原因弹窗
     fetchClueList(); // 刷新线索列表，显示最新状态
   }
-  
+
   // 失败处理：如果有线索放弃失败
   if (failCount > 0) {
     ElMessage.warning(`有${failCount}条线索放弃失败，可能不是您负责的线索`);
@@ -1515,7 +1991,6 @@ const orderOptions = [
 
 const loading = ref(false);
 const clueList = ref<any[]>([]);
-// const selectedIds = ref<any[]>([]);
 
 //定义查询显示参数
 const queryParams = reactive({
@@ -1658,7 +2133,7 @@ const selectCustomReply = async (typeId: string | number) => {
     .then(res => {
       customReplyList.value = res || [];
       console.log('自定义回复列表', customReplyList.value);
-  });
+    });
 };
 
 //下拉框绑定沟通类型列表
@@ -1671,15 +2146,6 @@ const selectCommunicationType = async () => {
     })
 };
 
-// 下拉框绑定用户列表
-const userList: any = ref([])
-const selectUser = async () => {
-  await GetUser()
-    .then(res => {
-      console.log('用户列表', res)
-      userList.value = res
-    })
-}
 
 //下拉框绑定线索来源列表
 const cluesourceList: any = ref([])
@@ -1930,8 +2396,20 @@ onMounted(() => {
   fetchContactList(); // 获取联系记录列表
   // selectCustomReply(); // 获取自定义回复列表 - 移至watch中
   console.log('clueList:', clueList.value);
+
+  selectCar(); //获取车架号列表
+  selectLevel(); //获取客户级别列表
+  selectCustomerSource(); // 获取客户来源列表
+  selectRegion(); //获取客户地区列表
+  selectType(); //获取客户类别列表
+
+  GetRoleData();
+  GetrelationData();
 });
 
+const customerPageIndex = ref(1)
+const customerPageSize = ref(10)
+const customerTotal = ref(0)
 
 </script>
 
@@ -1974,9 +2452,9 @@ onMounted(() => {
   padding: 20px;
 }
 
-  .search-card {
-    margin-bottom: 20px;
-  }
+.search-card {
+  margin-bottom: 20px;
+}
 
 .clue-header {
   font-size: 16px;
@@ -2018,9 +2496,9 @@ onMounted(() => {
 
 .ml16 {
   margin-left: 16px;
-  }
+}
 
-  .table-card {
+.table-card {
   margin-top: 0;
 }
 
@@ -2111,7 +2589,7 @@ onMounted(() => {
   font-size: 14px;
   color: #303133;
   font-weight: 400;
-    text-align: right;
+  text-align: right;
   flex-shrink: 0;
   margin-left: 40px;
 }
@@ -2516,5 +2994,59 @@ onMounted(() => {
 
 .drawer-bottom-form .el-button {
   border-radius: 6px;
+}
+
+.transfer-customer-drawer {
+  background: #fafbfc;
+}
+
+.transfer-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 10px 0 20px 0;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+}
+
+.transfer-header>div:last-child {
+  display: flex;
+  gap: 12px;
+}
+
+.transfer-content {
+  padding: 0 30px 30px 30px;
+}
+
+.transfer-section {
+  margin-bottom: 32px;
+}
+
+.transfer-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #222;
+  margin-bottom: 8px;
+  border-bottom: 3px solid #ff6600;
+  display: inline-block;
+  padding-bottom: 2px;
+}
+
+.transfer-row {
+  margin-bottom: 18px;
+}
+
+.transfer-main-row {
+  margin-top: 18px;
+}
+
+.transfer-form {
+  margin-top: 10px;
+}
+
+.el-table .is-selected {
+  background: #f0f7ff;
 }
 </style>
