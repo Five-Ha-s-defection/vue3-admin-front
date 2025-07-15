@@ -87,10 +87,8 @@
               </el-icon></el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>删除商机</el-dropdown-item>
-                <el-dropdown-item>导出数据</el-dropdown-item>
-                <el-dropdown-item>Excel导入</el-dropdown-item>
-                <el-dropdown-item>下载模版</el-dropdown-item>
+                <el-dropdown-item @click="delbus(getSelectedBusIds())">删除商机</el-dropdown-item>
+                <el-dropdown-item @click="exportbus">导出数据</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -163,8 +161,9 @@
           <div class="drawer-title-big">{{ currentBusiness?.businessOpportunityName || '-' }}</div>
           <!-- 右侧操作按钮区 -->
           <div class="drawer-btns">
-            <el-button type="primary">修改</el-button>
-            <el-button type="danger">删除</el-button>
+            <el-button v-if="!isEdit" type="primary" size="small" @click="isEdit = true">修改</el-button>
+            <el-button v-else type="success" size="small" @click="submitEdit">完成</el-button>
+            <el-button type="danger" @click="delbus([currentBusiness.id])">删除</el-button>
           </div>
         </div>
         <!-- 线索基础信息区，横向排列 -->
@@ -199,25 +198,20 @@
           <!-- 负责人 -->
           <div class="info-item"><span>录入方式</span>手动录入</div>
         </div>
-          <!-- ======================== 销售进度条 ======================== -->
-          <div class="sales-progress-container">
-            <div class="sales-progress-wrapper">
-              <div class="sales-process-flow">
-                <div 
-                  v-for="(step, index) in progressSteps" 
-                  :key="step.id"
-                  :class="['process-step', { 
-                    'active': index <= activeStepIndex, 
-                    'current': index === activeStepIndex 
-                  }]"
-                  @click="updateProgress(index)"
-                >
-                  {{ step.salesProgressName }}
-                  <div class="arrow-right" v-if="index < progressSteps.length - 1"></div>
-                </div>
+        <!-- ======================== 销售进度条 ======================== -->
+        <div class="sales-progress-container">
+          <div class="sales-progress-wrapper">
+            <div class="sales-process-flow">
+              <div v-for="(step, index) in progressSteps" :key="step.id" :class="['process-step', {
+                'active': index <= activeStepIndex,
+                'current': index === activeStepIndex
+              }]" @click="updateProgress(index)">
+                {{ step.salesProgressName }}
+                <div class="arrow-right" v-if="index < progressSteps.length - 1"></div>
               </div>
             </div>
           </div>
+        </div>
 
         <!-- 商机详情标题和分割线 -->
         <div class="clue-detail-title-row">
@@ -231,19 +225,76 @@
                   <!-- 左侧信息列 -->
                   <div class="detail-table-col">
                     <div class="detail-row"><span>商机编号</span>{{ currentBusiness?.businessOpportunityCode }}</div>
-                    <div class="detail-row"><span>优先级</span>{{ currentBusiness?.priorityName }}</div>
-                    <div class="detail-row"><span>预算金额</span>{{ currentBusiness?.budget || '--' }}</div>
+                    <div class="detail-row">
+                      <span>优先级</span>
+                      <template v-if="isEdit">
+                        <el-select v-model="editForm.priorityId" placeholder="请选择优先级">
+                          <el-option v-for="item in priorityList" :label="item.priorityName" :value="item.id" />
+                        </el-select>
+                      </template>
+                      <template v-else>
+                        {{ currentBusiness?.priorityName }}
+                      </template>
+                    </div>
+                    <div class="detail-row">
+                      <span>预算金额</span>
+                      <template v-if="isEdit">
+                        <el-input v-model="editForm.budget" class="value" size="small" />
+                      </template>
+                      <template v-else>
+                        {{ currentBusiness?.budget || '--' }}
+                      </template>
+                    </div>
                     <div class="detail-row">
                       <span>备注</span>
-                      {{ !currentBusiness?.remark || currentBusiness.remark === 'string' ? '--' : currentBusiness.remark }}
+                      <template v-if="isEdit">
+                        <div style="border: 1px solid #ccc">
+                          <Toolbar style="border-bottom: 1px solid #ccc" :editor="editorRef"
+                            :default-config="toolbarConfig" />
+                          <Editor v-model="editForm.remark" style="height: 500px; overflow-y: hidden;"
+                            :default-config="editorConfig" @on-created="handleCreated" />
+                        </div>
+                      </template>
+                      <template v-else>
+                        {{ !currentBusiness?.remark || currentBusiness.remark === 'string' ? '--' :
+                        currentBusiness.remark}}
+                      </template>
                     </div>
                   </div>
                   <!-- 右侧信息列 -->
                   <div class="detail-table-col">
-                    <div class="detail-row"><span>所属客户</span>{{ displayValue(currentBusiness?.customerName) }}</div>
-                    <div class="detail-row"><span>商机名称</span>{{ displayValue(currentBusiness?.businessOpportunityName) }}</div>
-                    <div class="detail-row"><span>预计成交日期</span>{{ currentBusiness?.expectedDate ? moment(currentBusiness.expectedDate).format('YYYY-MM-DD HH:mm:ss') : '--' }}
+                    <div class="detail-row">
+                      <span>所属客户</span>
+                     
+                      <template v-if="isEdit">
+                       <el-select v-model="editForm.customerId" placeholder="请选择客户">
+            <el-option v-for="item in selcustomerList" :label="item.customerName" :value="item.id" />
+          </el-select>
+                      </template>
+                      <template v-else>
+                         {{ displayValue(currentBusiness?.customerName) }}
+                      </template>
                     </div>
+                    <div class="detail-row">
+                      <span>商机名称</span>
+                      
+                      <template v-if="isEdit">
+                        <el-input v-model="editForm.businessOpportunityName" class="value" size="small" />
+                      </template>
+                      <template v-else>
+                        {{ displayValue(currentBusiness?.businessOpportunityName)}}
+                      </template>
+                    </div>
+                    <div class="detail-row">
+                      <span>预计成交日期</span>
+                     
+                      <template v-if="isEdit">
+                        <el-date-picker v-model="editForm.expectedDate" type="datetime" placeholder="选择时间" />
+                      </template>
+                      <template v-else>
+                        {{ currentBusiness?.expectedDate ? moment(currentBusiness.expectedDate).format('YYYY-MM-DD HH:mm:ss') : '--' }}
+                      </template>
+                  </div>
                   </div>
                 </div>
               </div>
@@ -613,7 +664,7 @@
 import { ref, reactive, onMounted, watch, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload, Filter } from '@element-plus/icons-vue';
-import { AddBusinessOpportunity, GetCustomerSelect, GetBusinessPrioritySelect, GetBusinessSalesProgressSelect, GetProductSelect, ShowBusinessOpportunityList, DeleteBusinessOpportunity, UpdateBusinessProgress } from '@/api/CustomerProcess/BusinessOpportunity/businessopportunity.api';
+import { AddBusinessOpportunity, GetCustomerSelect, GetBusinessPrioritySelect, GetBusinessSalesProgressSelect, GetProductSelect, ShowBusinessOpportunityList, DeleteBusinessOpportunity, UpdateBusinessProgress, ExportBus, UpdBusiness, GetBusDetail } from '@/api/CustomerProcess/BusinessOpportunity/businessopportunity.api';
 import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
 import { GetUserSelect } from '@/api/CustomerProcess/Customer/customer.api'
 import moment from 'moment';
@@ -627,6 +678,161 @@ import { onBeforeUnmount, shallowRef } from 'vue'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 
 const user = useUserStore();
+
+//=================修改商机===================================================================
+const isEdit = ref(false); // 是否处于编辑状态
+
+const editForm = ref({
+  priorityId: '',
+  budget: '',
+  remark: '',
+  customerId: '',
+  businessOpportunityName: '',
+  expectedDate: '',
+}); // 编辑用的表单数据
+
+// 进入编辑时，拷贝一份当前线索数据
+watch(isEdit, (val) => {
+  if (val && currentBusiness.value) {
+    editForm.value = { ...currentBusiness.value };
+  }
+});
+
+const submitEdit = async () => {
+  try {
+    const data = {
+      priorityId: editForm.value.priorityId,
+      budget: editForm.value.budget,
+      remark: editForm.value.remark,
+      customerId: editForm.value.customerId,
+      businessOpportunityName: editForm.value.businessOpportunityName,
+      expectedDate: editForm.value.expectedDate,
+    };
+    await UpdBusiness(currentBusiness.value.id, data);
+    ElMessage.success('提交成功');
+    isEdit.value = false;
+    await fetchBusDetail(currentBusiness.value.id); // 重新拉详情
+  } catch (e) {
+    ElMessage.error('提交失败');
+  }
+};
+
+// 线索详情
+const fetchBusDetail = async (id: any) => {
+  const res = await GetBusDetail(id);
+  Object.assign(currentBusiness.value, res.data);
+};
+
+//================导出商机============================
+// 导出客户数据并自动下载 Excel 文件
+const exportbus = async () => {
+  // 调用后端导出接口，传递筛选条件
+  const res = await ExportBus();
+
+  // 从响应头中获取文件名，默认文件名为"数据.xlsx"
+  const disposition = res.headers['content-disposition'];
+  let fileName = '商机数据.xlsx';
+  if (disposition) {
+    // 匹配 filename 或 filename*=UTF-8'' 这两种格式
+    const match = disposition.match(/filename\*?=(?:UTF-8'')?([^;]+)/i);
+    if (match && match[1]) {
+      // 解码文件名，去除引号
+      fileName = decodeURIComponent(match[1].replace(/["']/g, ''));
+    }
+  }
+
+  // 创建 Blob 对象，指定类型为 Excel
+  const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  // 创建临时 a 标签用于下载
+  const link = document.createElement('a');
+  link.href = window.URL.createObjectURL(blob); // 生成下载链接
+  link.download = fileName; // 设置下载文件名
+  link.click(); // 触发点击，开始下载
+
+  // 释放 URL 对象，避免内存泄漏
+  window.URL.revokeObjectURL(link.href);
+}
+
+
+//=================删除线索==========================
+/**
+ * 批量删除线索
+ * @param busIds 要删除的线索ID数组，可选参数
+ * 功能说明：
+ * 1. 校验是否有选中线索
+ * 2. 弹窗二次确认删除操作
+ * 3. 循环调用DeleteClue删除每条线索
+ * 4. 删除成功/失败分别统计并提示
+ * 5. 删除成功后刷新线索列表
+ */
+const delbus = async (busIds?: any[]) => {
+  // 如果没有传入参数，使用选中的线索ID
+  const ids = busIds || getSelectedBusIds();
+
+  // 校验：必须选择至少一条线索
+  if (!ids || !ids.length) {
+    ElMessage.warning('请先选择要删除的线索');
+    return;
+  }
+  try {
+    // 弹窗二次确认
+    await ElMessageBox.confirm(
+      `确定要删除选中的${ids.length}条线索吗？删除后不可恢复！`,
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+    let successCount = 0; // 成功删除数量
+    let failCount = 0;    // 删除失败数量
+    // 循环删除每个线索
+    for (const busId of ids) {
+      try {
+        await DeleteBusinessOpportunity(busId);
+        successCount++;
+      } catch (e) {
+        failCount++;
+      }
+    }
+    // 删除成功提示
+    if (successCount > 0) {
+      ElMessage.success(`成功删除${successCount}条商机`);
+      fetchBusinessList(); // 刷新列表
+    }
+    // 删除失败提示
+    if (failCount > 0) {
+      ElMessage.error(`有${failCount}条商机删除失败`);
+    }
+  } catch {
+    // 用户取消操作
+    ElMessage.info('已取消删除');
+  }
+}
+
+
+/**
+ * 表格选择相关的状态变量
+ */
+const selectedRows = ref<any[]>([]); // 保存所有选中的行数据
+
+/**
+ * 处理表格选择变化事件
+ * @param rows 当前选中的行数据数组
+ */
+const handleSelectionChange = (rows: any) => {
+  selectedRows.value = rows;
+};
+
+/**
+ * 获取当前选中线索的ID数组
+ * @returns 选中线索的ID数组
+ */
+const getSelectedBusIds = () => {
+  return selectedRows.value.map(row => row.id);
+};
 
 //=================销售进度条=======================
 // 销售进度阶段列表
@@ -652,30 +858,30 @@ const activeStepIndex = computed(() => {
 
 
 // 手动点击步骤时更新
-async function updateProgress(index:number) {
+async function updateProgress(index: number) {
   // 如果没有当前商机数据，则不执行更新
   if (!currentBusiness.value) return;
-  
+
   // 获取对应步骤
   const selectedStep = progressSteps.value[index];
   if (!selectedStep) return;
-  
-    try {
+
+  try {
     // 调用API保存进度更改，使用真实的后端ID
     await UpdateBusinessProgress(currentBusiness.value.id, selectedStep.id);
-      
+
     // 更新当前商机的销售进度信息
     currentBusiness.value.salesProgressId = selectedStep.id;
     currentBusiness.value.salesProgressName = selectedStep.salesProgressName;
-      
+
     ElMessage.success(`销售进度已更新为: ${selectedStep.salesProgressName}`);
     console.log('进度已改为:', selectedStep.salesProgressName, '进度ID:', selectedStep.id);
-      
-      // 可选：刷新商机列表以获取最新数据
-      // fetchBusinessList();
-    } catch (error) {
-      console.error('更新销售进度失败:', error);
-      ElMessage.error('更新销售进度失败，请稍后再试');
+
+    // 可选：刷新商机列表以获取最新数据
+    // fetchBusinessList();
+  } catch (error) {
+    console.error('更新销售进度失败:', error);
+    ElMessage.error('更新销售进度失败，请稍后再试');
   }
 }
 
@@ -1216,7 +1422,7 @@ const selectSalesProgress = async () => {
     .then(res => {
       console.log('销售进度列表', res)
       salesProgressList.value = res
-      
+
       // 将后端数据转换为进度条步骤，保持顺序
       if (res && Array.isArray(res)) {
         // 按照指定顺序重新排列销售进度
@@ -1225,7 +1431,7 @@ const selectSalesProgress = async () => {
           const found = res.find((item: any) => item.salesProgressName === name);
           return found || null;
         }).filter(item => item !== null);
-        
+
         progressSteps.value = orderedProgress;
         // 打印完整结构
         console.log('动态设置的进度步骤:', JSON.parse(JSON.stringify(progressSteps.value)));
@@ -1301,7 +1507,7 @@ const fetchBusinessList = async () => {
       queryParams.totalCount = 0;
       queryParams.pageCount = 0;
     }
-  } 
+  }
   // catch (e) {
   //   ElMessage.error('获取商机列表失败');
   //   queryParams.totalCount = 0; // 重置总记录数
@@ -1352,9 +1558,6 @@ const handleResetQuery = () => {
   queryParams.ExpectedDate = ''; //预计成交日期
   queryParams.MatchMode = 0
   handleQuery();
-};
-const handleSelectionChange = (val: any[]) => {
-  selectedIds.value = val.map(item => item.id);
 };
 
 //分页
@@ -1498,7 +1701,8 @@ console.log('当前登录用户信息', user.userInfo);
 }
 
 .sales-progress-container {
-  height: 50px; /* 固定高度，防止上下滚动 */
+  height: 50px;
+  /* 固定高度，防止上下滚动 */
   margin-bottom: 15px;
   position: relative;
 }
@@ -1506,14 +1710,18 @@ console.log('当前登录用户信息', user.userInfo);
 .sales-progress-wrapper {
   padding: 10px 0;
   overflow-x: auto;
-  overflow-y: hidden; /* 防止垂直滚动 */
+  overflow-y: hidden;
+  /* 防止垂直滚动 */
   width: 100%;
-  -webkit-overflow-scrolling: touch; /* 提高移动端滚动体验 */
-  scrollbar-width: none; /* 隐藏Firefox滚动条 */
+  -webkit-overflow-scrolling: touch;
+  /* 提高移动端滚动体验 */
+  scrollbar-width: none;
+  /* 隐藏Firefox滚动条 */
 }
 
 .sales-progress-wrapper::-webkit-scrollbar {
-  display: none; /* 隐藏WebKit滚动条 */
+  display: none;
+  /* 隐藏WebKit滚动条 */
 }
 
 .sales-process-flow {
@@ -1523,7 +1731,8 @@ console.log('当前登录用户信息', user.userInfo);
   height: 32px;
   margin: 0 auto;
   position: relative;
-  padding: 0 8px; /* 添加左右内边距，防止箭头溢出 */
+  padding: 0 8px;
+  /* 添加左右内边距，防止箭头溢出 */
 }
 
 .process-step {
@@ -1533,7 +1742,8 @@ console.log('当前登录用户信息', user.userInfo);
   padding: 0 15px;
   text-align: center;
   font-size: 13px;
-  background-color: #f0f0f0; /* 默认灰色背景 */
+  background-color: #f0f0f0;
+  /* 默认灰色背景 */
   color: #666;
   cursor: pointer;
   white-space: nowrap;
@@ -1542,7 +1752,8 @@ console.log('当前登录用户信息', user.userInfo);
   justify-content: center;
   flex: 1;
   font-weight: 500;
-  margin-right: 16px; /* 为箭头留出空间 */
+  margin-right: 16px;
+  /* 为箭头留出空间 */
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
@@ -1565,9 +1776,11 @@ console.log('当前登录用户信息', user.userInfo);
   height: 0;
   border-top: 16px solid transparent;
   border-bottom: 16px solid transparent;
-  border-left: 16px solid #f0f0f0; /* 默认灰色箭头 */
+  border-left: 16px solid #f0f0f0;
+  /* 默认灰色箭头 */
   z-index: 2;
-  pointer-events: none; /* 防止箭头触发鼠标事件 */
+  pointer-events: none;
+  /* 防止箭头触发鼠标事件 */
 }
 
 /* 删除固定样式，改为完全依赖动态类 */

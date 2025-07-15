@@ -552,22 +552,8 @@
             </template>
           </template>
         </el-table-column>
-        <el-table-column label="负责人" prop="userName" min-width="100" />
+        <el-table-column label="负责人" prop="realName" min-width="100" />
         <el-table-column label="创建人" prop="createName" min-width="100" />
-        <el-table-column label="操作" width="120" align="center">
-          <!-- <template #default="{ row }">
-            <el-dropdown>
-              <el-button type="primary" link>操作</el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="handleEdit(row)">编辑</el-dropdown-item>
-                  <el-dropdown-item @click="handleFollow(row)">跟进</el-dropdown-item>
-                  <el-dropdown-item divided @click="handleDelete(row)">删除</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </template> -->
-        </el-table-column>
       </el-table>
       <!-- 分页区域 -->
       <table>
@@ -1529,7 +1515,7 @@ const orderOptions = [
 
 const loading = ref(false);
 const clueList = ref<any[]>([]);
-const selectedIds = ref<any[]>([]);
+// const selectedIds = ref<any[]>([]);
 
 //定义查询显示参数
 const queryParams = reactive({
@@ -1561,6 +1547,7 @@ const queryParams = reactive({
   IndustryId: 0,   // 行业
   Address: '',      // 地址
   MatchMode: 0, // 0: 全部满足, 1: 部分满足
+  CluePoolStatus: 1, //线索分配状态 
 });
 
 const advancedDialogVisible = ref(false);

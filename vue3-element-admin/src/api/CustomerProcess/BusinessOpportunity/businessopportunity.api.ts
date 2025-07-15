@@ -72,3 +72,29 @@ export const UpdateBusinessProgress = (id: string, salesProgressId: string | num
     }
   });
 }
+
+//修改商机
+export const UpdBusiness=(id: string, data: any)=>{
+   return request({
+    url: `${BusinessOpportunity_BASE_URL}/${id}/upd-customer`,
+    method: "put",
+    data,
+  });
+}
+
+//获取商机详情
+export const GetBusDetail = (id: any) => {
+  return request({
+    url: `${BusinessOpportunity_BASE_URL}/${id}/business-opportunity-by-id`,
+    method: "get",
+  });
+}
+
+//导出所有商机
+export const ExportBus = () => {
+  return request({
+    url: `${BusinessOpportunity_BASE_URL}/export-all-product-category-to`,
+    method: "get",
+    responseType: "blob", // 关键
+  });
+};
