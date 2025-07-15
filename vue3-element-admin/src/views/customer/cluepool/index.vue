@@ -1,8 +1,9 @@
 <template>
   <div class="app-container">
+     <!-- 查询线索池 -->
     <el-card class="search-card" shadow="never">
       <div class="clue-header">
-        <span>线索列表 | 总记录数：<b>{{ queryParams.totalCount }}</b> 条</span>
+        <span>线索池列表 | 总记录数：<b>{{ queryParams.totalCount }}</b> 条</span>
       </div>
       <!-- 查看范围 -->
       <el-row class="clue-row" align="middle">
@@ -13,18 +14,6 @@
             @click="handleScopeChange(item.value)">
             {{ item.label }}
           </el-link>
-        </el-col>
-      </el-row>
-      <!-- 线索状态 -->
-      <el-row class="clue-row clue-status-row" align="middle">
-        <el-col :span="24">
-          <div class="clue-status-flex">
-            <span class="clue-label">线索状态</span>
-            <el-checkbox-group v-model="queryParams.Status" @change="handleQuery">
-              <el-checkbox v-for="item in statusOptions" :key="item.value" :label="item.value">{{ item.label
-              }}</el-checkbox>
-            </el-checkbox-group>
-          </div>
         </el-col>
       </el-row>
       <!-- 选择时间 -->
@@ -85,18 +74,23 @@
               </el-button>
             </template>
           </el-input>
-          <el-button icon="el-icon-filter" class="mr8 clue-large-btn"
-            @click="advancedDialogVisible = true">高级搜索</el-button>
+          <el-button style="width: 80px;" icon="el-icon-filter" class="mr8 clue-large-btn"
+            @click="advancedDialogVisible = true">
+            <el-icon>
+              <Filter />
+            </el-icon>
+            高级搜索
+          </el-button>
           <el-dropdown>
             <el-button class="clue-large-btn">操作<el-icon>
                 <ArrowDown />
               </el-icon></el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                 <el-dropdown-item @click="openAbandonDialog(getSelectedClueIds())">放弃线索</el-dropdown-item>
-                <el-dropdown-item @click="openUserSelectDialog">转移线索</el-dropdown-item>
+                <el-dropdown-item @click="receiveClue(getSelectedClueIds())">领取</el-dropdown-item>
+                <el-dropdown-item @click="openUserSelectDialog">分配</el-dropdown-item>
                 <el-dropdown-item @click="delclue(getSelectedClueIds())">删除线索</el-dropdown-item>
-                <el-dropdown-item @click="exportclue(1)">导出数据</el-dropdown-item>
+                <el-dropdown-item @click="exportclue(0)">导出数据</el-dropdown-item>
                 <el-dropdown-item>Excel导入</el-dropdown-item>
                 <el-dropdown-item>下载模版</el-dropdown-item>
               </el-dropdown-menu>
@@ -106,7 +100,7 @@
       </el-row>
     </el-card>
 
-      <!-- 转移线索弹出框 -->
+    <!-- 分配弹出框 -->
     <el-dialog v-model="userSelectDialogVisible" title="用户列表" width="900px">
       <el-table :data="showuserList" style="width: 100%" :row-key="row => row.id" :current-row-key="selectUserId"
         highlight-current-row @row-click="uhandleRowClick">
@@ -128,25 +122,6 @@
         <el-button type="primary" @click="handleAssignSubmit">提交</el-button>
       </template>
     </el-dialog>
-
-    <!-- 放弃线索原因弹出框 -->
-    <el-dialog title="选择放弃原因" v-model="abandonDialogVisible" width="500px">
-      <el-form>
-        <el-form-item label="放弃原因">
-          <el-select v-model="abandonReason" placeholder="请选择放弃原因" style="width: 300px" filterable>
-            <el-option v-for="item in abandonReasonOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <div style="color: #409EFF; margin-left: 100px;">
-          备注：放弃后线索将进入公海
-        </div>
-      </el-form>
-      <template #footer>
-        <el-button @click="abandonDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAbandonSubmit">提交</el-button>
-      </template>
-    </el-dialog>
-
 
     <!-- 添加线索弹出框 -->
     <el-dialog v-model="addcluedialogVisible" title="添加线索" width="500">
@@ -215,10 +190,9 @@
           <div class="drawer-title-big">{{ currentClue?.clueName || '-' }}</div>
           <!-- 右侧操作按钮区 -->
           <div class="drawer-btns">
-            <el-button type="success">转客户</el-button>
-            <el-button type="primary" @click="openAbandonDialog([currentClue.id])">放弃</el-button>
-            <el-button type="warning" @click="openUserSelectDialog([currentClue.id])">转移</el-button>
-            <el-button type="danger"  @click="delclue([currentClue.id])">删除</el-button>
+            <el-button type="primary" @click="receiveClue([currentClue.id])">领取</el-button>
+            <el-button type="warning" @click="openUserSelectDialog([currentClue.id])">分配</el-button>
+            <el-button type="danger" @click="delclue([currentClue.id])">删除</el-button>
           </div>
         </div>
         <!-- 线索基础信息区，横向排列 -->
@@ -319,7 +293,7 @@
               </div>
             </div>
             <!-- 右侧信息列 -->
-             <div class="detail-table-col">
+            <div class="detail-table-col">
               <div class="detail-row">
                 <span class="value">姓名</span>
                 <template v-if="isEdit">
@@ -376,7 +350,7 @@
               <el-button type="primary" icon="Edit" @click="AddCommunication()">添加联系记录</el-button>
               <!-- 联系记录列表 -->
               <div class="contact-list">
-                <div class="contact-item" v-for="item in contactList" :key="item.id">
+                <div v-for="item in contactList" :key="item.id" class="contact-item">
                   <div class="contact-meta">
                     <span class="contact-type">{{ item.typeName }}</span>
                     <span class="contact-time">{{ item.time }}</span>
@@ -419,7 +393,7 @@
               <Upload />
             </el-icon>
             上传附件
-            </el-button>
+          </el-button>
           <!-- 已上传文件名回显 -->
           <div v-if="fileList.length" style="margin-top:8px;">
             <div v-for="file in fileList" :key="file.uid" style="font-size:13px;color:#666;">
@@ -459,7 +433,7 @@
         <el-form-item>
           <el-button type="primary" @click="communicationsubmitForm(communicationruleFormRef)">
             添加记录
-            </el-button>
+          </el-button>
           <el-button @click="communicationresetForm(communicationruleFormRef)">重置</el-button>
         </el-form-item>
       </el-form>
@@ -473,7 +447,7 @@
         :on-exceed="handleUploadExceed" :on-progress="handleUploadProgress" list-type="text">
         <template #trigger>
           <el-button type="primary">选择文件</el-button>
-      </template>
+        </template>
         <el-button type="success" style="margin-left: 12px;" @click="submitUpload">开始上传</el-button>
         <template #file="{ file }">
           <span>{{ file.name }}</span>
@@ -510,7 +484,9 @@
         <el-table-column label="电话" prop="cluePhone" min-width="120">
           <template #default="{ row }">
             <span>{{ row.cluePhone }}</span>
-            <el-icon style="margin-left:4px;"><i class="el-icon-phone" /></el-icon>
+            <el-icon v-if="row.cluePhone !== 'string'" style="margin-left:4px;" class="phone-icon">
+              <Phone />
+            </el-icon>
           </template>
         </el-table-column>
         <el-table-column label="线索来源" prop="clueSourceName" min-width="100" />
@@ -552,7 +528,7 @@
             </template>
           </template>
         </el-table-column>
-        <el-table-column label="负责人" prop="userName" min-width="100" />
+        <el-table-column label="负责人" prop="realName" min-width="100" />
         <el-table-column label="创建人" prop="createName" min-width="100" />
         <el-table-column label="操作" width="120" align="center">
           <!-- <template #default="{ row }">
@@ -768,7 +744,7 @@
 import { ref, reactive, onMounted, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { ArrowDown, ArrowUp, DocumentAdd, Search, InfoFilled, CircleClose, Phone, Upload } from '@element-plus/icons-vue';
-import { UpdateClue, ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue, ClueAction, ShowUserList, DeleteClue, ExportClue, GetClueDetail } from '@/api/CustomerProcess/Clue/clue.api';
+import { UpdateClue,GetClueDetail,ShowClueList, GetUser, GetClueSource, GetIndustry, AddClue, ClueAction, ShowUserList,ExportClue,DeleteClue } from '@/api/CustomerProcess/Clue/clue.api';
 import { AddContactCommunication, GetContactCommunication, GetCommunicationType, GetCustomReplyByType } from '@/api/CustomerProcess/ContactCommunication/contactcommunication.api';
 import moment from 'moment';
 import dayjs from 'dayjs';
@@ -792,7 +768,7 @@ const editForm = ref({
   industryId: '',
   address: '',
   remark:'',
-  cluePoolStatus: 1,
+  cluePoolStatus: 0,
 }); // 编辑用的表单数据
 
 // 进入编辑时，拷贝一份当前线索数据
@@ -832,10 +808,9 @@ const fetchClueDetail = async (id:any) => {
   Object.assign(currentClue.value, res.data); 
 };
 
-
 //================导出线索============================
 // 导出客户数据并自动下载 Excel 文件
-const exportclue = async (cluePoolStatus: number) => {
+const exportclue = async (cluePoolStatus:number) => {
   // 调用后端导出接口，传递筛选条件
   const res = await ExportClue(cluePoolStatus);
 
@@ -868,10 +843,9 @@ const exportclue = async (cluePoolStatus: number) => {
 //=================删除线索==========================
 /**
  * 批量删除线索
- * @param clueIds 要删除的线索ID数组，可选参数
- * 功能说明：
+ * @param clueIds 选中的线索ID数组
  * 1. 校验是否有选中线索
- * 2. 弹窗二次确认删除操作
+ * 2. 弹窗二次确认
  * 3. 循环调用DeleteClue删除每条线索
  * 4. 删除成功/失败分别统计并提示
  * 5. 删除成功后刷新线索列表
@@ -879,8 +853,6 @@ const exportclue = async (cluePoolStatus: number) => {
 const delclue = async (clueIds?: any[]) => {
   // 如果没有传入参数，使用选中的线索ID
   const ids = clueIds || getSelectedClueIds();
-  
-  // 校验：必须选择至少一条线索
   if (!ids || !ids.length) {
     ElMessage.warning('请先选择要删除的线索');
     return;
@@ -922,42 +894,42 @@ const delclue = async (clueIds?: any[]) => {
   }
 }
 
-//================转移线索===========================
-/**
- * 转移线索相关的状态变量
- */
-const selectUserId = ref(''); // 存储选中的目标用户ID，推荐用字符串类型
-const userSelectDialogVisible = ref(false); // 控制用户选择弹窗的显示/隐藏
-const transferClueIds = ref<any[]>([]); // 存储要转移的线索ID数组
+//=================分配、领取=====================
+//获取线索Id方便分配、领取
+const getSelectedClueIds = () => {
+  return selectedRows.value.map(row => row.id);
+};
+// 领取线索
+const receiveClue = async (clueIds?: any) => {
+  // 如果没有传入参数，使用选中的线索ID
+  const ids = clueIds || getSelectedClueIds();
+  if (!ids.length) {
+    ElMessage.warning('请先选择线索');
+    return;
+  }
+  for (const clueId of ids) {
+    await ClueAction({ clueId, actionType: 'receive' });
+  }
+  ElMessage.success('领取成功');
+  // 刷新列表
+  fetchClueList()
+};
 
-/**
- * 处理用户选择弹窗中的行点击事件
- * @param row 被点击的用户行数据
- */
+// 分配线索
+const selectUserId = ref(''); // 推荐用字符串
+const userSelectDialogVisible = ref(false); // 控制弹窗显示
+const transferClueIds = ref<any[]>([]); // 存储要转移的线索ID
+
 const uhandleRowClick = (row: any) => {
-  // 将选中用户的ID转换为字符串并存储
   selectUserId.value = String(row.userId);
 };
 
-/**
- * 打开用户选择弹窗
- * @param clueIds 要转移的线索ID数组，可选参数
- * 功能说明：
- * 1. 如果传入了线索ID，则存储到全局变量；否则清空存储的线索ID
- * 2. 调用showUser()获取用户列表数据
- * 3. 显示用户选择弹窗
- */
 const openUserSelectDialog = (clueIds?: any[]) => {
   // 如果传入了线索ID，则存储；否则清空存储的线索ID，使用选中的线索ID
   transferClueIds.value = clueIds || [];
-  
-  // 获取用户列表数据
   showUser()
-  
-  // 显示用户选择弹窗
   userSelectDialogVisible.value = true
 }
-
 const assignClue = async (clueIds?: any, targetUserId?: any) => {
   // 如果没有传入线索ID参数，使用选中的线索ID
   const ids = clueIds || getSelectedClueIds();
@@ -985,25 +957,13 @@ const assignClue = async (clueIds?: any, targetUserId?: any) => {
   showUser()
 };
 
-/**
- * 处理转移线索的提交操作
- * 功能说明：
- * 1. 使用存储的线索ID，如果没有则使用选中的线索ID
- * 2. 调用assignClue方法执行转移操作
- * 3. 关闭用户选择弹窗
- * 4. 清空存储的线索ID，避免影响下次操作
- */
+// 提交按钮
 const handleAssignSubmit = () => {
   // 使用存储的线索ID，如果没有则使用选中的线索ID
   const clueIds = transferClueIds.value.length > 0 ? transferClueIds.value : undefined;
-  
-  // 调用assignClue方法执行转移操作
   assignClue(clueIds, selectUserId.value);
-  
-  // 关闭用户选择弹窗
   userSelectDialogVisible.value = false;
-  
-  // 清空存储的线索ID，避免影响下次操作
+  // 清空存储的线索ID
   transferClueIds.value = [];
 };
 
@@ -1034,170 +994,6 @@ const showUser = async () => {
   queryUser.pageCount = res.pageCount || 0; // 更新总页数
   console.log('showuserList:', showuserList.value);
 }
-
-//=================放弃原因==========================
-/**
- * 放弃线索相关的状态变量
- */
-const abandonDialogVisible = ref(false); // 控制放弃原因弹窗的显示/隐藏
-const abandonReason = ref(''); // 存储用户选择的放弃原因
-const abandonClueIds = ref<any[]>([]); // 存储要放弃的线索ID数组
-
-/**
- * 放弃原因选项列表
- * 用户可以从这些预设的原因中选择一个
- */
-const abandonReasonOptions = [
-  { label: '放弃购买', value: '放弃购买' },
-  { label: '预算少', value: '预算少' },
-  { label: '信息有误', value: '信息有误' },
-];
-
-/**
- * 打开放弃线索对话框
- * @param clueIds 要放弃的线索ID数组，可选参数
- * 功能说明：
- * 1. 如果没有传入线索ID，则使用当前选中的线索ID
- * 2. 校验是否有线索被选中
- * 3. 存储要放弃的线索ID到全局变量
- * 4. 重置放弃原因为空
- * 5. 显示放弃原因选择弹窗
- */
-const openAbandonDialog = (clueIds?: any[]) => {
-  // 如果没有传入参数，使用选中的线索ID
-  const ids = clueIds || getSelectedClueIds();
-  
-  // 校验：必须选择至少一条线索
-  if (!ids.length) {
-    ElMessage.warning('请先选择线索');
-    return;
-  }
-  
-  // 存储要放弃的线索ID到全局变量，供提交时使用
-  abandonClueIds.value = ids;
-  
-  // 重置放弃原因为空，确保每次都是重新选择
-  abandonReason.value = '';
-  
-  // 显示放弃原因选择弹窗
-  abandonDialogVisible.value = true;
-};
-
-/**
- * 提交放弃线索操作
- * 功能说明：
- * 1. 校验放弃原因是否已选择
- * 2. 遍历所有要放弃的线索ID
- * 3. 检查每个线索是否属于当前用户
- * 4. 调用后端接口执行放弃操作
- * 5. 统计成功和失败数量并给出相应提示
- * 6. 成功后刷新线索列表
- */
-const handleAbandonSubmit = async () => {
-  // 校验：必须选择放弃原因
-  if (!abandonReason.value) {
-    ElMessage.warning('请选择放弃原因');
-    return;
-  }
-  
-  // 调试信息：打印操作开始的关键信息
-  console.log('=== 开始放弃线索操作 ===');
-  console.log('放弃原因:', abandonReason.value);
-  console.log('要放弃的线索ID:', abandonClueIds.value);
-  console.log('当前用户ID:', user.userInfo.id);
-  
-  // 初始化计数器
-  let successCount = 0; // 成功放弃的线索数量
-  let failCount = 0;    // 放弃失败的线索数量
-  
-  // 遍历所有要放弃的线索ID
-  for (const clueId of abandonClueIds.value) {
-    try {
-      // 在线索列表中查找对应的线索数据
-      const clue = clueList.value.find(item => item.id === clueId);
-      console.log(`查找线索ID ${clueId}:`, clue);
-      
-      // 校验：检查是否找到了对应的线索数据
-      if (!clue) {
-        console.warn(`未找到线索ID: ${clueId}，可能数据已过期`);
-        failCount++;
-        continue; // 跳过当前线索，继续处理下一个
-      }
-      
-      // 调试信息：打印线索负责人和当前用户的ID对比
-      console.log(`线索负责人ID: ${clue.userId}, 当前用户ID: ${user.userInfo.id}`);
-      
-      // 权限校验：只有线索的负责人才能放弃该线索
-      // 这是业务逻辑要求，防止用户放弃不属于自己的线索
-      if (clue.userId !== user.userInfo.id) {
-        console.warn(`线索ID ${clueId} 不是当前用户负责的，跳过操作`);
-        failCount++;
-        continue; // 跳过当前线索，继续处理下一个
-      }
-      
-      // 调试信息：打印即将发送给后端的参数
-      console.log(`准备调用ClueAction接口，参数:`, {
-        clueId,
-        actionType: 'abandon',
-        abandonReason: abandonReason.value
-      });
-      
-      // 调用后端接口执行放弃操作
-      // ClueAction接口会更新线索状态为"已放弃"
-      const result = await ClueAction({ 
-        clueId, 
-        actionType: 'abandon', 
-        abandonReason: abandonReason.value 
-      });
-      
-      // 调试信息：打印接口返回结果
-      console.log(`ClueAction接口返回结果:`, result);
-      successCount++; // 接口调用成功，增加成功计数
-      
-    } catch (error) {
-      // 异常处理：接口调用失败时的错误处理
-      console.error(`放弃线索 ${clueId} 失败:`, error);
-      failCount++; // 接口调用失败，增加失败计数
-    }
-  }
-  
-  // 调试信息：打印最终操作结果统计
-  console.log(`=== 放弃操作完成，成功: ${successCount}, 失败: ${failCount} ===`);
-  
-  // 成功处理：如果有线索成功放弃
-  if (successCount > 0) {
-    ElMessage.success(`成功放弃${successCount}条线索`);
-    abandonDialogVisible.value = false; // 关闭放弃原因弹窗
-    fetchClueList(); // 刷新线索列表，显示最新状态
-  }
-  
-  // 失败处理：如果有线索放弃失败
-  if (failCount > 0) {
-    ElMessage.warning(`有${failCount}条线索放弃失败，可能不是您负责的线索`);
-  }
-};
-
-//=================放弃线索========================
-/**
- * 表格选择相关的状态变量
- */
-const selectedRows = ref<any[]>([]); // 保存所有选中的行数据
-
-/**
- * 处理表格选择变化事件
- * @param rows 当前选中的行数据数组
- */
-const handleSelectionChange = (rows: any) => {
-  selectedRows.value = rows;
-};
-
-/**
- * 获取当前选中线索的ID数组
- * @returns 选中线索的ID数组
- */
-const getSelectedClueIds = () => {
-  return selectedRows.value.map(row => row.id);
-};
 
 
 //=================显示联系记录====================
@@ -1438,6 +1234,11 @@ const handleRowClick = (row: any) => {
 
 //================添加线索===========================
 const addcluedialogVisible = ref(false);
+
+const handleAddClue = () => {
+  addcluedialogVisible.value = true;
+};
+
 interface RuleForm {
   userId: number | string
   clueName: string
@@ -1451,6 +1252,8 @@ interface RuleForm {
   address: string
   remark: string
   status: number
+  cluePoolStatus: number
+  abandonReason: string
 }
 
 const ruleFormRef = ref<FormInstance>()
@@ -1467,6 +1270,8 @@ const ruleForm = reactive<RuleForm>({
   address: '',
   remark: '',
   status: 0,
+  cluePoolStatus: 0,
+  abandonReason: '',
 })
 
 const rules = reactive<FormRules<RuleForm>>({
@@ -1476,10 +1281,6 @@ const rules = reactive<FormRules<RuleForm>>({
   cluePhone: [
     { required: true, message: '电话是必填项', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号', trigger: 'blur', },
-  ],
-  clueEmail: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'change'] }
   ],
 })
 
@@ -1529,7 +1330,6 @@ const orderOptions = [
 
 const loading = ref(false);
 const clueList = ref<any[]>([]);
-const selectedIds = ref<any[]>([]);
 
 //定义查询显示参数
 const queryParams = reactive({
@@ -1560,16 +1360,11 @@ const queryParams = reactive({
   CompanyName: '',  // 公司名称
   IndustryId: 0,   // 行业
   Address: '',      // 地址
-  MatchMode: 0, // 0: 全部满足, 1: 部分满足
+  MatchMode: 0,  // 0: 全部满足, 1: 部分满足
+  CluePoolStatus: 0, //线索分配状态 
 });
 
 const advancedDialogVisible = ref(false);
-
-const statusOptions = [
-  { label: '未跟进', value: 0 },
-  { label: '跟进中', value: 1 },
-  { label: '已转换', value: 2 }
-];
 
 const dateRange = ref<string[]>([]);
 const dateShortcuts = [
@@ -1671,7 +1466,7 @@ const selectCustomReply = async (typeId: string | number) => {
     .then(res => {
       customReplyList.value = res || [];
       console.log('自定义回复列表', customReplyList.value);
-  });
+    });
 };
 
 //下拉框绑定沟通类型列表
@@ -1753,7 +1548,8 @@ const fetchClueList = async () => {
       CompanyName: queryParams.CompanyName,
       IndustryId: queryParams.IndustryId,
       Address: queryParams.Address,
-      MatchMode: queryParams.MatchMode
+      MatchMode: queryParams.MatchMode,
+      CluePoolStatus: queryParams.CluePoolStatus
     };
     const params = filterParams(rawParams);
 
@@ -1821,7 +1617,10 @@ const handleResetQuery = () => {
   queryParams.PageSize = 10;
   handleQuery();
 };
-
+const selectedRows = ref<any[]>([]); // 保存所有选中的行
+const handleSelectionChange = (rows: any) => {
+  selectedRows.value = rows;
+};
 
 //分页
 const handleSizeChange = (val: number) => {
@@ -1835,10 +1634,7 @@ const handleCurrentChange = (val: number) => {
   fetchClueList();
 }
 
-// 添加线索方法
-const handleAddClue = () => {
-  addcluedialogVisible.value = true;
-};
+
 // const handleEdit = (row: any) => {
 //   ElMessage.info('编辑功能开发中...');
 // };
@@ -1849,6 +1645,7 @@ const handleAddClue = () => {
 //   ElMessage.info('删除功能开发中...');
 // };
 
+//========================================================================
 // 处理排序点击事件
 // 0: 按最后跟进时间排序, 1: 按下次联系时间排序, 2: 按创建时间排序
 // 如果当前排序字段与点击的字段相同，则切换升降序；否则设置为降序
@@ -1945,26 +1742,9 @@ onMounted(() => {
   console.log('clueList:', clueList.value);
 });
 
-
 </script>
 
 <style scoped>
-.detail-table-flex {
-  display: flex;
-  gap: 40px;
-  /* 左右列间距 */
-}
-
-.detail-table-col {
-  flex: 1;
-}
-
-.detail-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 18px;
-}
-
 .detail-row .label {
   width: 80px;
   /* 字段名宽度，可根据实际调整 */
@@ -1978,18 +1758,46 @@ onMounted(() => {
   min-width: 0;
 }
 
-.el-input.value,
-.el-select.value {
-  width: 100%;
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  color: #303133;
+}
+
+.detail-table-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-table-flex {
+  display: flex;
+  justify-content: center;
+  gap: 180px;
+  margin: 0 auto 20px auto;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e4e7ed;
+  max-width: 1000px;
+  min-width: 700px;
+}
+
+
+.clue-detail-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-container {
   padding: 20px;
 }
 
-  .search-card {
-    margin-bottom: 20px;
-  }
+.search-card {
+  margin-bottom: 20px;
+}
 
 .clue-header {
   font-size: 16px;
@@ -2031,9 +1839,9 @@ onMounted(() => {
 
 .ml16 {
   margin-left: 16px;
-  }
+}
 
-  .table-card {
+.table-card {
   margin-top: 0;
 }
 
@@ -2124,7 +1932,7 @@ onMounted(() => {
   font-size: 14px;
   color: #303133;
   font-weight: 400;
-    text-align: right;
+  text-align: right;
   flex-shrink: 0;
   margin-left: 40px;
 }
@@ -2286,6 +2094,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
 }
+
 
 .phone-icon {
   color: #409eff;
